@@ -1,0 +1,9 @@
+{
+  "version": "1.0",
+  "approvalId": "77777777-7777-4777-8777-777777777777",
+  "correlationId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "decision": "REJECTED",
+  "decidedAt": "2026-08-20T20:05:00Z",
+  "decidedByRef": "12121212-1212-4121-8121-121212121212",
+  "reason": "La condición comercial no fue autorizada."
+}

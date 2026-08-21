@@ -1,0 +1,13 @@
+{
+  "version": "1.0",
+  "queryId": "55555555-5555-4555-8555-555555555555",
+  "correlationId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "query": "Empresa Ejemplo Quito sitio oficial",
+  "market": {
+    "countryCode": "EC",
+    "city": "Quito"
+  },
+  "requestedAt": "2026-08-20T20:00:01Z",
+  "limit": 10,
+  "sources": ["SEARXNG", "WEB_API"]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "@rhia/spike-drizzle",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "migration:generate": "drizzle-kit generate --config=drizzle.config.ts --name=orm-spike"
+  }
+}

@@ -1,0 +1,382 @@
+{
+  "updatedAt": "2026-08-17T21:11:50.254Z",
+  "createdAt": "2026-08-17T21:11:50.254Z",
+  "id": "kxUFfTOkwhEOkxnd",
+  "name": "RHIA - Verificación Personas",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "type": "n8n-nodes-base.postgres",
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "SELECT\n    empresa_key,\n    persona_key,\n    empresa,\n    persona_contacto,\n    cargo_contacto AS cargo_declarado,\n    fuente_inicial,\n    tipo_fuente_inicial,\n    puntuacion_prioridad,\n    prioridad_verificacion,\n    estado,\n    '\"' || persona_contacto || '\" \"' || empresa ||\n    '\" (\"Talento Humano\" OR \"Recursos Humanos\" OR RRHH OR TTHH OR \"Human Resources\")'\n        AS consulta_verificacion,\n    '\"' || persona_contacto || '\" \"' || empresa ||\n    '\" (email OR correo OR contacto OR telefono OR teléfono OR whatsapp)'\n        AS consulta_contacto\nFROM prospect_contact_candidates\nWHERE empresa_key =\n    translate(\n        lower(trim($1)),\n        'áéíóúüñ',\n        'aeiouun'\n    )\nAND estado IN (\n    'PENDIENTE_VERIFICACION_INDEPENDIENTE',\n    'PARCIALMENTE_VERIFICADO'\n)\nORDER BY\n    CASE\n        WHEN estado = 'PENDIENTE_VERIFICACION_INDEPENDIENTE' THEN 1\n        WHEN estado = 'PARCIALMENTE_VERIFICADO' THEN 2\n        ELSE 3\n    END,\n    puntuacion_prioridad DESC,\n    first_seen ASC;",
+        "options": {
+          "queryReplacement": "={{$json.empresa}}"
+        }
+      },
+      "typeVersion": 2.7,
+      "position": [
+        688,
+        464
+      ],
+      "id": "d525bc6c-6196-4e58-8059-ba4ac2de9022",
+      "name": "Leer candidatos pendientes",
+      "disabled": false,
+      "issues": {}
+    },
+    {
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        816,
+        464
+      ],
+      "id": "5f14364e-aa52-487f-99c9-8cb4248f7378",
+      "name": "HTTP Request5",
+      "disabled": false,
+      "parameters": {
+        "curlImport": "",
+        "method": "GET",
+        "url": "http://searxng:8080/search?format=json",
+        "authentication": "none",
+        "provideSslCertificates": false,
+        "sendQuery": true,
+        "specifyQuery": "keypair",
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "= {{$json.consulta_verificacion}}"
+            },
+            {
+              "name": "safesearch",
+              "value": "1"
+            }
+          ]
+        },
+        "sendHeaders": false,
+        "sendBody": false,
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": false,
+              "neverError": false,
+              "responseFormat": "json"
+            }
+          }
+        },
+        "infoMessage": ""
+      },
+      "issues": {}
+    },
+    {
+      "type": "n8n-nodes-base.code",
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const respuestas = $input.all();\nconst candidatosMemoria = $(\"Leer candidatos pendientes\").all();\n\n\n// ============================================================\n// FUNCIONES GENERALES\n// ============================================================\n\nfunction limpiar(texto) {\n  return String(texto || \"\")\n    .replace(/\\s+/g, \" \")\n    .trim();\n}\n\nfunction normalizar(texto) {\n  return limpiar(texto)\n    .toLowerCase()\n    .normalize(\"NFD\")\n    .replace(/[\\u0300-\\u036f]/g, \"\");\n}\n\nfunction dominioDe(url) {\n  let texto = String(url || \"\")\n    .trim()\n    .toLowerCase();\n\n  texto = texto\n    .replace(/^https?:\\/\\//, \"\")\n    .replace(/^www\\./, \"\");\n\n  return texto\n    .split(\"/\")[0]\n    .split(\"?\")[0]\n    .split(\"#\")[0]\n    .split(\":\")[0];\n}\n\nfunction contiene(texto, valor) {\n  return normalizar(texto)\n    .includes(normalizar(valor));\n}\n\n\n// ============================================================\n// COINCIDENCIA CONTROLADA DE PERSONA\n//\n// Samantha Alban Arboleda\n// también puede aparecer públicamente como:\n// Samantha Alban\n//\n// Exigimos al menos los dos primeros componentes del nombre.\n// ============================================================\n\nfunction mencionaPersona(texto, personaCompleta) {\n\n  const t =\n    normalizar(texto);\n\n  const persona =\n    normalizar(personaCompleta);\n\n  if (!persona) {\n    return false;\n  }\n\n  // Coincidencia exacta completa\n  if (t.includes(persona)) {\n    return true;\n  }\n\n  const partes =\n    persona\n      .split(/\\s+/)\n      .filter(Boolean);\n\n  // No usamos coincidencias de una sola palabra.\n  if (partes.length >= 2) {\n\n    const nombreCorto =\n      `${partes[0]} ${partes[1]}`;\n\n    if (\n      nombreCorto.length >= 6 &&\n      t.includes(nombreCorto)\n    ) {\n      return true;\n    }\n  }\n\n  return false;\n}\n\n\n// ============================================================\n// FUENTES\n// ============================================================\n\nfunction esLinkedInPersonal(url) {\n\n  const u =\n    normalizar(url);\n\n  return u.includes(\"linkedin.com/in/\");\n}\n\nfunction esWebCorporativa(url) {\n\n  return dominioDe(url) ===\n    \"corporacionfavorita.com\";\n}\n\nfunction esFuenteFuerte(url) {\n\n  return (\n    esLinkedInPersonal(url) ||\n    esWebCorporativa(url)\n  );\n}\n\nfunction esFuenteMedia(url) {\n\n  const dominio =\n    dominioDe(url);\n\n  return (\n    dominio === \"theorg.com\" ||\n    dominio === \"rocketreach.co\" ||\n    dominio === \"zoominfo.com\" ||\n    dominio === \"x.com\"\n  );\n}\n\n\n// ============================================================\n// EXTRAER CARGO\n// ============================================================\n\nfunction extraerCargo(texto) {\n\n  const t =\n    limpiar(texto);\n\n  const patrones = [\n\n    /Gerente\\s+de\\s+Recursos\\s+Humanos/i,\n    /Gerente\\s+de\\s+RRHH/i,\n    /Gerente\\s+de\\s+Talento\\s+Humano/i,\n\n    /Jefe\\s+Corporativo\\s+de\\s+Talento\\s+Humano/i,\n    /Jefa\\s+Corporativa\\s+de\\s+Talento\\s+Humano/i,\n\n    /Jefe\\s+de\\s+Recursos\\s+Humanos/i,\n    /Jefa\\s+de\\s+Recursos\\s+Humanos/i,\n\n    /Jefe\\s+de\\s+Talento\\s+Humano/i,\n    /Jefa\\s+de\\s+Talento\\s+Humano/i,\n\n    /Jefe\\s+de\\s+TTHH/i,\n    /Jefa\\s+de\\s+TTHH/i,\n\n    /Sub\\s+Jefe\\s+de\\s+Talento\\s+Humano(?:,\\s*Zona\\s+[A-Za-zÁÉÍÓÚáéíóúñÑ]+)?/i,\n    /Sub\\s+Jefa\\s+de\\s+Talento\\s+Humano(?:,\\s*Zona\\s+[A-Za-zÁÉÍÓÚáéíóúñÑ]+)?/i,\n\n    /Asistente\\s+de\\s+Talento\\s+Humano/i,\n    /Asistente\\s+De\\s+Talento\\s+Humano/i,\n\n    /Coordinador\\s+de\\s+Talento\\s+Humano/i,\n    /Coordinadora\\s+de\\s+Talento\\s+Humano/i,\n\n    /Analista\\s+de\\s+Talento\\s+Humano/i,\n    /Analista\\s+de\\s+Recursos\\s+Humanos/i,\n\n    /Talento\\s+Humano/i,\n    /Recursos\\s+Humanos/i\n  ];\n\n  for (const regex of patrones) {\n\n    const match =\n      t.match(regex);\n\n    if (match) {\n      return limpiar(match[0]);\n    }\n  }\n\n  return \"NO IDENTIFICADO\";\n}\n\n\n// ============================================================\n// NORMALIZACIÓN SEMÁNTICA DEL CARGO\n//\n// Evita considerar conflicto:\n//\n// Gerente de RRHH\n// Gerente de Recursos Humanos\n// Gerente de Talento Humano\n//\n// porque representan la misma familia de cargo.\n// ============================================================\n\nfunction claveCargo(cargo) {\n\n  const c =\n    normalizar(cargo);\n\n  if (\n    c === \"talento humano\" ||\n    c === \"recursos humanos\"\n  ) {\n    return \"AREA_RRHH\";\n  }\n\n  if (\n    c.includes(\"gerente\") &&\n    (\n      c.includes(\"rrhh\") ||\n      c.includes(\"recursos humanos\") ||\n      c.includes(\"talento humano\")\n    )\n  ) {\n    return \"GERENTE_RRHH\";\n  }\n\n  if (\n    c.includes(\"jefe corporativo\") &&\n    (\n      c.includes(\"talento humano\") ||\n      c.includes(\"recursos humanos\")\n    )\n  ) {\n    return \"JEFE_CORPORATIVO_RRHH\";\n  }\n\n  if (\n    (\n      c.includes(\"sub jefe\") ||\n      c.includes(\"sub jefa\")\n    ) &&\n    c.includes(\"talento humano\")\n  ) {\n    return \"SUBJEFE_RRHH\";\n  }\n\n  if (\n    (\n      c.includes(\"jefe\") ||\n      c.includes(\"jefa\")\n    ) &&\n    (\n      c.includes(\"tthh\") ||\n      c.includes(\"talento humano\") ||\n      c.includes(\"recursos humanos\")\n    )\n  ) {\n    return \"JEFE_RRHH\";\n  }\n\n  if (\n    c.includes(\"asistente\") &&\n    c.includes(\"talento humano\")\n  ) {\n    return \"ASISTENTE_RRHH\";\n  }\n\n  if (\n    c.includes(\"coordinador\") &&\n    c.includes(\"talento humano\")\n  ) {\n    return \"COORDINADOR_RRHH\";\n  }\n\n  if (\n    c.includes(\"analista\") &&\n    (\n      c.includes(\"talento humano\") ||\n      c.includes(\"recursos humanos\")\n    )\n  ) {\n    return \"ANALISTA_RRHH\";\n  }\n\n  return c || \"NO_IDENTIFICADO\";\n}\n\n\n// ============================================================\n// ¿ES CARGO ESPECÍFICO?\n// ============================================================\n\nfunction cargoEspecifico(cargo) {\n\n  const clave =\n    claveCargo(cargo);\n\n  return (\n    clave !== \"AREA_RRHH\" &&\n    clave !== \"NO_IDENTIFICADO\"\n  );\n}\n\n\n// ============================================================\n// EMAIL ENMASCARADO\n// ============================================================\n\nfunction contieneEmailEnmascarado(texto) {\n\n  return (\n    /\\*+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/i.test(texto) ||\n    /[A-Za-z0-9]\\*{2,}@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/i.test(texto)\n  );\n}\n\n\n// ============================================================\n// PROCESAR\n// ============================================================\n\nconst salida = [];\n\nfor (\n  let i = 0;\n  i < respuestas.length;\n  i++\n) {\n\n  const respuesta =\n    respuestas[i]?.json || {};\n\n  const candidato =\n    candidatosMemoria[i]?.json || {};\n\n  const persona =\n    candidato.persona_contacto ||\n    \"NO ENCONTRADO\";\n\n  const empresa =\n    candidato.empresa ||\n    \"NO IDENTIFICADO\";\n\n  const cargoDeclarado =\n    candidato.cargo_declarado ||\n    \"NO IDENTIFICADO\";\n\n  const resultados =\n    Array.isArray(respuesta.results)\n      ? respuesta.results\n      : [];\n\n\n  const evidenciasValidas = [];\n  const cargosDetectados = [];\n  const emailsEnmascarados = [];\n  const resultadosIrrelevantes = [];\n\n  let fuentesFuertes = 0;\n  let fuentesMedias = 0;\n\n  let personaConfirmada = false;\n  let empresaConfirmada = false;\n  let rrhhConfirmado = false;\n\n\n  // ==========================================================\n  // RESULTADOS\n  // ==========================================================\n\n  for (const r of resultados) {\n\n    const titulo =\n      limpiar(r.title);\n\n    const contenido =\n      limpiar(r.content);\n\n    const url =\n      limpiar(r.url);\n\n    const dominio =\n      dominioDe(url);\n\n    const texto =\n      `${titulo} ${contenido}`;\n\n\n    const confirmaPersona =\n      mencionaPersona(\n        texto,\n        persona\n      );\n\n    const mencionaEmpresa =\n      contiene(\n        texto,\n        \"Corporacion Favorita\"\n      );\n\n    const mencionaRRHH =\n      (\n        contiene(texto, \"Talento Humano\") ||\n        contiene(texto, \"Recursos Humanos\") ||\n        contiene(texto, \"RRHH\") ||\n        contiene(texto, \"TTHH\") ||\n        contiene(texto, \"Human Resources\")\n      );\n\n\n    // --------------------------------------------------------\n    // SOLO EVIDENCIA DE PERSONA + EMPRESA\n    // --------------------------------------------------------\n\n    if (\n      !confirmaPersona ||\n      !mencionaEmpresa\n    ) {\n\n      resultadosIrrelevantes.push({\n        titulo,\n        url,\n        motivo:\n          \"NO_CONFIRMA_PERSONA_Y_EMPRESA\"\n      });\n\n      continue;\n    }\n\n\n    personaConfirmada = true;\n    empresaConfirmada = true;\n\n    if (mencionaRRHH) {\n      rrhhConfirmado = true;\n    }\n\n\n    // --------------------------------------------------------\n    // NIVEL DE FUENTE\n    // --------------------------------------------------------\n\n    let nivelFuente =\n      \"BAJA\";\n\n    if (\n      esFuenteFuerte(url)\n    ) {\n\n      nivelFuente =\n        \"FUERTE\";\n\n      fuentesFuertes++;\n\n    } else if (\n      esFuenteMedia(url)\n    ) {\n\n      nivelFuente =\n        \"MEDIA\";\n\n      fuentesMedias++;\n    }\n\n\n    // --------------------------------------------------------\n    // CARGO\n    // --------------------------------------------------------\n\n    const cargo =\n      extraerCargo(texto);\n\n    if (\n      cargo !==\n      \"NO IDENTIFICADO\"\n    ) {\n\n      cargosDetectados.push({\n\n        cargo,\n\n        clave_cargo:\n          claveCargo(cargo),\n\n        fuente:\n          url,\n\n        dominio,\n\n        nivel_fuente:\n          nivelFuente,\n\n        evidencia:\n          contenido\n      });\n    }\n\n\n    // --------------------------------------------------------\n    // EMAIL ENMASCARADO\n    // --------------------------------------------------------\n\n    if (\n      contieneEmailEnmascarado(texto)\n    ) {\n\n      emailsEnmascarados.push({\n\n        evidencia:\n          texto,\n\n        fuente:\n          url,\n\n        utilizable:\n          false\n      });\n    }\n\n\n    // --------------------------------------------------------\n    // EVIDENCIA VÁLIDA\n    // --------------------------------------------------------\n\n    evidenciasValidas.push({\n\n      titulo,\n\n      url,\n\n      dominio,\n\n      nivel_fuente:\n        nivelFuente,\n\n      evidencia:\n        contenido\n    });\n  }\n\n\n  // ==========================================================\n  // DEDUPLICAR VARIANTES EXACTAS\n  // ==========================================================\n\n  const vistosCargo =\n    new Set();\n\n  const cargosUnicos =\n    cargosDetectados.filter(c => {\n\n      const clave =\n        `${c.clave_cargo}|${normalizar(c.cargo)}|${c.fuente}`;\n\n      if (\n        vistosCargo.has(clave)\n      ) {\n        return false;\n      }\n\n      vistosCargo.add(clave);\n\n      return true;\n    });\n\n\n  // ==========================================================\n  // CARGOS ESPECÍFICOS\n  // ==========================================================\n\n  const cargosEspecificos =\n    cargosDetectados.filter(\n      c => cargoEspecifico(c.cargo)\n    );\n\n\n  // ==========================================================\n  // CARGO PREFERIDO\n  //\n  // 1. Fuente fuerte\n  // 2. Fuente media\n  // 3. Cargo declarado\n  // ==========================================================\n\n  let cargoVerificado =\n    cargoDeclarado;\n\n  let fuenteCargo =\n    candidato.fuente_inicial || \"\";\n\n  let nivelCargo =\n    \"NO_VERIFICADO\";\n\n\n  const cargoFuerte =\n    cargosEspecificos.find(\n      c =>\n        c.nivel_fuente ===\n        \"FUERTE\"\n    );\n\n\n  if (cargoFuerte) {\n\n    cargoVerificado =\n      cargoFuerte.cargo;\n\n    fuenteCargo =\n      cargoFuerte.fuente;\n\n    nivelCargo =\n      \"VERIFICADO_FUENTE_FUERTE\";\n\n  } else {\n\n    const cargoMedio =\n      cargosEspecificos.find(\n        c =>\n          c.nivel_fuente ===\n          \"MEDIA\"\n      );\n\n\n    if (cargoMedio) {\n\n      cargoVerificado =\n        cargoMedio.cargo;\n\n      fuenteCargo =\n        cargoMedio.fuente;\n\n      nivelCargo =\n        \"CARGO_FUENTE_MEDIA\";\n    }\n  }\n\n\n  // ==========================================================\n  // CONFLICTO REAL\n  //\n  // Comparamos familias semánticas.\n  // ==========================================================\n\n  const familiasCargo =\n    [\n      ...new Set(\n        cargosEspecificos\n          .map(c =>\n            c.clave_cargo\n          )\n          .filter(Boolean)\n      )\n    ];\n\n\n  const conflictoCargo =\n    familiasCargo.length > 1;\n\n\n  // ==========================================================\n  // ESTADO VERIFICACIÓN\n  // ==========================================================\n\n  let estadoVerificacion =\n    \"NO_VERIFICADO\";\n\n\n  // Persona + empresa + RRHH con fuente fuerte.\n  if (\n    personaConfirmada &&\n    empresaConfirmada &&\n    rrhhConfirmado &&\n    fuentesFuertes >= 1\n  ) {\n\n    if (\n      conflictoCargo\n    ) {\n\n      estadoVerificacion =\n        \"CONFLICTO_DE_CARGO\";\n\n    } else if (\n      nivelCargo ===\n      \"VERIFICADO_FUENTE_FUERTE\"\n    ) {\n\n      estadoVerificacion =\n        \"VERIFICADO\";\n\n    } else {\n\n      // Ejemplo Samantha:\n      // LinkedIn confirma pertenencia a Talento Humano,\n      // pero cargo exacto viene de ZoomInfo.\n      estadoVerificacion =\n        \"PARCIALMENTE_VERIFICADO\";\n    }\n\n  } else if (\n    personaConfirmada &&\n    empresaConfirmada &&\n    rrhhConfirmado\n  ) {\n\n    estadoVerificacion =\n      \"PARCIALMENTE_VERIFICADO\";\n  }\n\n\n  // ==========================================================\n  // CONFIANZA\n  // ==========================================================\n\n  let confianza =\n    \"BAJA\";\n\n  if (\n    estadoVerificacion ===\n    \"VERIFICADO\"\n  ) {\n\n    confianza =\n      \"ALTA\";\n\n  } else if (\n    estadoVerificacion ===\n      \"CONFLICTO_DE_CARGO\" ||\n    estadoVerificacion ===\n      \"PARCIALMENTE_VERIFICADO\"\n  ) {\n\n    confianza =\n      \"MEDIA\";\n  }\n\n\n  // ==========================================================\n  // SALIDA\n  // ==========================================================\n\n  salida.push({\n\n    json: {\n\n      empresa,\n\n      persona_contacto:\n        persona,\n\n      cargo_declarado:\n        cargoDeclarado,\n\n      estado_verificacion:\n        estadoVerificacion,\n\n      confianza_verificacion:\n        confianza,\n\n      cargo_verificado:\n        cargoVerificado,\n\n      fuente_cargo:\n        fuenteCargo,\n\n      nivel_verificacion_cargo:\n        nivelCargo,\n\n      conflicto_cargo:\n        conflictoCargo,\n\n      familias_cargo_detectadas:\n        familiasCargo,\n\n      cargos_encontrados:\n        cargosUnicos,\n\n      total_fuentes_validas:\n        evidenciasValidas.length,\n\n      fuentes_fuertes:\n        fuentesFuertes,\n\n      fuentes_medias:\n        fuentesMedias,\n\n      evidencias_validas:\n        evidenciasValidas,\n\n      emails_enmascarados_no_utilizables:\n        emailsEnmascarados,\n\n      estado_contacto:\n        \"SIN_CONTACTO_DIRECTO_VERIFICADO\",\n\n      resultados_irrelevantes:\n        resultadosIrrelevantes,\n\n      siguiente_accion:\n        estadoVerificacion ===\n          \"VERIFICADO\"\n          ? \"BUSCAR_CONTACTO_PUBLICO_VERIFICABLE\"\n\n          : estadoVerificacion ===\n            \"CONFLICTO_DE_CARGO\"\n            ? \"MANTENER_PERSONA_Y_RESOLVER_CARGO\"\n\n          : estadoVerificacion ===\n            \"PARCIALMENTE_VERIFICADO\"\n            ? \"AMPLIAR_EVIDENCIA_PERSONA\"\n\n          : \"DESCARTAR_O_REINTENTAR_VERIFICACION\"\n\n    }\n  });\n}\n\n\nreturn salida;",
+        "notice": ""
+      },
+      "typeVersion": 2,
+      "position": [
+        960,
+        464
+      ],
+      "id": "cf4ff8c7-6904-453c-a6d1-fa4c86dd9c2f",
+      "name": "Code in JavaScript8",
+      "disabled": false
+    },
+    {
+      "type": "n8n-nodes-base.postgres",
+      "parameters": {
+        "resource": "database",
+        "operation": "update",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "prospect_contact_candidates",
+          "mode": "list",
+          "cachedResultName": "prospect_contact_candidates"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "empresa_key": "={{ $json.empresa.toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').replace(/\\s+/g, ' ').trim() }}",
+            "persona_key": "={{ $json.persona_contacto.toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').replace(/\\s+/g, ' ').trim() }}",
+            "estado": "={{ $json.estado_verificacion }}",
+            "cargo_contacto": "={{ $json.estado_verificacion === 'VERIFICADO' ? $json.cargo_verificado : $json.cargo_declarado }}",
+            "last_seen": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [
+            "empresa_key",
+            "persona_key"
+          ],
+          "schema": [
+            {
+              "id": "empresa_key",
+              "displayName": "empresa_key",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "persona_key",
+              "displayName": "persona_key",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "empresa",
+              "displayName": "empresa",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "persona_contacto",
+              "displayName": "persona_contacto",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "cargo_contacto",
+              "displayName": "cargo_contacto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fuente_inicial",
+              "displayName": "fuente_inicial",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "tipo_fuente_inicial",
+              "displayName": "tipo_fuente_inicial",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "evidencia_inicial",
+              "displayName": "evidencia_inicial",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "puntuacion_prioridad",
+              "displayName": "puntuacion_prioridad",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "prioridad_verificacion",
+              "displayName": "prioridad_verificacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "estado",
+              "displayName": "estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "first_seen",
+              "displayName": "first_seen",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "last_seen",
+              "displayName": "last_seen",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "typeVersion": 2.7,
+      "position": [
+        1104,
+        464
+      ],
+      "id": "1ed9b206-3251-4654-9f7c-a0ac70312862",
+      "name": "Actualizar estado candidato memoria",
+      "disabled": false,
+      "issues": {}
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ada11f85-2152-4531-ad6a-fb59d1ce048e",
+              "name": "empresa",
+              "value": "={{ $json.empresa }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1312,
+        464
+      ],
+      "id": "8f21d027-2d37-4ece-b396-facc4b09c760",
+      "name": "Return"
+    },
+    {
+      "id": "9d6fcfc4-e2ae-4b92-bc23-863025edffa0",
+      "typeVersion": 1.1,
+      "name": "Start",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [
+        480,
+        464
+      ],
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "empresa",
+              "type": "any"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Leer candidatos pendientes": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request5": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript8": {
+      "main": [
+        [
+          {
+            "node": "Actualizar estado candidato memoria",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Leer candidatos pendientes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar estado candidato memoria": {
+      "main": [
+        [
+          {
+            "node": "Return",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "meta": null,
+  "nodeGroups": [],
+  "versionId": "0e3ffe13-b601-43b8-9071-1048bc909290",
+  "activeVersionId": "0e3ffe13-b601-43b8-9071-1048bc909290",
+  "versionCounter": 1,
+  "triggerCount": 0,
+  "sourceWorkflowId": null,
+  "tags": [],
+  "versionMetadata": {
+    "name": null,
+    "description": null
+  }
+}

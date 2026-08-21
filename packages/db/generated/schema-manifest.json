@@ -1,0 +1,639 @@
+{
+  "version": "0004_outreach_policy",
+  "tableCount": 45,
+  "tables": [
+    {
+      "name": "schema_migration",
+      "columns": [
+        "version",
+        "applied_at",
+        "checksum_sha256"
+      ]
+    },
+    {
+      "name": "organization",
+      "columns": [
+        "id",
+        "name",
+        "default_locale",
+        "default_timezone",
+        "active",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "app_user",
+      "columns": [
+        "id",
+        "organization_id",
+        "email",
+        "display_name",
+        "status",
+        "auth_provider",
+        "created_at",
+        "updated_at",
+        "last_login_at"
+      ]
+    },
+    {
+      "name": "role",
+      "columns": [
+        "id",
+        "organization_id",
+        "key",
+        "name",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "permission",
+      "columns": [
+        "id",
+        "key",
+        "description",
+        "created_at"
+      ]
+    },
+    {
+      "name": "user_role",
+      "columns": [
+        "user_id",
+        "role_id",
+        "granted_at",
+        "granted_by_user_id"
+      ]
+    },
+    {
+      "name": "role_permission",
+      "columns": [
+        "role_id",
+        "permission_id",
+        "granted_at"
+      ]
+    },
+    {
+      "name": "agent_definition",
+      "columns": [
+        "id",
+        "key",
+        "name",
+        "version",
+        "purpose",
+        "status",
+        "default_policy_id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "agent_instance",
+      "columns": [
+        "id",
+        "organization_id",
+        "agent_definition_id",
+        "configuration",
+        "status",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "capability",
+      "columns": [
+        "id",
+        "key",
+        "risk_level",
+        "requires_approval_default",
+        "created_at"
+      ]
+    },
+    {
+      "name": "agent_capability",
+      "columns": [
+        "agent_definition_id",
+        "capability_id",
+        "policy_overrides",
+        "created_at"
+      ]
+    },
+    {
+      "name": "job",
+      "columns": [
+        "id",
+        "organization_id",
+        "agent_instance_id",
+        "job_type",
+        "input",
+        "status",
+        "priority",
+        "idempotency_key",
+        "retry_count",
+        "next_attempt_at",
+        "created_at",
+        "updated_at",
+        "completed_at"
+      ]
+    },
+    {
+      "name": "execution",
+      "columns": [
+        "id",
+        "job_id",
+        "attempt",
+        "executor_type",
+        "started_at",
+        "ended_at",
+        "outcome",
+        "error_code",
+        "trace_id",
+        "created_at"
+      ]
+    },
+    {
+      "name": "action",
+      "columns": [
+        "id",
+        "execution_id",
+        "capability_key",
+        "resource_type",
+        "resource_id",
+        "request_payload",
+        "response_summary",
+        "risk_level",
+        "status",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "approval",
+      "columns": [
+        "id",
+        "action_id",
+        "requested_by_agent_instance_id",
+        "approval_type",
+        "status",
+        "approver_user_id",
+        "reason",
+        "requested_at",
+        "decided_at",
+        "expires_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "company_group",
+      "columns": [
+        "id",
+        "organization_id",
+        "canonical_name",
+        "website_root",
+        "global_identity_status",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "company_entity",
+      "columns": [
+        "id",
+        "organization_id",
+        "company_group_id",
+        "legal_name",
+        "trade_name",
+        "country_code",
+        "legal_identifier",
+        "entity_type",
+        "status",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "company_location",
+      "columns": [
+        "id",
+        "organization_id",
+        "company_entity_id",
+        "country_code",
+        "administrative_area",
+        "city",
+        "address",
+        "latitude",
+        "longitude",
+        "timezone",
+        "is_headquarters",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "company_alias",
+      "columns": [
+        "id",
+        "organization_id",
+        "company_group_id",
+        "company_entity_id",
+        "alias",
+        "source",
+        "created_at"
+      ]
+    },
+    {
+      "name": "evidence_source",
+      "columns": [
+        "id",
+        "organization_id",
+        "source_type",
+        "domain",
+        "url",
+        "fetched_at",
+        "provider",
+        "source_reliability",
+        "created_at"
+      ]
+    },
+    {
+      "name": "evidence",
+      "columns": [
+        "id",
+        "organization_id",
+        "subject_type",
+        "subject_id",
+        "source_id",
+        "claim_type",
+        "excerpt_hash",
+        "observed_value",
+        "confidence",
+        "freshness_at",
+        "status",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "fact",
+      "columns": [
+        "id",
+        "organization_id",
+        "subject_type",
+        "subject_id",
+        "predicate",
+        "value",
+        "confidence",
+        "valid_from",
+        "valid_to",
+        "supporting_evidence_ids",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "model_provider",
+      "columns": [
+        "organization_id",
+        "provider",
+        "status",
+        "capabilities",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "model_profile",
+      "columns": [
+        "id",
+        "organization_id",
+        "task_class",
+        "provider",
+        "model",
+        "quality_score",
+        "latency_score",
+        "cost_score",
+        "privacy_class",
+        "enabled",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "model_run",
+      "columns": [
+        "id",
+        "organization_id",
+        "job_id",
+        "provider",
+        "model",
+        "task_class",
+        "input_tokens",
+        "output_tokens",
+        "estimated_cost",
+        "latency_ms",
+        "success",
+        "quality_result",
+        "created_at"
+      ]
+    },
+    {
+      "name": "inference",
+      "columns": [
+        "id",
+        "organization_id",
+        "subject_type",
+        "subject_id",
+        "inference_type",
+        "value",
+        "confidence",
+        "model_run_id",
+        "supporting_fact_ids",
+        "created_at"
+      ]
+    },
+    {
+      "name": "decision_record",
+      "columns": [
+        "id",
+        "organization_id",
+        "decision_type",
+        "input_snapshot",
+        "output",
+        "rationale_summary",
+        "policy_version",
+        "model_run_id",
+        "created_at"
+      ]
+    },
+    {
+      "name": "contact",
+      "columns": [
+        "id",
+        "organization_id",
+        "company_group_id",
+        "company_entity_id",
+        "full_name",
+        "title",
+        "department",
+        "seniority",
+        "country_code",
+        "city",
+        "linkedin_url",
+        "status",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "contact_point",
+      "columns": [
+        "id",
+        "organization_id",
+        "contact_id",
+        "point_type",
+        "value_encrypted",
+        "value_hash",
+        "validation_status",
+        "source_id",
+        "last_validated_at",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "opportunity",
+      "columns": [
+        "id",
+        "organization_id",
+        "company_group_id",
+        "primary_entity_id",
+        "market_country",
+        "market_city",
+        "stage",
+        "score",
+        "score_version",
+        "owner_user_id",
+        "next_action_at",
+        "status",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "opportunity_signal",
+      "columns": [
+        "id",
+        "opportunity_id",
+        "signal_type",
+        "signal_value",
+        "evidence_id",
+        "weight",
+        "created_at"
+      ]
+    },
+    {
+      "name": "product",
+      "columns": [
+        "id",
+        "organization_id",
+        "sku",
+        "name",
+        "description",
+        "active",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "price_book",
+      "columns": [
+        "id",
+        "organization_id",
+        "country_code",
+        "currency",
+        "valid_from",
+        "valid_to",
+        "status",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "price_book_item",
+      "columns": [
+        "price_book_id",
+        "product_id",
+        "unit_price",
+        "minimum_quantity",
+        "policy_metadata",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "outreach_sequence",
+      "columns": [
+        "id",
+        "organization_id",
+        "opportunity_id",
+        "policy_id",
+        "status",
+        "max_touches",
+        "timezone",
+        "quiet_hours",
+        "started_at",
+        "stopped_at",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "outreach_touch",
+      "columns": [
+        "id",
+        "sequence_id",
+        "contact_id",
+        "channel",
+        "planned_at",
+        "sent_at",
+        "status",
+        "message_version",
+        "provider_message_id",
+        "idempotency_key",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "conversation",
+      "columns": [
+        "id",
+        "organization_id",
+        "opportunity_id",
+        "contact_id",
+        "channel",
+        "status",
+        "sentiment",
+        "intent",
+        "last_message_at",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "message",
+      "columns": [
+        "id",
+        "conversation_id",
+        "direction",
+        "content_redacted",
+        "provider_message_id",
+        "sent_at",
+        "detected_intent",
+        "created_at"
+      ]
+    },
+    {
+      "name": "meeting",
+      "columns": [
+        "id",
+        "organization_id",
+        "opportunity_id",
+        "contact_id",
+        "scheduled_at",
+        "timezone",
+        "status",
+        "qualification_status",
+        "attended",
+        "outcome",
+        "calendar_event_id",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "model_benchmark",
+      "columns": [
+        "id",
+        "organization_id",
+        "task_class",
+        "dataset_version",
+        "provider",
+        "model",
+        "accuracy",
+        "cost_per_case",
+        "latency_p50",
+        "latency_p95",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "audit_event",
+      "columns": [
+        "id",
+        "organization_id",
+        "actor_ref",
+        "actor_type",
+        "action",
+        "resource_type",
+        "resource_id",
+        "before_hash",
+        "after_hash",
+        "occurred_at",
+        "trace_id"
+      ]
+    },
+    {
+      "name": "system_health_event",
+      "columns": [
+        "id",
+        "component",
+        "status",
+        "detail",
+        "occurred_at"
+      ]
+    },
+    {
+      "name": "legacy_object_map",
+      "columns": [
+        "id",
+        "source_table",
+        "source_key",
+        "target_table",
+        "target_id",
+        "migration_version",
+        "migrated_at"
+      ]
+    },
+    {
+      "name": "outreach_policy",
+      "columns": [
+        "id",
+        "organization_id",
+        "version",
+        "name",
+        "configuration",
+        "status",
+        "approved_by_user_id",
+        "approved_at",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "outreach_suppression",
+      "columns": [
+        "id",
+        "organization_id",
+        "subject_type",
+        "subject_key_hash",
+        "reason",
+        "source",
+        "active",
+        "expires_at",
+        "created_at",
+        "updated_at"
+      ]
+    }
+  ]
+}

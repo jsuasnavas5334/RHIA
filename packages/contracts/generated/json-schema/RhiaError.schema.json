@@ -1,0 +1,87 @@
+{
+  "$id": "https://schemas.rhia.invalid/v1/RhiaError.schema.json",
+  "title": "RHIA RhiaError v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "string",
+      "enum": [
+        "RHIA_STATE_INVALID_TRANSITION",
+        "RHIA_CONTRACT_INVALID_PAYLOAD",
+        "RHIA_SEARCH_PROVIDER_DEGRADED",
+        "RHIA_SEARCH_PROVIDER_UNAVAILABLE",
+        "RHIA_SEARCH_RATE_LIMITED",
+        "RHIA_SEARCH_CAPTCHA_BLOCKED",
+        "RHIA_SEARCH_TIMEOUT",
+        "RHIA_WORKFLOW_TIMEOUT",
+        "RHIA_ENTITY_AMBIGUOUS",
+        "RHIA_APPROVAL_REQUIRED",
+        "RHIA_POLICY_DENIED",
+        "RHIA_JOB_RETRY_EXHAUSTED",
+        "RHIA_OUTREACH_OPTED_OUT",
+        "RHIA_OUTREACH_PERMANENT_BOUNCE",
+        "RHIA_MODEL_RATE_LIMITED",
+        "RHIA_MODEL_PROVIDER_UNAVAILABLE",
+        "RHIA_TOOL_FORBIDDEN",
+        "RHIA_CORE_UNEXPECTED_FAILURE"
+      ]
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "retryable": {
+      "type": "boolean"
+    },
+    "correlationId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "VALIDATION",
+        "DEPENDENCY",
+        "RATE_LIMIT",
+        "TIMEOUT",
+        "CONFLICT",
+        "POLICY",
+        "INTERNAL"
+      ]
+    },
+    "safeDetails": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string",
+            "maxLength": 500
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    }
+  },
+  "required": [
+    "code",
+    "message",
+    "retryable",
+    "correlationId",
+    "category"
+  ],
+  "additionalProperties": false
+}

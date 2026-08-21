@@ -1,0 +1,561 @@
+{
+  "updatedAt": "2026-08-19T04:22:26.200Z",
+  "createdAt": "2026-08-13T15:31:15.278Z",
+  "id": "WsN7YI1FAeOIFGrR",
+  "name": "RHIA - Orquestador Prospector",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -272,
+        0
+      ],
+      "id": "a4368c23-09b6-4eb5-879c-17efafa3576d",
+      "name": "When clicking ‘Execute workflow’",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://ollama:11434/api/chat",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"qwen3.5:2b-q4_K_M\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Eres RHIA AI y actuas como analista de prospeccion comercial para empresas. Tu objetivo es convertir informacion de una oportunidad en datos estructurados para segmentacion, investigacion y contacto comercial. REGLA 1: nunca inventes informacion. Utiliza exclusivamente informacion existente en la entrada. Si un dato descriptivo no existe utiliza NO IDENTIFICADO. Si un dato de contacto no existe utiliza NO ENCONTRADO. Nunca dejes campos vacios. REGLA 2: toda organizacion con 10 o mas colaboradores puede ser prospecto valido. Si conoces numero_colaboradores calcula rango_empresa: 10-49, 50-199, 200-499 o 500+. REGLA 3: registra solamente necesidades expresamente mencionadas. No agregues necesidades que no aparezcan en la informacion recibida. REGLA 4: tipo_negocio significa el giro o tipo real de organizacion, no la necesidad que tenga. sector y subsector corresponden a la industria. Si no se conocen utiliza NO IDENTIFICADO. REGLA 5 - PRIORIDAD ABSOLUTA DE INVESTIGACION: siempre intentar identificar persona de contacto, cargo, correo electronico y WhatsApp o telefono. El contacto no necesita tener capacidad de decision. Cualquier contacto profesional valido sirve. La capacidad de decision es solamente un factor adicional y nunca una condicion para aceptar o descartar un prospecto. Nunca inventes nombres, cargos, correos o telefonos. REGLA 6: CONTACTABILIDAD ALTA cuando existe persona identificada, correo y WhatsApp o telefono; MEDIA cuando existe persona o area y al menos un medio de contacto; BAJA cuando solamente existe un canal general; SIN_CONTACTO cuando no existe ningun medio conocido. REGLA 7: si existen 10 o mas colaboradores y una necesidad empresarial explicita, la prioridad comercial puede ser ALTA. Si cumple tamaño pero no existe necesidad clara utiliza MEDIA. REGLA 8: si solamente existe una necesidad explicita utiliza NECESIDAD_IDENTIFICADA. No asumas que esta cotizando o buscando proveedor salvo que la entrada lo diga. REGLA 9: fuentes debe incluir solamente fuentes realmente recibidas o consultadas. Nunca declares haber consultado LinkedIn, Google u otro sitio si no se consulto realmente. Devuelve exclusivamente JSON valido.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"{{$json.tarea}}\"\n    }\n  ],\n  \"format\": {\n    \"type\": \"object\",\n    \"properties\": {\n      \"empresa\": {\"type\": \"string\"},\n      \"estado_validacion\": {\n        \"type\": \"string\",\n        \"enum\": [\"VALIDO\", \"PENDIENTE\", \"NO_VALIDO\"]\n      },\n      \"prospecto_valido\": {\"type\": \"boolean\"},\n      \"prioridad_comercial\": {\n        \"type\": \"string\",\n        \"enum\": [\"ALTA\", \"MEDIA\", \"BAJA\"]\n      },\n      \"tipo_negocio\": {\"type\": \"string\"},\n      \"sector\": {\"type\": \"string\"},\n      \"subsector\": {\"type\": \"string\"},\n      \"numero_colaboradores\": {\"type\": \"integer\"},\n      \"rango_empresa\": {\n        \"type\": \"string\",\n        \"enum\": [\"10-49\", \"50-199\", \"200-499\", \"500+\", \"NO IDENTIFICADO\"]\n      },\n      \"pais\": {\"type\": \"string\"},\n      \"ciudad\": {\"type\": \"string\"},\n      \"necesidades_detectadas\": {\n        \"type\": \"array\",\n        \"items\": {\"type\": \"string\"}\n      },\n      \"soluciones_potenciales\": {\n        \"type\": \"array\",\n        \"items\": {\"type\": \"string\"}\n      },\n      \"nivel_intencion\": {\"type\": \"string\"},\n      \"persona_contacto\": {\"type\": \"string\"},\n      \"cargo_contacto\": {\"type\": \"string\"},\n      \"email\": {\"type\": \"string\"},\n      \"whatsapp\": {\"type\": \"string\"},\n      \"telefono\": {\"type\": \"string\"},\n      \"nivel_contacto\": {\"type\": \"string\"},\n      \"capacidad_decision_estimada\": {\"type\": \"string\"},\n      \"contactabilidad\": {\"type\": \"string\"},\n      \"busqueda_contacto_requerida\": {\"type\": \"boolean\"},\n      \"datos_contacto_faltantes\": {\n        \"type\": \"array\",\n        \"items\": {\"type\": \"string\"}\n      },\n      \"fuentes\": {\n        \"type\": \"array\",\n        \"items\": {\"type\": \"string\"}\n      },\n      \"motivo_prioridad\": {\"type\": \"string\"},\n      \"accion_recomendada\": {\"type\": \"string\"},\n      \"datos_faltantes\": {\n        \"type\": \"array\",\n        \"items\": {\"type\": \"string\"}\n      },\n      \"resumen_comercial\": {\"type\": \"string\"}\n    },\n    \"required\": [\n      \"empresa\",\n      \"estado_validacion\",\n      \"prospecto_valido\",\n      \"prioridad_comercial\",\n      \"tipo_negocio\",\n      \"sector\",\n      \"subsector\",\n      \"numero_colaboradores\",\n      \"rango_empresa\",\n      \"pais\",\n      \"ciudad\",\n      \"necesidades_detectadas\",\n      \"soluciones_potenciales\",\n      \"nivel_intencion\",\n      \"persona_contacto\",\n      \"cargo_contacto\",\n      \"email\",\n      \"whatsapp\",\n      \"telefono\",\n      \"nivel_contacto\",\n      \"capacidad_decision_estimada\",\n      \"contactabilidad\",\n      \"busqueda_contacto_requerida\",\n      \"datos_contacto_faltantes\",\n      \"fuentes\",\n      \"motivo_prioridad\",\n      \"accion_recomendada\",\n      \"datos_faltantes\",\n      \"resumen_comercial\"\n    ],\n    \"additionalProperties\": false\n  },\n  \"stream\": false,\n  \"think\": false,\n  \"options\": {\n    \"temperature\": 0\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        96,
+        0
+      ],
+      "id": "4c286870-10b9-4448-b6b2-2624e929deac",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fdba2a69-d061-48f2-ba2b-dbf1cb58facd",
+              "name": "tarea",
+              "value": "={{ $json.body && $json.body.tarea ? $json.body.tarea : ($json.tarea ? $json.tarea : 'Analiza esta oportunidad comercial: [PEGAR AQUÍ LA OPORTUNIDAD A ANALIZAR]') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -96,
+        0
+      ],
+      "id": "a9fb3abd-31f7-425f-b613-754e702ab313",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nfunction estaVacio(valor) {\n  if (valor === null || valor === undefined) return true;\n\n  const texto = String(valor).trim().toUpperCase();\n\n  return [\n    \"\",\n    \"NO ENCONTRADO\",\n    \"NO ENCONTRADA\",\n    \"NO IDENTIFICADO\",\n    \"NO IDENTIFICADA\",\n    \"NO_IDENTIFICADO\",\n    \"NO_IDENTIFICADA\",\n    \"SIN_CONTACTO\",\n    \"N/A\",\n    \"NULL\"\n  ].includes(texto);\n}\n\nfunction normalizarDescriptivo(valor) {\n  return estaVacio(valor) ? \"NO IDENTIFICADO\" : String(valor).trim();\n}\n\nfunction normalizarContacto(valor) {\n  return estaVacio(valor) ? \"NO ENCONTRADO\" : String(valor).trim();\n}\n\nreturn items.map((item) => {\n\n  // ============================================================\n  // 1. LEER LA RESPUESTA JSON DE OLLAMA\n  // ============================================================\n\n  let datos;\n\n  try {\n    const contenido = item.json.message?.content;\n\n    if (!contenido) {\n      throw new Error(\"Ollama no devolvió message.content\");\n    }\n\n    datos = typeof contenido === \"string\"\n      ? JSON.parse(contenido)\n      : contenido;\n\n  } catch (error) {\n    throw new Error(\n      \"RHIA CORE no pudo interpretar la respuesta de Ollama: \" +\n      error.message\n    );\n  }\n\n\n  // ============================================================\n  // 2. DATOS BÁSICOS\n  // ============================================================\n\n  const empresa = normalizarDescriptivo(datos.empresa);\n  const tipoNegocio = normalizarDescriptivo(datos.tipo_negocio);\n  const sector = normalizarDescriptivo(datos.sector);\n  const subsector = normalizarDescriptivo(datos.subsector);\n  const pais = normalizarDescriptivo(datos.pais);\n  const ciudad = normalizarDescriptivo(datos.ciudad);\n\n  const numeroColaboradores =\n    Number.isFinite(Number(datos.numero_colaboradores))\n      ? Number(datos.numero_colaboradores)\n      : 0;\n\n  const necesidades = Array.isArray(datos.necesidades_detectadas)\n    ? datos.necesidades_detectadas\n        .filter(Boolean)\n        .map(x => String(x).trim())\n    : [];\n\n  const soluciones = Array.isArray(datos.soluciones_potenciales)\n    ? datos.soluciones_potenciales\n        .filter(Boolean)\n        .map(x => String(x).trim())\n    : [];\n\n\n  // ============================================================\n  // 3. RANGO DE EMPRESA — REGLA DETERMINÍSTICA\n  // ============================================================\n\n  let rangoEmpresa = \"NO IDENTIFICADO\";\n\n  if (numeroColaboradores >= 500) {\n    rangoEmpresa = \"500+\";\n  } else if (numeroColaboradores >= 200) {\n    rangoEmpresa = \"200-499\";\n  } else if (numeroColaboradores >= 50) {\n    rangoEmpresa = \"50-199\";\n  } else if (numeroColaboradores >= 10) {\n    rangoEmpresa = \"10-49\";\n  }\n\n\n  // ============================================================\n  // 4. VALIDACIÓN DEL PROSPECTO\n  // ============================================================\n\n  let estadoValidacion;\n  let prospectoValido;\n\n  if (numeroColaboradores >= 10) {\n    estadoValidacion = \"VALIDO\";\n    prospectoValido = true;\n\n  } else if (numeroColaboradores > 0) {\n    estadoValidacion = \"NO_VALIDO\";\n    prospectoValido = false;\n\n  } else {\n    estadoValidacion = \"PENDIENTE\";\n    prospectoValido = false;\n  }\n\n\n  // ============================================================\n  // 5. PRIORIDAD COMERCIAL\n  //\n  // 10+ colaboradores + necesidad concreta = ALTA\n  // 10+ colaboradores sin necesidad clara = MEDIA\n  // ============================================================\n\n  let prioridadComercial;\n\n  if (numeroColaboradores >= 10 && necesidades.length > 0) {\n    prioridadComercial = \"ALTA\";\n  } else if (numeroColaboradores >= 10) {\n    prioridadComercial = \"MEDIA\";\n  } else {\n    prioridadComercial = \"BAJA\";\n  }\n\n\n  // ============================================================\n  // 6. DATOS DE CONTACTO\n  //\n  // PRIORIDAD OPERATIVA #1:\n  // Persona + cargo + email + WhatsApp/teléfono\n  // ============================================================\n\n  const persona = normalizarContacto(datos.persona_contacto);\n  const cargo = normalizarContacto(datos.cargo_contacto);\n  const email = normalizarContacto(datos.email);\n  const whatsapp = normalizarContacto(datos.whatsapp);\n  const telefono = normalizarContacto(datos.telefono);\n\n  const tienePersona = persona !== \"NO ENCONTRADO\";\n  const tieneCargo = cargo !== \"NO ENCONTRADO\";\n  const tieneEmail = email !== \"NO ENCONTRADO\";\n  const tieneWhatsapp = whatsapp !== \"NO ENCONTRADO\";\n  const tieneTelefono = telefono !== \"NO ENCONTRADO\";\n\n  const tieneTelefonoOWhatsapp =\n    tieneWhatsapp || tieneTelefono;\n\n\n  // ============================================================\n  // 7. CONTACTABILIDAD\n  // ============================================================\n\n  let contactabilidad;\n\n  if (\n    tienePersona &&\n    tieneEmail &&\n    tieneTelefonoOWhatsapp\n  ) {\n    contactabilidad = \"ALTA\";\n\n  } else if (\n    (tienePersona || tieneCargo) &&\n    (tieneEmail || tieneTelefonoOWhatsapp)\n  ) {\n    contactabilidad = \"MEDIA\";\n\n  } else if (\n    tieneEmail || tieneTelefonoOWhatsapp\n  ) {\n    contactabilidad = \"BAJA\";\n\n  } else {\n    contactabilidad = \"SIN_CONTACTO\";\n  }\n\n\n  // ============================================================\n  // 8. QUÉ CONTACTOS FALTAN\n  // ============================================================\n\n  const datosContactoFaltantes = [];\n\n  if (!tienePersona) {\n    datosContactoFaltantes.push(\"PERSONA_CONTACTO\");\n  }\n\n  if (!tieneCargo) {\n    datosContactoFaltantes.push(\"CARGO_CONTACTO\");\n  }\n\n  if (!tieneEmail) {\n    datosContactoFaltantes.push(\"EMAIL\");\n  }\n\n  if (!tieneTelefonoOWhatsapp) {\n    datosContactoFaltantes.push(\"WHATSAPP_O_TELEFONO\");\n  }\n\n  const busquedaContactoRequerida =\n    datosContactoFaltantes.length > 0;\n\n\n  // ============================================================\n  // 9. NIVEL DEL CONTACTO\n  //\n  // La capacidad de decisión es SOLO un factor.\n  // Nunca invalida un contacto.\n  // ============================================================\n\n  let nivelContacto = normalizarDescriptivo(\n    datos.nivel_contacto\n  );\n\n  let capacidadDecision = normalizarDescriptivo(\n    datos.capacidad_decision_estimada\n  );\n\n  if (!tienePersona) {\n    nivelContacto = \"NO IDENTIFICADO\";\n    capacidadDecision = \"NO IDENTIFICADA\";\n  }\n\n\n  // ============================================================\n  // 10. NIVEL DE INTENCIÓN\n  //\n  // No asumir que está cotizando o buscando proveedor.\n  // ============================================================\n\n  let nivelIntencion = \"NO_IDENTIFICADO\";\n\n  const intencionOriginal =\n    String(datos.nivel_intencion || \"\")\n      .trim()\n      .toUpperCase();\n\n  const intencionesFuertesPermitidas = [\n    \"BUSCANDO_PROVEEDOR\",\n    \"COTIZANDO\",\n    \"COMPRA_PROXIMA\"\n  ];\n\n  if (\n    intencionesFuertesPermitidas.includes(intencionOriginal)\n  ) {\n    nivelIntencion = intencionOriginal;\n\n  } else if (necesidades.length > 0) {\n    nivelIntencion = \"NECESIDAD_IDENTIFICADA\";\n  }\n\n\n  // ============================================================\n  // 11. MOTIVO DE PRIORIDAD\n  // ============================================================\n\n  let motivoPrioridad;\n\n  if (\n    numeroColaboradores >= 10 &&\n    necesidades.length > 0\n  ) {\n    motivoPrioridad =\n      `Cumple el mínimo de ${numeroColaboradores} colaboradores ` +\n      `y presenta una necesidad comercial concreta: ` +\n      `${necesidades.join(\", \")}.`;\n\n  } else if (numeroColaboradores >= 10) {\n    motivoPrioridad =\n      \"Cumple el mínimo de 10 colaboradores, pero todavía debe identificarse una necesidad comercial concreta.\";\n\n  } else if (numeroColaboradores > 0) {\n    motivoPrioridad =\n      \"No cumple actualmente el mínimo de 10 colaboradores.\";\n\n  } else {\n    motivoPrioridad =\n      \"Falta determinar el número de colaboradores antes de validar el prospecto.\";\n  }\n\n\n  // ============================================================\n  // 12. ACCIÓN RECOMENDADA\n  //\n  // PRIMERO CONTACTABILIDAD.\n  // ============================================================\n\n  let accionRecomendada;\n\n  if (\n    prospectoValido &&\n    busquedaContactoRequerida\n  ) {\n    accionRecomendada =\n      \"INVESTIGAR_CONTACTO_PRIORITARIAMENTE\";\n\n  } else if (\n    prospectoValido &&\n    !busquedaContactoRequerida\n  ) {\n    accionRecomendada =\n      \"INICIAR_CONTACTO_COMERCIAL\";\n\n  } else if (\n    estadoValidacion === \"PENDIENTE\"\n  ) {\n    accionRecomendada =\n      \"COMPLETAR_INVESTIGACION\";\n\n  } else {\n    accionRecomendada =\n      \"NO_PRIORIZAR\";\n  }\n\n\n  // ============================================================\n  // 13. DATOS GENERALES FALTANTES\n  // ============================================================\n\n  const datosFaltantes = [];\n\n  if (empresa === \"NO IDENTIFICADO\") {\n    datosFaltantes.push(\"EMPRESA\");\n  }\n\n  if (tipoNegocio === \"NO IDENTIFICADO\") {\n    datosFaltantes.push(\"TIPO_NEGOCIO\");\n  }\n\n  if (sector === \"NO IDENTIFICADO\") {\n    datosFaltantes.push(\"SECTOR\");\n  }\n\n  if (subsector === \"NO IDENTIFICADO\") {\n    datosFaltantes.push(\"SUBSECTOR\");\n  }\n\n  if (pais === \"NO IDENTIFICADO\") {\n    datosFaltantes.push(\"PAIS\");\n  }\n\n  if (ciudad === \"NO IDENTIFICADO\") {\n    datosFaltantes.push(\"CIUDAD\");\n  }\n\n\n  // ============================================================\n  // 14. FUENTES\n  // ============================================================\n\n  const fuentes = Array.isArray(datos.fuentes)\n    ? datos.fuentes.filter(Boolean)\n    : [];\n\n\n  // ============================================================\n  // 15. RESUMEN COMERCIAL CONSISTENTE\n  // ============================================================\n\n  const nombreResumen =\n    empresa === \"NO IDENTIFICADO\"\n      ? \"La organización\"\n      : empresa;\n\n  let resumenComercial = \"\";\n\n  if (numeroColaboradores > 0) {\n    resumenComercial +=\n      `${nombreResumen} tiene ${numeroColaboradores} colaboradores ` +\n      `y pertenece al rango ${rangoEmpresa}. `;\n  } else {\n    resumenComercial +=\n      `${nombreResumen} no tiene aún un tamaño identificado. `;\n  }\n\n  if (necesidades.length > 0) {\n    resumenComercial +=\n      `Necesidades detectadas: ${necesidades.join(\", \")}. `;\n  } else {\n    resumenComercial +=\n      \"Todavía no se ha identificado una necesidad comercial concreta. \";\n  }\n\n  resumenComercial +=\n    `Prioridad comercial: ${prioridadComercial}. ` +\n    `Contactabilidad: ${contactabilidad}. `;\n\n  if (busquedaContactoRequerida) {\n    resumenComercial +=\n      `La prioridad operativa es localizar ${datosContactoFaltantes.join(\", \")}.`;\n  } else {\n    resumenComercial +=\n      \"Los datos básicos para iniciar contacto comercial están disponibles.\";\n  }\n\n\n  // ============================================================\n  // 16. RESULTADO FINAL RHIA CORE\n  // ============================================================\n\n  return {\n    json: {\n\n      empresa,\n\n      estado_validacion: estadoValidacion,\n      prospecto_valido: prospectoValido,\n      prioridad_comercial: prioridadComercial,\n\n      tipo_negocio: tipoNegocio,\n      sector,\n      subsector,\n\n      numero_colaboradores: numeroColaboradores,\n      rango_empresa: rangoEmpresa,\n\n      pais,\n      ciudad,\n\n      necesidades_detectadas: necesidades,\n      soluciones_potenciales: soluciones,\n\n      nivel_intencion: nivelIntencion,\n\n      persona_contacto: persona,\n      cargo_contacto: cargo,\n      email,\n      whatsapp,\n      telefono,\n\n      nivel_contacto: nivelContacto,\n      capacidad_decision_estimada: capacidadDecision,\n\n      contactabilidad,\n\n      busqueda_contacto_requerida: busquedaContactoRequerida,\n      datos_contacto_faltantes: datosContactoFaltantes,\n\n      fuentes,\n\n      motivo_prioridad: motivoPrioridad,\n      accion_recomendada: accionRecomendada,\n\n      datos_faltantes: datosFaltantes,\n\n      resumen_comercial: resumenComercial\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        0
+      ],
+      "id": "4dc2af74-6fab-4be7-b245-b02d20b248d2",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f080ab36-23fa-4afd-a226-f771ac8b1104",
+              "leftValue": "={{$json.busqueda_contacto_requerida}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        480,
+        0
+      ],
+      "id": "9ede7a8a-1ad7-40ae-91c3-65422f6fc20a",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3be6a03c-85e9-47c8-abd4-76920607eed2",
+              "name": "instruccion_investigacion",
+              "value": "Investiga este prospecto utilizando únicamente información pública y verificable.  PRIORIDAD 1 ABSOLUTA: conseguir datos reales que permitan contactar a la organización.  Debes intentar encontrar siempre:  1. WhatsApp o teléfono. 2. Correo electrónico. 3. Persona de contacto. 4. Cargo de la persona de contacto.  No es obligatorio que la persona tenga capacidad de decisión. Cualquier contacto profesional válido sirve. La capacidad de decisión es únicamente un dato adicional y nunca una razón para rechazar un contacto.  Después intenta completar:  - Nombre correcto de la empresa. - Tipo de negocio. - Sector. - Subsector. - País. - Ciudad. - Sitio web oficial.  Nunca inventes nombres, correos electrónicos, números telefónicos, cargos, sectores ni ubicaciones.  No construyas correos suponiendo el formato de la empresa.  No declares que un número tiene WhatsApp si no existe evidencia.  Para cada dato encontrado conserva la fuente donde fue localizado.  Si un dato no puede encontrarse, registra NO ENCONTRADO.  Si no es posible identificar qué empresa debe investigarse, registra IDENTIFICACION_EMPRESA_REQUERIDA.  El objetivo principal es conseguir la mayor cantidad posible de datos de contacto reales y verificables para iniciar una gestión comercial.",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        720,
+        -16
+      ],
+      "id": "1300cbd4-1883-4204-9281-cce6f52fed97",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "27acacf1-e4da-44c0-9f22-844188fb8779",
+              "leftValue": "={{$json.empresa}}",
+              "rightValue": "NO IDENTIFICADO",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        880,
+        -64
+      ],
+      "id": "e5f74aad-88c4-41a7-b927-b3a91bc2a032",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "12ff5d4a-c2ba-49a7-a115-296def09efcf",
+              "name": "estado_investigacion",
+              "value": "IDENTIFICACION_EMPRESA_REQUERIDA",
+              "type": "string"
+            },
+            {
+              "id": "8c89b450-2054-44e6-b916-ec9022fe8271",
+              "name": "accion_siguiente",
+              "value": "Identificar primero el nombre exacto de la empresa antes de iniciar la búsqueda de persona de contacto, cargo, correo electrónico y WhatsApp o teléfono. No intentar adivinar la empresa ni generar datos que no estén verificados.",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1072,
+        96
+      ],
+      "id": "6a622fd6-dac3-46be-b6be-ae57611ef9cd",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "njuTLU32Gy0BB0yy",
+          "mode": "list"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "empresa": "={{ $json.empresa }}"
+          },
+          "matchingColumns": [
+            "empresa"
+          ],
+          "schema": [
+            {
+              "id": "empresa",
+              "displayName": "empresa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1584,
+        -144
+      ],
+      "name": "Call RHIA - Contactabilidad",
+      "id": "d6afb1fc-aebd-4393-94ee-aa4d8c84d318"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "kxUFfTOkwhEOkxnd",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/kxUFfTOkwhEOkxnd",
+          "cachedResultName": "RHIA - Verificación Personas"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "empresa": "={{ $('Edit Fields1').first().json.empresa }}"
+          },
+          "matchingColumns": [
+            "empresa"
+          ],
+          "schema": [
+            {
+              "id": "empresa",
+              "displayName": "empresa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1440,
+        -144
+      ],
+      "name": "Call RHIA - Verificación Personas",
+      "id": "6a71f19c-cbcb-4809-aa38-e9d60c824f11"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "v7JqlLLIME4NwJo0",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/v7JqlLLIME4NwJo0",
+          "cachedResultName": "RHIA - Descubrimiento RRHH"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "_firstItem": "={{ $('Call RHIA - Investigación Empresa').first().json._firstItem }}",
+            "Split_Out_allItems": "={{ $('Call RHIA - Investigación Empresa').first().json.Split_Out_allItems }}"
+          },
+          "matchingColumns": [
+            "_firstItem",
+            "Split_Out_allItems"
+          ],
+          "schema": [
+            {
+              "id": "_firstItem",
+              "displayName": "_firstItem",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Split_Out_allItems",
+              "displayName": "Split_Out_allItems",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1264,
+        -144
+      ],
+      "name": "Call RHIA - Descubrimiento RRHH",
+      "id": "65cd5a0a-b6c3-430f-836f-0ee540a42d36",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "j4maQyGj457W4yFs",
+          "mode": "list"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "empresa": "={{ $json.empresa }}",
+            "pais": "={{ $json.pais }}",
+            "_firstItem": "={{ $(\"Edit Fields1\").first().json }}"
+          },
+          "matchingColumns": [
+            "empresa",
+            "pais",
+            "_firstItem"
+          ],
+          "schema": [
+            {
+              "id": "empresa",
+              "displayName": "empresa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "pais",
+              "displayName": "pais",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "_firstItem",
+              "displayName": "_firstItem",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1088,
+        -144
+      ],
+      "name": "Call RHIA - Investigación Empresa",
+      "id": "53e24159-b48c-4070-aeb4-dca6987f76ba"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "rhia-prospector",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -288,
+        -240
+      ],
+      "id": "847007c4-822e-4481-b178-71f9646e50d9",
+      "name": "Entrada API - Oportunidad",
+      "webhookId": "744ad897-156c-432d-b58a-b0d69ccfe1a3"
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Call RHIA - Investigación Empresa",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call RHIA - Verificación Personas": {
+      "main": [
+        [
+          {
+            "node": "Call RHIA - Contactabilidad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call RHIA - Descubrimiento RRHH": {
+      "main": [
+        [
+          {
+            "node": "Call RHIA - Verificación Personas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call RHIA - Investigación Empresa": {
+      "main": [
+        [
+          {
+            "node": "Call RHIA - Descubrimiento RRHH",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Entrada API - Oportunidad": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "nodeGroups": [],
+  "versionId": "322d3309-12c6-4181-b167-8bdbda4a440e",
+  "activeVersionId": "322d3309-12c6-4181-b167-8bdbda4a440e",
+  "versionCounter": 373,
+  "triggerCount": 1,
+  "sourceWorkflowId": null,
+  "tags": [],
+  "versionMetadata": {
+    "name": "RHIA Prospector v1.0 - API Producción",
+    "description": "Arquitectura modular validada de extremo a extremo.\n\n- Entrada API mediante Webhook.\n- Procesamiento local con Ollama.\n- Investigación de empresa.\n- Descubrimiento de contactos RRHH.\n- Memoria persistente en PostgreSQL.\n- Verificación independiente de candidatos.\n- Búsqueda y clasificación de contactabilidad.\n- Flujo completo probado correctamente desde Webhook hasta Contactabilidad."
+  }
+}

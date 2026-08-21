@@ -1,0 +1,13 @@
+datasource db {
+  provider = "postgresql"
+}
+
+model OrmSpikeRecord {
+  id          String   @id @default(uuid()) @db.Uuid
+  externalKey String   @unique @map("external_key")
+  status      String   @default("PENDING") @db.VarChar(32)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([status], map: "orm_spike_records_status_idx")
+  @@map("orm_spike_records")
+}

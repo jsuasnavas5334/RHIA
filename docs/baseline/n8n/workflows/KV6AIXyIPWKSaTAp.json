@@ -1,0 +1,373 @@
+{
+  "updatedAt": "2026-08-19T06:57:08.842Z",
+  "createdAt": "2026-08-19T05:18:11.168Z",
+  "id": "KV6AIXyIPWKSaTAp",
+  "name": "RHIA - Resolución Entidad y País",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1664,
+        -112
+      ],
+      "id": "130c3532-9a2a-4a29-ba1e-3b7f38b3b39a",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nfunction limpiar(valor) {\n  return String(valor ?? '')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction valorUtil(valor) {\n  const v = limpiar(valor);\n\n  if (!v) return '';\n\n  const normalizado = v\n    .toUpperCase()\n    .normalize('NFD')\n    .replace(/[\\u0300-\\u036f]/g, '');\n\n  if (\n    normalizado === 'NO IDENTIFICADO' ||\n    normalizado === 'NO ENCONTRADO' ||\n    normalizado === 'NULL' ||\n    normalizado === 'UNDEFINED'\n  ) {\n    return '';\n  }\n\n  return v;\n}\n\nreturn items.map(item => {\n  const j = item.json || {};\n\n  const empresa =\n    valorUtil(j.empresa) ||\n    valorUtil(j.empresa_mencionada) ||\n    valorUtil(j.marca) ||\n    valorUtil(j.organizacion) ||\n    'NO IDENTIFICADO';\n\n  const pais =\n    valorUtil(j.pais) ||\n    valorUtil(j.pais_objetivo) ||\n    valorUtil(j.country);\n\n  const ciudad =\n    valorUtil(j.ciudad) ||\n    valorUtil(j.ciudad_objetivo) ||\n    valorUtil(j.city);\n\n  return {\n    json: {\n      ...j,\n\n      empresa_mencionada: empresa,\n\n      pais_entrada:\n        pais || 'NO IDENTIFICADO',\n\n      ciudad_entrada:\n        ciudad || 'NO IDENTIFICADO',\n\n      pais_consulta: pais,\n\n      ciudad_consulta: ciudad,\n\n      contexto_regional_version:\n        'RHIA_REGIONAL_V1',\n\n      estado_contexto_regional:\n        'PENDIENTE_RESOLUCION'\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1296,
+        -112
+      ],
+      "id": "cdd0f3f0-7502-4caf-bee2-d8ff4819784d",
+      "name": "Preparar contexto regional"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH parametros AS (\n    SELECT\n        NULLIF(TRIM($1::TEXT), '') AS ciudad,\n        NULLIF(TRIM($2::TEXT), '') AS pais\n),\n\nmercado_pais AS (\n    SELECT\n        cc.iso2,\n        cc.iso3,\n        cc.country_name,\n        cc.official_name,\n        cc.market_type,\n        cc.commercial_scope,\n        cc.priority_tier,\n        cc.priority_weight,\n        cc.calling_codes,\n        cc.cc_tlds,\n        cc.currency_codes,\n        cc.language_codes\n    FROM country_context cc\n    CROSS JOIN parametros p\n    WHERE\n        cc.is_active = TRUE\n        AND cc.prospecting_enabled = TRUE\n        AND p.pais IS NOT NULL\n        AND (\n            LOWER(TRIM(cc.iso2::TEXT)) = LOWER(TRIM(p.pais))\n\n            OR LOWER(TRIM(cc.country_name)) = LOWER(TRIM(p.pais))\n\n            OR EXISTS (\n                SELECT 1\n                FROM unnest(cc.aliases) AS alias_value\n                WHERE LOWER(TRIM(alias_value)) = LOWER(TRIM(p.pais))\n            )\n        )\n    LIMIT 1\n),\n\ncandidatos AS (\n    SELECT *\n    FROM rhia_resolve_location(\n        (SELECT ciudad FROM parametros),\n        (SELECT pais FROM parametros),\n        10\n    )\n)\n\nSELECT\n\n    $4::JSONB AS contexto_original,\n\n    $3::TEXT AS empresa_mencionada,\n\n    COALESCE($1::TEXT, '') AS ciudad_entrada,\n\n    COALESCE($2::TEXT, '') AS pais_entrada,\n\n    COALESCE(\n        (\n            SELECT TO_JSONB(m)\n            FROM mercado_pais m\n            LIMIT 1\n        ),\n        '{}'::JSONB\n    ) AS mercado_pais,\n\n    COALESCE(\n        (\n            SELECT JSONB_AGG(\n                TO_JSONB(c)\n                ORDER BY\n                    c.location_score DESC,\n                    c.population DESC\n            )\n            FROM candidatos c\n        ),\n        '[]'::JSONB\n    ) AS candidatos_geograficos;",
+        "options": {
+          "queryReplacement": "={{ [\n  $json.ciudad_consulta,\n  $json.pais_consulta,\n  $json.empresa_mencionada,\n  JSON.stringify($json)\n] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        -1104,
+        -112
+      ],
+      "id": "3ef00e03-c28f-4f68-b28b-24002483ffbd",
+      "name": "Resolver ubicación regional"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nfunction texto(valor) {\n  return String(valor ?? '').trim();\n}\n\nfunction objeto(valor) {\n  if (\n    valor &&\n    typeof valor === 'object' &&\n    !Array.isArray(valor)\n  ) {\n    return valor;\n  }\n\n  try {\n    return JSON.parse(valor || '{}');\n  } catch {\n    return {};\n  }\n}\n\nfunction arreglo(valor) {\n  if (Array.isArray(valor)) {\n    return valor;\n  }\n\n  try {\n    const parsed = JSON.parse(valor || '[]');\n    return Array.isArray(parsed) ? parsed : [];\n  } catch {\n    return [];\n  }\n}\n\nreturn items.map(item => {\n\n  const j = item.json || {};\n\n  const original =\n    objeto(j.contexto_original);\n\n  const mercado =\n    objeto(j.mercado_pais);\n\n  const candidatos =\n    arreglo(j.candidatos_geograficos);\n\n  const paisEntrada =\n    texto(j.pais_entrada);\n\n  const ciudadEntrada =\n    texto(j.ciudad_entrada);\n\n  const tienePais =\n    paisEntrada !== '';\n\n  const tieneCiudad =\n    ciudadEntrada !== '';\n\n  const primero =\n    candidatos[0] || null;\n\n  const segundo =\n    candidatos[1] || null;\n\n\n  let estado =\n    'NO_RESUELTO';\n\n  let confianza = 0;\n\n  let paisResuelto =\n    'NO IDENTIFICADO';\n\n  let iso2 =\n    'NO IDENTIFICADO';\n\n  let ciudadResuelta =\n    tieneCiudad\n      ? ciudadEntrada\n      : 'NO IDENTIFICADO';\n\n  let provinciaEstado =\n    'NO IDENTIFICADO';\n\n  let ciudadId = null;\n  let geonameId = null;\n\n  let timezone =\n    'NO IDENTIFICADO';\n\n  let priorityTier = null;\n  let priorityWeight = null;\n\n  let callingCodes = [];\n  let ccTlds = [];\n  let currencyCodes = [];\n  let languageCodes = [];\n\n  let commercialScope =\n    'NO IDENTIFICADO';\n\n  let marketType =\n    'NO IDENTIFICADO';\n\n\n  // ==========================================================\n  // CASO 1\n  // PAÍS + CIUDAD PROPORCIONADOS Y RESUELTOS\n  // ==========================================================\n\n  if (\n    tienePais &&\n    tieneCiudad &&\n    primero\n  ) {\n\n    estado =\n      'RESUELTO';\n\n    if (\n      primero.city_match_type === 'EXACT_CITY_NAME' ||\n      primero.city_match_type === 'EXACT_ASCII_NAME' ||\n      primero.city_match_type === 'EXACT_ALIAS'\n    ) {\n      confianza = 100;\n    } else {\n      confianza = 90;\n    }\n\n    paisResuelto =\n      mercado.country_name ||\n      primero.country_name ||\n      'NO IDENTIFICADO';\n\n    iso2 =\n      mercado.iso2 ||\n      primero.market_iso2 ||\n      'NO IDENTIFICADO';\n\n    ciudadResuelta =\n      primero.city_name ||\n      ciudadEntrada;\n\n    provinciaEstado =\n      primero.admin1_name ||\n      'NO IDENTIFICADO';\n\n    ciudadId =\n      primero.city_id || null;\n\n    geonameId =\n      primero.geoname_id || null;\n\n    timezone =\n      primero.timezone ||\n      'NO IDENTIFICADO';\n\n    priorityTier =\n      mercado.priority_tier ??\n      primero.priority_tier ??\n      null;\n\n    priorityWeight =\n      mercado.priority_weight ??\n      primero.priority_weight ??\n      null;\n\n    callingCodes =\n      mercado.calling_codes || [];\n\n    ccTlds =\n      mercado.cc_tlds || [];\n\n    currencyCodes =\n      mercado.currency_codes || [];\n\n    languageCodes =\n      mercado.language_codes || [];\n\n    commercialScope =\n      mercado.commercial_scope ||\n      'NO IDENTIFICADO';\n\n    marketType =\n      mercado.market_type ||\n      'NO IDENTIFICADO';\n  }\n\n\n  // ==========================================================\n  // CASO 2\n  // PAÍS CONOCIDO SIN CIUDAD\n  // ==========================================================\n\n  else if (\n    tienePais &&\n    !tieneCiudad &&\n    mercado.country_name\n  ) {\n\n    estado =\n      'PAIS_RESUELTO_CIUDAD_NO_IDENTIFICADA';\n\n    confianza = 95;\n\n    paisResuelto =\n      mercado.country_name;\n\n    iso2 =\n      mercado.iso2 ||\n      'NO IDENTIFICADO';\n\n    priorityTier =\n      mercado.priority_tier ?? null;\n\n    priorityWeight =\n      mercado.priority_weight ?? null;\n\n    callingCodes =\n      mercado.calling_codes || [];\n\n    ccTlds =\n      mercado.cc_tlds || [];\n\n    currencyCodes =\n      mercado.currency_codes || [];\n\n    languageCodes =\n      mercado.language_codes || [];\n\n    commercialScope =\n      mercado.commercial_scope ||\n      'NO IDENTIFICADO';\n\n    marketType =\n      mercado.market_type ||\n      'NO IDENTIFICADO';\n  }\n\n\n  // ==========================================================\n  // CASO 3\n  // CIUDAD CONOCIDA SIN PAÍS\n  // ==========================================================\n\n  else if (\n    !tienePais &&\n    tieneCiudad &&\n    primero\n  ) {\n\n    const scorePrimero =\n      Number(primero.location_score || 0);\n\n    const scoreSegundo =\n      segundo\n        ? Number(segundo.location_score || 0)\n        : null;\n\n    const diferencia =\n      segundo\n        ? scorePrimero - scoreSegundo\n        : 999;\n\n    const segundoFuerte =\n      segundo &&\n      scoreSegundo >= 95;\n\n    const diferenteMercado =\n      segundo &&\n      segundo.market_iso2 !==\n        primero.market_iso2;\n\n\n    if (\n      segundoFuerte &&\n      diferenteMercado &&\n      diferencia <= 5\n    ) {\n\n      // Hay dos ubicaciones plausibles en países distintos.\n      // No heredamos NINGÚN atributo del primer candidato.\n\n      estado =\n        'AMBIGUO';\n\n      confianza = 60;\n\n      paisResuelto =\n        'NO IDENTIFICADO';\n\n      iso2 =\n        'NO IDENTIFICADO';\n\n      ciudadResuelta =\n        ciudadEntrada;\n\n      provinciaEstado =\n        'NO IDENTIFICADO';\n\n      ciudadId = null;\n      geonameId = null;\n\n      timezone =\n        'NO IDENTIFICADO';\n\n      priorityTier = null;\n      priorityWeight = null;\n\n      callingCodes = [];\n      ccTlds = [];\n      currencyCodes = [];\n      languageCodes = [];\n\n      commercialScope =\n        'NO IDENTIFICADO';\n\n      marketType =\n        'NO IDENTIFICADO';\n\n    } else {\n\n      estado =\n        'RESUELTO_POR_CIUDAD';\n\n      confianza =\n        segundo ? 85 : 95;\n\n      paisResuelto =\n        primero.country_name ||\n        'NO IDENTIFICADO';\n\n      iso2 =\n        primero.market_iso2 ||\n        'NO IDENTIFICADO';\n\n      ciudadResuelta =\n        primero.city_name ||\n        ciudadEntrada;\n\n      provinciaEstado =\n        primero.admin1_name ||\n        'NO IDENTIFICADO';\n\n      ciudadId =\n        primero.city_id || null;\n\n      geonameId =\n        primero.geoname_id || null;\n\n      timezone =\n        primero.timezone ||\n        'NO IDENTIFICADO';\n\n      priorityTier =\n        primero.priority_tier ?? null;\n\n      priorityWeight =\n        primero.priority_weight ?? null;\n    }\n  }\n\n\n  // ==========================================================\n  // CASO 4\n  // PAÍS PROPORCIONADO PERO NO RECONOCIDO\n  // ==========================================================\n\n  else if (\n    tienePais &&\n    !mercado.country_name &&\n    !primero\n  ) {\n\n    estado =\n      'PAIS_NO_RESUELTO';\n\n    confianza = 0;\n\n    ciudadResuelta =\n      tieneCiudad\n        ? ciudadEntrada\n        : 'NO IDENTIFICADO';\n  }\n\n\n  // ==========================================================\n  // CASO 5\n  // SIN INFORMACIÓN GEOGRÁFICA\n  // ==========================================================\n\n  else {\n\n    estado =\n      'SIN_CONTEXTO_GEOGRAFICO';\n\n    confianza = 0;\n  }\n\n\n  return {\n    json: {\n\n      ...original,\n\n      empresa_mencionada:\n        j.empresa_mencionada ||\n        original.empresa_mencionada ||\n        original.empresa ||\n        'NO IDENTIFICADO',\n\n      pais_entrada:\n        paisEntrada ||\n        'NO IDENTIFICADO',\n\n      ciudad_entrada:\n        ciudadEntrada ||\n        'NO IDENTIFICADO',\n\n      pais_resuelto:\n        paisResuelto,\n\n      market_iso2:\n        iso2,\n\n      ciudad_resuelta:\n        ciudadResuelta,\n\n      provincia_estado:\n        provinciaEstado,\n\n      city_id:\n        ciudadId,\n\n      geoname_id:\n        geonameId,\n\n      timezone,\n\n      priority_tier:\n        priorityTier,\n\n      priority_weight:\n        priorityWeight,\n\n      calling_codes:\n        callingCodes,\n\n      cc_tlds:\n        ccTlds,\n\n      currency_codes:\n        currencyCodes,\n\n      language_codes:\n        languageCodes,\n\n      commercial_scope:\n        commercialScope,\n\n      market_type:\n        marketType,\n\n      estado_geografico:\n        estado,\n\n      confianza_geografica:\n        confianza,\n\n      requiere_resolucion_adicional:\n        [\n          'AMBIGUO',\n          'PAIS_NO_RESUELTO',\n          'SIN_CONTEXTO_GEOGRAFICO'\n        ].includes(estado),\n\n      candidatos_geograficos:\n        candidatos,\n\n      contexto_regional_version:\n        'RHIA_REGIONAL_V1'\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -944,
+        -112
+      ],
+      "id": "0f8c4069-e310-47fb-9e67-7f9c14e1f394",
+      "name": "Clasificar contexto geográfico"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1696,
+        80
+      ],
+      "id": "a3ba22ac-8fae-4c1c-8902-d181ead346aa",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "674f68b1-af49-4eaf-8d9f-0c0c5707c75d",
+              "name": "empresa",
+              "value": "Empresa X",
+              "type": "string"
+            },
+            {
+              "id": "f85451fb-930c-4c44-bcd9-927f84c65e0d",
+              "name": "pais",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "44f5b153-f08e-4c4c-960a-63ef963af7ee",
+              "name": "ciudad",
+              "value": "San Jose",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -1488,
+        80
+      ],
+      "id": "fbf3c407-ecc4-48d0-89d9-223a117f89ea",
+      "name": "TEST - Entrada regional"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nfunction limpiar(valor) {\n  return String(valor ?? '')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction normalizar(valor) {\n  return limpiar(valor)\n    .toLowerCase()\n    .normalize('NFD')\n    .replace(/[\\u0300-\\u036f]/g, '');\n}\n\nfunction esIdentificado(valor) {\n  const v = normalizar(valor);\n\n  return (\n    v !== '' &&\n    v !== 'no identificado' &&\n    v !== 'no encontrado' &&\n    v !== 'null' &&\n    v !== 'undefined'\n  );\n}\n\nfunction textoBusqueda(valor) {\n  const v = limpiar(valor);\n\n  if (!esIdentificado(v)) {\n    return '';\n  }\n\n  return `\"${v}\"`;\n}\n\nreturn items.map(item => {\n\n  const j = item.json || {};\n\n  // =========================================================\n  // 1. MARCA / EMPRESA MENCIONADA\n  // =========================================================\n\n  const empresa =\n    limpiar(\n      j.empresa_mencionada ||\n      j.empresa ||\n      j.marca ||\n      j.organizacion\n    ) || 'NO IDENTIFICADO';\n\n  const empresaKey =\n    normalizar(empresa);\n\n\n  // =========================================================\n  // 2. CONTEXTO GEOGRÁFICO\n  // =========================================================\n\n  const estadoGeografico =\n    limpiar(j.estado_geografico) ||\n    'SIN_CONTEXTO_GEOGRAFICO';\n\n  const paisResuelto =\n    esIdentificado(j.pais_resuelto)\n      ? limpiar(j.pais_resuelto)\n      : '';\n\n  const iso2Resuelto =\n    esIdentificado(j.market_iso2)\n      ? limpiar(j.market_iso2)\n      : '';\n\n  const ciudadResuelta =\n    esIdentificado(j.ciudad_resuelta)\n      ? limpiar(j.ciudad_resuelta)\n      : '';\n\n  const provinciaEstado =\n    esIdentificado(j.provincia_estado)\n      ? limpiar(j.provincia_estado)\n      : '';\n\n  const candidatosGeo =\n    Array.isArray(j.candidatos_geograficos)\n      ? j.candidatos_geograficos\n      : [];\n\n\n  // =========================================================\n  // 3. CONSTRUIR CONTEXTOS DE BÚSQUEDA\n  //\n  // Si el país ya está resuelto:\n  //   usamos únicamente ese mercado.\n  //\n  // Si está ambiguo:\n  //   conservamos hasta 3 países candidatos diferentes.\n  //\n  // Nunca elegimos uno arbitrariamente.\n  // =========================================================\n\n  const contextos = [];\n\n\n  if (paisResuelto && iso2Resuelto) {\n\n    contextos.push({\n      market_iso2: iso2Resuelto,\n      pais: paisResuelto,\n      ciudad: ciudadResuelta,\n      provincia_estado: provinciaEstado,\n      origen: 'UBICACION_RESUELTA',\n      confianza_geografica:\n        Number(j.confianza_geografica || 0)\n    });\n\n  } else if (\n    estadoGeografico === 'AMBIGUO' &&\n    candidatosGeo.length > 0\n  ) {\n\n    const mercadosVistos = new Set();\n\n    for (const candidato of candidatosGeo) {\n\n      const iso2 =\n        limpiar(candidato.market_iso2);\n\n      const pais =\n        limpiar(candidato.country_name);\n\n      if (!iso2 || !pais) {\n        continue;\n      }\n\n      if (mercadosVistos.has(iso2)) {\n        continue;\n      }\n\n      mercadosVistos.add(iso2);\n\n      contextos.push({\n        market_iso2: iso2,\n        pais: pais,\n        ciudad:\n          limpiar(candidato.city_name),\n        provincia_estado:\n          limpiar(candidato.admin1_name),\n        origen:\n          'CANDIDATO_GEOGRAFICO',\n        location_score:\n          Number(candidato.location_score || 0)\n      });\n\n      if (contextos.length >= 3) {\n        break;\n      }\n    }\n\n  }\n\n\n  // Si no pudimos obtener ningún mercado,\n  // generamos un contexto regional sin asumir país.\n\n  if (contextos.length === 0) {\n\n    contextos.push({\n      market_iso2: '',\n      pais: '',\n      ciudad:\n        ciudadResuelta ||\n        limpiar(j.ciudad_entrada),\n      provincia_estado: '',\n      origen:\n        'SIN_MERCADO_RESUELTO'\n    });\n  }\n\n\n  // =========================================================\n  // 4. GENERAR CONSULTAS DE RESOLUCIÓN DE ENTIDAD\n  // =========================================================\n\n  const consultas = [];\n\n  for (const contexto of contextos) {\n\n    const empresaQ =\n      textoBusqueda(empresa);\n\n    const paisQ =\n      textoBusqueda(contexto.pais);\n\n    const ciudadQ =\n      textoBusqueda(contexto.ciudad);\n\n    const geografia =\n      [paisQ, ciudadQ]\n        .filter(Boolean)\n        .join(' ');\n\n\n    // ---------------------------------------------------------\n    // SITIO / PRESENCIA OFICIAL\n    // ---------------------------------------------------------\n\n    consultas.push({\n      tipo: 'SITIO_OFICIAL',\n      market_iso2:\n        contexto.market_iso2,\n      pais:\n        contexto.pais ||\n        'NO IDENTIFICADO',\n      ciudad:\n        contexto.ciudad ||\n        'NO IDENTIFICADO',\n      contexto_origen:\n        contexto.origen,\n\n      q:\n        `${empresaQ} ${geografia} ` +\n        `(\"sitio oficial\" OR official OR corporativo)`\n    });\n\n\n    // ---------------------------------------------------------\n    // OPERADOR LOCAL / FRANQUICIADO / LICENCIATARIO\n    // ---------------------------------------------------------\n\n    consultas.push({\n      tipo: 'OPERADOR_LOCAL',\n      market_iso2:\n        contexto.market_iso2,\n      pais:\n        contexto.pais ||\n        'NO IDENTIFICADO',\n      ciudad:\n        contexto.ciudad ||\n        'NO IDENTIFICADO',\n      contexto_origen:\n        contexto.origen,\n\n      q:\n        `${empresaQ} ${geografia} ` +\n        `(operador OR \"operador local\" OR franquicia ` +\n        `OR franquiciado OR franchisee OR licensee ` +\n        `OR licenciatario OR representación ` +\n        `OR representante OR distribuidor)`\n    });\n\n\n    // ---------------------------------------------------------\n    // ENTIDAD LEGAL / RAZÓN SOCIAL\n    // ---------------------------------------------------------\n\n    consultas.push({\n      tipo: 'ENTIDAD_LEGAL',\n      market_iso2:\n        contexto.market_iso2,\n      pais:\n        contexto.pais ||\n        'NO IDENTIFICADO',\n      ciudad:\n        contexto.ciudad ||\n        'NO IDENTIFICADO',\n      contexto_origen:\n        contexto.origen,\n\n      q:\n        `${empresaQ} ${paisQ} ` +\n        `(\"razón social\" OR \"razon social\" ` +\n        `OR \"legal entity\" OR sociedad OR compañía ` +\n        `OR compania OR S.A. OR S.A.S. OR SAS)`\n    });\n\n\n    // ---------------------------------------------------------\n    // ENTIDAD EMPLEADORA\n    // ---------------------------------------------------------\n\n    consultas.push({\n      tipo: 'ENTIDAD_EMPLEADORA',\n      market_iso2:\n        contexto.market_iso2,\n      pais:\n        contexto.pais ||\n        'NO IDENTIFICADO',\n      ciudad:\n        contexto.ciudad ||\n        'NO IDENTIFICADO',\n      contexto_origen:\n        contexto.origen,\n\n      q:\n        `${empresaQ} ${geografia} ` +\n        `(\"trabaja con nosotros\" OR empleos OR empleo ` +\n        `OR careers OR jobs OR \"talento humano\" ` +\n        `OR \"recursos humanos\" OR contratación ` +\n        `OR contratacion OR selección OR seleccion)`\n    });\n\n\n    // ---------------------------------------------------------\n    // GRUPO EMPRESARIAL / HOLDING / PROPIETARIO\n    // ---------------------------------------------------------\n\n    consultas.push({\n      tipo: 'GRUPO_EMPRESARIAL',\n      market_iso2:\n        contexto.market_iso2,\n      pais:\n        contexto.pais ||\n        'NO IDENTIFICADO',\n      ciudad:\n        contexto.ciudad ||\n        'NO IDENTIFICADO',\n      contexto_origen:\n        contexto.origen,\n\n      q:\n        `${empresaQ} ${paisQ} ` +\n        `(\"grupo empresarial\" OR holding OR grupo ` +\n        `OR propietario OR owner OR parent company ` +\n        `OR subsidiaria OR subsidiary)`\n    });\n\n\n    // ---------------------------------------------------------\n    // PRESENCIA LOCAL\n    //\n    // Útil para marcas que tienen operadores diferentes\n    // por país o ciudad.\n    // ---------------------------------------------------------\n\n    if (contexto.ciudad) {\n\n      consultas.push({\n        tipo: 'PRESENCIA_LOCAL',\n        market_iso2:\n          contexto.market_iso2,\n        pais:\n          contexto.pais ||\n          'NO IDENTIFICADO',\n        ciudad:\n          contexto.ciudad,\n        contexto_origen:\n          contexto.origen,\n\n        q:\n          `${empresaQ} ${ciudadQ} ${paisQ}`\n      });\n    }\n  }\n\n\n  // =========================================================\n  // 5. SALIDA\n  // =========================================================\n\n  return {\n    json: {\n\n      ...j,\n\n      marca_mencionada:\n        empresa,\n\n      empresa_mencionada:\n        empresa,\n\n      empresa_key:\n        empresaKey,\n\n      estado_resolucion_entidad:\n        'PENDIENTE',\n\n      entidad_operadora:\n        'NO IDENTIFICADO',\n\n      entidad_empleadora:\n        'NO IDENTIFICADO',\n\n      grupo_empresarial:\n        'NO IDENTIFICADO',\n\n      tipo_relacion:\n        'NO IDENTIFICADO',\n\n      confianza_resolucion_entidad:\n        0,\n\n      contextos_busqueda_entidad:\n        contextos,\n\n      consultas_resolucion_entidad:\n        consultas,\n\n      cantidad_contextos_entidad:\n        contextos.length,\n\n      cantidad_consultas_entidad:\n        consultas.length,\n\n      requiere_evidencia_entidad:\n        true,\n\n      reglas_resolucion_entidad: {\n\n        no_asumir_marca_como_empresa:\n          true,\n\n        no_asumir_operador_como_empleador:\n          true,\n\n        no_asumir_pais_ambiguo:\n          true,\n\n        exigir_evidencia_relacion:\n          true,\n\n        preservar_fuentes:\n          true,\n\n        permitir_franquicia:\n          true,\n\n        permitir_licencia:\n          true,\n\n        permitir_distribuidor:\n          true,\n\n        permitir_subsidiaria:\n          true,\n\n        permitir_grupo_empresarial:\n          true\n      },\n\n      siguiente_accion_entidad:\n        'BUSCAR_EVIDENCIA_ENTIDAD'\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -768,
+        -112
+      ],
+      "id": "1f5360b6-cd0a-4e0e-9d55-6069b7357831",
+      "name": "Preparar resolución entidad"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "consultas_resolucion_entidad",
+        "include": "allOtherFields",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -608,
+        -112
+      ],
+      "id": "0f5aeb6b-c631-4a2e-9743-e717a8ce84cd",
+      "name": "Separar consultas entidad"
+    },
+    {
+      "parameters": {
+        "url": "={{ 'http://searxng:8080/search?q=' + encodeURIComponent($json.consultas_resolucion_entidad.q) + '&format=json' }}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 3000
+            }
+          },
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -432,
+        -112
+      ],
+      "id": "3098eb8e-a7d3-4329-a5cf-3b9092c8b168",
+      "name": "Buscar evidencia entidad"
+    },
+    {
+      "parameters": {
+        "jsCode": "const respuestas = $input.all();\n\nconst originales =\n  $('Separar consultas entidad').all();\n\nif (\n  respuestas.length !==\n  originales.length\n) {\n  throw new Error(\n    `DESALINEACION_ITEMS: Buscar evidencia entregó ${respuestas.length} items, pero Separar consultas entidad tiene ${originales.length}.`\n  );\n}\n\nreturn respuestas.map(\n  (item, index) => {\n\n    const original =\n      originales[index]?.json || {};\n\n    const consulta =\n      original.consultas_resolucion_entidad || {};\n\n    const respuesta =\n      item.json || {};\n\n    const resultados =\n      Array.isArray(respuesta.results)\n        ? respuesta.results\n        : [];\n\n    return {\n\n      json: {\n\n        empresa_mencionada:\n          original.empresa_mencionada ||\n          original.empresa ||\n          'NO IDENTIFICADO',\n\n        empresa_key:\n          original.empresa_key ||\n          'NO IDENTIFICADO',\n\n        tipo_consulta:\n          consulta.tipo ||\n          'NO IDENTIFICADO',\n\n        market_iso2_consulta:\n          consulta.market_iso2 ||\n          'NO IDENTIFICADO',\n\n        pais_consulta_entidad:\n          consulta.pais ||\n          'NO IDENTIFICADO',\n\n        ciudad_consulta_entidad:\n          consulta.ciudad ||\n          'NO IDENTIFICADO',\n\n        contexto_origen:\n          consulta.contexto_origen ||\n          'NO IDENTIFICADO',\n\n        query_original:\n          consulta.q ||\n          respuesta.query ||\n          'NO IDENTIFICADO',\n\n        total_resultados:\n          resultados.length,\n\n        resultados_searxng:\n          resultados,\n\n        answers:\n          Array.isArray(respuesta.answers)\n            ? respuesta.answers\n            : [],\n\n        corrections:\n          Array.isArray(respuesta.corrections)\n            ? respuesta.corrections\n            : [],\n\n        infoboxes:\n          Array.isArray(respuesta.infoboxes)\n            ? respuesta.infoboxes\n            : [],\n\n        suggestions:\n          Array.isArray(respuesta.suggestions)\n            ? respuesta.suggestions\n            : [],\n\n        unresponsive_engines:\n          Array.isArray(\n            respuesta.unresponsive_engines\n          )\n            ? respuesta.unresponsive_engines\n            : [],\n\n        estado_busqueda_evidencia:\n          resultados.length > 0\n            ? 'RESULTADOS_ENCONTRADOS'\n            : 'SIN_RESULTADOS',\n\n        contexto_geografico_original: {\n\n          pais_resuelto:\n            original.pais_resuelto ||\n            'NO IDENTIFICADO',\n\n          market_iso2:\n            original.market_iso2 ||\n            'NO IDENTIFICADO',\n\n          ciudad_resuelta:\n            original.ciudad_resuelta ||\n            'NO IDENTIFICADO',\n\n          estado_geografico:\n            original.estado_geografico ||\n            'NO IDENTIFICADO',\n\n          confianza_geografica:\n            original.confianza_geografica ??\n            null\n        }\n      },\n\n      pairedItem: {\n        item: index\n      }\n    };\n  }\n);"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        -112
+      ],
+      "id": "0a93e178-f0cc-401a-9e3c-5055753fa000",
+      "name": "Empaquetar evidencia entidad"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nfunction limpiar(v) {\n  return String(v ?? '')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction norm(v) {\n  return limpiar(v)\n    .toLowerCase()\n    .normalize('NFD')\n    .replace(/[\\u0300-\\u036f]/g, '')\n    .replace(/[’‘`´']/g, '')\n    .replace(/[^a-z0-9áéíóúüñ\\s.-]/gi, ' ')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction dominio(url) {\n  const texto = limpiar(url);\n\n  if (!texto) {\n    return '';\n  }\n\n  const match = texto.match(\n    /^(?:https?:\\/\\/)?(?:www\\.)?([^\\/?#:]+)/i\n  );\n\n  return match\n    ? String(match[1]).toLowerCase()\n    : '';\n}\n\nfunction contiene(texto, palabras) {\n  const t = norm(texto);\n\n  return palabras.some(\n    p => t.includes(norm(p))\n  );\n}\n\nfunction empresaPresente(texto, empresa) {\n  const t = norm(texto);\n  const e = norm(empresa);\n\n  if (!e) {\n    return false;\n  }\n\n  return t.includes(e);\n}\n\nfunction fuenteTipo(domain) {\n\n  if (!domain) {\n    return 'DESCONOCIDA';\n  }\n\n  if (\n    domain.endsWith('.gov') ||\n    domain.endsWith('.gob') ||\n    domain.includes('.gov.') ||\n    domain.includes('.gob.')\n  ) {\n    return 'GOBIERNO';\n  }\n\n  if (\n    domain.includes('linkedin.com')\n  ) {\n    return 'LINKEDIN';\n  }\n\n  if (\n    domain.includes('facebook.com') ||\n    domain.includes('instagram.com') ||\n    domain.includes('tiktok.com') ||\n    domain === 'x.com' ||\n    domain.endsWith('.x.com')\n  ) {\n    return 'RED_SOCIAL';\n  }\n\n  if (\n    domain.includes('researchgate.net') ||\n    domain.includes('academia.edu') ||\n    domain.includes('studocu.com') ||\n    domain.includes('coursehero.com') ||\n    domain.includes('scribd.com')\n  ) {\n    return 'ACADEMICA_SECUNDARIA';\n  }\n\n  if (\n    domain.includes('scielo.') ||\n    domain.includes('.edu') ||\n    domain.includes('.ac.')\n  ) {\n    return 'ACADEMICA';\n  }\n\n  return 'WEB';\n}\n\nfunction pesoFuente(tipo) {\n  switch (tipo) {\n\n    case 'GOBIERNO':\n      return 35;\n\n    case 'LINKEDIN':\n      return 22;\n\n    case 'WEB':\n      return 20;\n\n    case 'ACADEMICA':\n      return 8;\n\n    case 'RED_SOCIAL':\n      return 6;\n\n    case 'ACADEMICA_SECUNDARIA':\n      return 3;\n\n    default:\n      return 0;\n  }\n}\n\nfunction terminosRelacion(tipoConsulta) {\n\n  const mapa = {\n\n    SITIO_OFICIAL: [\n      'sitio oficial',\n      'official site',\n      'official',\n      'corporativo',\n      'corporate',\n      'about us',\n      'quienes somos',\n      'quiénes somos'\n    ],\n\n    OPERADOR_LOCAL: [\n      'operador',\n      'operador local',\n      'franquicia',\n      'franquiciado',\n      'franchisee',\n      'licensee',\n      'licenciatario',\n      'representante',\n      'representacion',\n      'representación',\n      'distribuidor'\n    ],\n\n    ENTIDAD_LEGAL: [\n      'razon social',\n      'razón social',\n      'legal entity',\n      'sociedad',\n      'compania',\n      'compañía',\n      's.a.',\n      's.a.s.',\n      'sas',\n      'ltda',\n      'inc.',\n      'corp.'\n    ],\n\n    ENTIDAD_EMPLEADORA: [\n      'trabaja con nosotros',\n      'empleos',\n      'empleo',\n      'careers',\n      'jobs',\n      'talento humano',\n      'recursos humanos',\n      'contratacion',\n      'contratación',\n      'seleccion',\n      'selección'\n    ],\n\n    GRUPO_EMPRESARIAL: [\n      'grupo empresarial',\n      'holding',\n      'parent company',\n      'owner',\n      'propietario',\n      'subsidiaria',\n      'subsidiary',\n      'grupo'\n    ],\n\n    PRESENCIA_LOCAL: [\n      'sucursal',\n      'tienda',\n      'oficina',\n      'local',\n      'ubicacion',\n      'ubicación',\n      'presencia'\n    ]\n  };\n\n  return mapa[tipoConsulta] || [];\n}\n\nfunction evaluar(j) {\n\n  const empresa =\n    limpiar(j.empresa_mencionada);\n\n  const tipoConsulta =\n    limpiar(j.tipo_consulta);\n\n  const pais =\n    limpiar(j.pais_consulta_entidad);\n\n  const ciudad =\n    limpiar(j.ciudad_consulta_entidad);\n\n  const resultados =\n    Array.isArray(j.resultados_searxng)\n      ? j.resultados_searxng\n      : [];\n\n  const empresaGenericaPrueba = [\n    'empresa x',\n    'company x',\n    'empresa y',\n    'compania x',\n    'compañia x'\n  ].includes(norm(empresa));\n\n  const evaluados = resultados.map(\n    (r, index) => {\n\n      const title =\n        limpiar(r.title);\n\n      const content =\n        limpiar(r.content);\n\n      const url =\n        limpiar(r.url);\n\n      const domain =\n        dominio(url);\n\n      const textoCompleto =\n        `${title} ${content} ${url}`;\n\n      const tipoFuente =\n        fuenteTipo(domain);\n\n      let score =\n        pesoFuente(tipoFuente);\n\n      const razones = [];\n      const alertas = [];\n\n      const mencionaEmpresa =\n        empresaPresente(\n          textoCompleto,\n          empresa\n        );\n\n      if (mencionaEmpresa) {\n        score += 28;\n        razones.push(\n          'EMPRESA_MENCIONADA'\n        );\n      } else {\n        score -= 30;\n        alertas.push(\n          'EMPRESA_NO_MENCIONADA'\n        );\n      }\n\n      const mencionaPais =\n        pais &&\n        pais !== 'NO IDENTIFICADO' &&\n        contiene(\n          textoCompleto,\n          [pais]\n        );\n\n      if (mencionaPais) {\n        score += 12;\n        razones.push(\n          'PAIS_MENCIONADO'\n        );\n      }\n\n      const mencionaCiudad =\n        ciudad &&\n        ciudad !== 'NO IDENTIFICADO' &&\n        contiene(\n          textoCompleto,\n          [ciudad]\n        );\n\n      if (mencionaCiudad) {\n        score += 8;\n        razones.push(\n          'CIUDAD_MENCIONADA'\n        );\n      }\n\n      const relacion =\n        contiene(\n          textoCompleto,\n          terminosRelacion(tipoConsulta)\n        );\n\n      if (relacion) {\n        score += 20;\n        razones.push(\n          'RELACION_COMPATIBLE_CON_CONSULTA'\n        );\n      } else {\n        score -= 5;\n      }\n\n      if (\n        tipoFuente === 'RED_SOCIAL'\n      ) {\n        alertas.push(\n          'FUENTE_SOCIAL_REQUIERE_VERIFICACION'\n        );\n      }\n\n      if (\n        tipoFuente === 'ACADEMICA' ||\n        tipoFuente === 'ACADEMICA_SECUNDARIA'\n      ) {\n        alertas.push(\n          'FUENTE_NO_ORIENTADA_A_IDENTIDAD_COMERCIAL'\n        );\n      }\n\n      if (\n        empresaGenericaPrueba\n      ) {\n        score -= 55;\n        alertas.push(\n          'NOMBRE_EMPRESA_GENERICO_DE_PRUEBA'\n        );\n      }\n\n      const posicion =\n        Array.isArray(r.positions) &&\n        r.positions.length\n          ? Number(r.positions[0])\n          : index + 1;\n\n      if (posicion <= 3) {\n        score += 4;\n      }\n\n      score =\n        Math.max(\n          0,\n          Math.min(100, score)\n        );\n\n      let clasificacion =\n        'DESCARTAR';\n\n      if (score >= 75) {\n        clasificacion =\n          'EVIDENCIA_FUERTE';\n\n      } else if (score >= 55) {\n        clasificacion =\n          'EVIDENCIA_MEDIA';\n\n      } else if (score >= 35) {\n        clasificacion =\n          'EVIDENCIA_DEBIL';\n      }\n\n      return {\n        posicion,\n        title,\n        url,\n        domain,\n        content,\n\n        tipo_fuente:\n          tipoFuente,\n\n        score_evidencia:\n          score,\n\n        clasificacion,\n\n        menciona_empresa:\n          mencionaEmpresa,\n\n        menciona_pais:\n          Boolean(mencionaPais),\n\n        menciona_ciudad:\n          Boolean(mencionaCiudad),\n\n        relacion_compatible:\n          relacion,\n\n        razones,\n\n        alertas\n      };\n    }\n  );\n\n  evaluados.sort(\n    (a, b) =>\n      b.score_evidencia -\n      a.score_evidencia\n  );\n\n  const evidenciaFuerte =\n    evaluados.filter(\n      x =>\n        x.clasificacion ===\n        'EVIDENCIA_FUERTE'\n    );\n\n  const evidenciaMedia =\n    evaluados.filter(\n      x =>\n        x.clasificacion ===\n        'EVIDENCIA_MEDIA'\n    );\n\n  const evidenciaDebil =\n    evaluados.filter(\n      x =>\n        x.clasificacion ===\n        'EVIDENCIA_DEBIL'\n    );\n\n  const descartados =\n    evaluados.filter(\n      x =>\n        x.clasificacion ===\n        'DESCARTAR'\n    );\n\n  let estado =\n    'SIN_EVIDENCIA_UTIL';\n\n  if (\n    evidenciaFuerte.length > 0\n  ) {\n    estado =\n      'EVIDENCIA_FUERTE_ENCONTRADA';\n\n  } else if (\n    evidenciaMedia.length > 0\n  ) {\n    estado =\n      'EVIDENCIA_MEDIA_ENCONTRADA';\n\n  } else if (\n    evidenciaDebil.length > 0\n  ) {\n    estado =\n      'SOLO_EVIDENCIA_DEBIL';\n  }\n\n  return {\n    ...j,\n\n    estado_evaluacion_evidencia:\n      estado,\n\n    total_evaluados:\n      evaluados.length,\n\n    total_evidencia_fuerte:\n      evidenciaFuerte.length,\n\n    total_evidencia_media:\n      evidenciaMedia.length,\n\n    total_evidencia_debil:\n      evidenciaDebil.length,\n\n    total_descartados:\n      descartados.length,\n\n    evidencia_priorizada:\n      evaluados.slice(0, 10),\n\n    evidencia_fuerte:\n      evidenciaFuerte,\n\n    evidencia_media:\n      evidenciaMedia.slice(0, 10),\n\n    evidencia_debil:\n      evidenciaDebil.slice(0, 10),\n\n    requiere_verificacion_independiente:\n      evidenciaFuerte.length === 0,\n\n    siguiente_accion_evidencia:\n      evidenciaFuerte.length > 0\n        ? 'VALIDAR_RELACION_ENTIDAD'\n        : 'BUSCAR_EVIDENCIA_ADICIONAL'\n  };\n}\n\nreturn items.map(\n  (item, index) => ({\n    json: evaluar(item.json || {}),\n    pairedItem: {\n      item: index\n    }\n  })\n);"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        112,
+        -112
+      ],
+      "id": "b53aba11-40d4-44f2-861e-b2aff78d0cef",
+      "name": "Evaluar evidencia entidad"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nfunction limpiar(v) {\n  return String(v ?? '')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction clave(v) {\n  return limpiar(v)\n    .toLowerCase()\n    .normalize('NFD')\n    .replace(/[\\u0300-\\u036f]/g, '');\n}\n\nconst grupos = new Map();\n\nfor (const item of items) {\n\n  const j = item.json || {};\n\n  const empresa =\n    limpiar(\n      j.empresa_mencionada ||\n      j.empresa\n    ) || 'NO IDENTIFICADO';\n\n  const empresaKey =\n    limpiar(j.empresa_key) ||\n    clave(empresa);\n\n  const iso2 =\n    limpiar(\n      j.market_iso2_consulta\n    ) || 'NO IDENTIFICADO';\n\n  const pais =\n    limpiar(\n      j.pais_consulta_entidad\n    ) || 'NO IDENTIFICADO';\n\n  const ciudad =\n    limpiar(\n      j.ciudad_consulta_entidad\n    ) || 'NO IDENTIFICADO';\n\n  const tipoConsulta =\n    limpiar(\n      j.tipo_consulta\n    ) || 'NO IDENTIFICADO';\n\n  const groupKey =\n    `${empresaKey}::${iso2}`;\n\n  if (!grupos.has(groupKey)) {\n\n    grupos.set(groupKey, {\n      empresa_mencionada: empresa,\n      empresa_key: empresaKey,\n\n      market_iso2: iso2,\n      pais,\n      ciudades_consultadas: new Set(),\n\n      consultas_realizadas: 0,\n\n      tipos_consulta: new Set(),\n\n      total_resultados_busqueda: 0,\n      total_resultados_evaluados: 0,\n\n      total_evidencia_fuerte: 0,\n      total_evidencia_media: 0,\n      total_evidencia_debil: 0,\n      total_descartados: 0,\n\n      evidencias: [],\n\n      fuentes_unicas: new Set(),\n\n      consultas: []\n    });\n  }\n\n  const g =\n    grupos.get(groupKey);\n\n  if (\n    ciudad &&\n    ciudad !== 'NO IDENTIFICADO'\n  ) {\n    g.ciudades_consultadas.add(\n      ciudad\n    );\n  }\n\n  g.consultas_realizadas++;\n\n  g.tipos_consulta.add(\n    tipoConsulta\n  );\n\n  g.total_resultados_busqueda +=\n    Number(\n      j.total_resultados || 0\n    );\n\n  g.total_resultados_evaluados +=\n    Number(\n      j.total_evaluados || 0\n    );\n\n  g.total_evidencia_fuerte +=\n    Number(\n      j.total_evidencia_fuerte || 0\n    );\n\n  g.total_evidencia_media +=\n    Number(\n      j.total_evidencia_media || 0\n    );\n\n  g.total_evidencia_debil +=\n    Number(\n      j.total_evidencia_debil || 0\n    );\n\n  g.total_descartados +=\n    Number(\n      j.total_descartados || 0\n    );\n\n\n  const evidencia =\n    Array.isArray(\n      j.evidencia_priorizada\n    )\n      ? j.evidencia_priorizada\n      : [];\n\n\n  for (const e of evidencia) {\n\n    const score =\n      Number(\n        e.score_evidencia || 0\n      );\n\n    const clasificacion =\n      limpiar(\n        e.clasificacion\n      );\n\n    // Conservamos solamente evidencia que no fue descartada\n    if (\n      clasificacion === 'DESCARTAR'\n    ) {\n      continue;\n    }\n\n    const domain =\n      limpiar(e.domain);\n\n    if (domain) {\n      g.fuentes_unicas.add(\n        domain\n      );\n    }\n\n    g.evidencias.push({\n      tipo_consulta:\n        tipoConsulta,\n\n      score_evidencia:\n        score,\n\n      clasificacion,\n\n      tipo_fuente:\n        limpiar(e.tipo_fuente),\n\n      domain,\n\n      title:\n        limpiar(e.title),\n\n      url:\n        limpiar(e.url),\n\n      menciona_empresa:\n        Boolean(\n          e.menciona_empresa\n        ),\n\n      menciona_pais:\n        Boolean(\n          e.menciona_pais\n        ),\n\n      menciona_ciudad:\n        Boolean(\n          e.menciona_ciudad\n        ),\n\n      relacion_compatible:\n        Boolean(\n          e.relacion_compatible\n        ),\n\n      razones:\n        Array.isArray(e.razones)\n          ? e.razones\n          : [],\n\n      alertas:\n        Array.isArray(e.alertas)\n          ? e.alertas\n          : []\n    });\n  }\n\n\n  g.consultas.push({\n    tipo_consulta:\n      tipoConsulta,\n\n    query_original:\n      limpiar(\n        j.query_original\n      ),\n\n    estado_evaluacion:\n      limpiar(\n        j.estado_evaluacion_evidencia\n      ),\n\n    total_evidencia_fuerte:\n      Number(\n        j.total_evidencia_fuerte || 0\n      ),\n\n    total_evidencia_media:\n      Number(\n        j.total_evidencia_media || 0\n      ),\n\n    total_evidencia_debil:\n      Number(\n        j.total_evidencia_debil || 0\n      )\n  });\n}\n\n\nconst salida = [];\n\nfor (\n  const g of grupos.values()\n) {\n\n  g.evidencias.sort(\n    (a, b) =>\n      b.score_evidencia -\n      a.score_evidencia\n  );\n\n  const mejor =\n    g.evidencias[0] || null;\n\n  const mejorScore =\n    mejor\n      ? Number(\n          mejor.score_evidencia\n        )\n      : 0;\n\n\n  const tiposConEvidencia =\n    new Set(\n      g.evidencias.map(\n        e => e.tipo_consulta\n      )\n    );\n\n\n  let estadoMercado =\n    'SIN_EVIDENCIA_UTIL';\n\n  let confianzaMercado = 0;\n\n\n  if (\n    g.total_evidencia_fuerte >= 2 &&\n    g.fuentes_unicas.size >= 2\n  ) {\n\n    estadoMercado =\n      'MERCADO_CON_EVIDENCIA_FUERTE';\n\n    confianzaMercado =\n      Math.min(\n        100,\n        80 +\n        (\n          g.total_evidencia_fuerte *\n          3\n        ) +\n        (\n          g.fuentes_unicas.size *\n          2\n        )\n      );\n\n  } else if (\n    g.total_evidencia_fuerte >= 1\n  ) {\n\n    estadoMercado =\n      'MERCADO_CON_EVIDENCIA_PARCIAL';\n\n    confianzaMercado =\n      Math.max(\n        70,\n        mejorScore\n      );\n\n  } else if (\n    g.total_evidencia_media >= 2\n  ) {\n\n    estadoMercado =\n      'MERCADO_CON_EVIDENCIA_MEDIA';\n\n    confianzaMercado =\n      Math.min(\n        69,\n        Math.max(\n          50,\n          mejorScore\n        )\n      );\n\n  } else if (\n    g.total_evidencia_debil > 0\n  ) {\n\n    estadoMercado =\n      'MERCADO_CON_EVIDENCIA_DEBIL';\n\n    confianzaMercado =\n      Math.min(\n        49,\n        Math.max(\n          25,\n          mejorScore\n        )\n      );\n  }\n\n\n  salida.push({\n    json: {\n\n      empresa_mencionada:\n        g.empresa_mencionada,\n\n      empresa_key:\n        g.empresa_key,\n\n      market_iso2:\n        g.market_iso2,\n\n      pais:\n        g.pais,\n\n      ciudades_consultadas:\n        [...g.ciudades_consultadas],\n\n      consultas_realizadas:\n        g.consultas_realizadas,\n\n      tipos_consulta_ejecutados:\n        [...g.tipos_consulta],\n\n      tipos_con_evidencia:\n        [...tiposConEvidencia],\n\n      total_resultados_busqueda:\n        g.total_resultados_busqueda,\n\n      total_resultados_evaluados:\n        g.total_resultados_evaluados,\n\n      total_evidencia_fuerte:\n        g.total_evidencia_fuerte,\n\n      total_evidencia_media:\n        g.total_evidencia_media,\n\n      total_evidencia_debil:\n        g.total_evidencia_debil,\n\n      total_descartados:\n        g.total_descartados,\n\n      fuentes_unicas:\n        [...g.fuentes_unicas],\n\n      cantidad_fuentes_unicas:\n        g.fuentes_unicas.size,\n\n      mejor_score_evidencia:\n        mejorScore,\n\n      mejor_evidencia:\n        mejor,\n\n      evidencia_util:\n        g.evidencias.slice(0, 20),\n\n      detalle_consultas:\n        g.consultas,\n\n      estado_resolucion_mercado:\n        estadoMercado,\n\n      confianza_resolucion_mercado:\n        confianzaMercado,\n\n      requiere_mas_evidencia:\n        ![\n          'MERCADO_CON_EVIDENCIA_FUERTE'\n        ].includes(\n          estadoMercado\n        ),\n\n      siguiente_accion:\n        estadoMercado ===\n        'MERCADO_CON_EVIDENCIA_FUERTE'\n          ? 'RESOLVER_ENTIDAD_COMERCIAL'\n          : 'AMPLIAR_O_VALIDAR_EVIDENCIA'\n    }\n  });\n}\n\n\n// Ordenamos por evidencia,\n// NO por prioridad comercial del país.\n// La prioridad comercial nunca debe decidir identidad.\n\nsalida.sort(\n  (a, b) => {\n\n    const ca =\n      Number(\n        a.json.confianza_resolucion_mercado ||\n        0\n      );\n\n    const cb =\n      Number(\n        b.json.confianza_resolucion_mercado ||\n        0\n      );\n\n    return cb - ca;\n  }\n);\n\nreturn salida;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        272,
+        -112
+      ],
+      "id": "099a8a43-bdcb-4ff1-9308-eab9637edbac",
+      "name": "Consolidar evidencia por mercado"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\n// ============================================================\n// RHIA - DIAGNÓSTICO DE SALUD DE BÚSQUEDA\n// Objetivo:\n// 1. Verificar que SearXNG respondió correctamente.\n// 2. Medir cobertura de las consultas.\n// 3. NO resolver todavía la identidad de la empresa.\n// 4. Preservar los 18 items para el siguiente nodo.\n// ============================================================\n\nfunction parseObject(value) {\n  if (!value) return {};\n\n  if (typeof value === 'object') {\n    return value;\n  }\n\n  if (typeof value === 'string') {\n    try {\n      const parsed = JSON.parse(value);\n      return parsed && typeof parsed === 'object' ? parsed : {};\n    } catch {\n      return {};\n    }\n  }\n\n  return {};\n}\n\nfunction getPayload(json) {\n  const body = parseObject(json.body);\n  const data = parseObject(json.data);\n\n  if (Array.isArray(json.results)) {\n    return json;\n  }\n\n  if (Array.isArray(body.results)) {\n    return body;\n  }\n\n  if (Array.isArray(data.results)) {\n    return data;\n  }\n\n  return json;\n}\n\nfunction getDomain(url) {\n  if (!url || typeof url !== 'string') {\n    return null;\n  }\n\n  try {\n    return new URL(url)\n      .hostname\n      .toLowerCase()\n      .replace(/^www\\./, '');\n  } catch {\n    return null;\n  }\n}\n\nfunction normalizeUnresponsiveEngines(value) {\n  if (!Array.isArray(value)) {\n    return [];\n  }\n\n  return value.map(entry => {\n    if (Array.isArray(entry)) {\n      return {\n        motor: entry[0] ?? 'NO_IDENTIFICADO',\n        motivo: entry[1] ?? 'NO_IDENTIFICADO',\n      };\n    }\n\n    if (typeof entry === 'string') {\n      return {\n        motor: entry,\n        motivo: 'NO_IDENTIFICADO',\n      };\n    }\n\n    if (entry && typeof entry === 'object') {\n      return entry;\n    }\n\n    return {\n      motor: 'NO_IDENTIFICADO',\n      motivo: 'NO_IDENTIFICADO',\n    };\n  });\n}\n\n// ============================================================\n// 1. DIAGNÓSTICO INDIVIDUAL POR CONSULTA\n// ============================================================\n\nconst diagnosticos = items.map((item, index) => {\n  const json = item.json ?? {};\n  const payload = getPayload(json);\n\n  const existeArrayResultados = Array.isArray(payload.results);\n  const resultados = existeArrayResultados\n    ? payload.results\n    : [];\n\n  const query =\n    payload.query ??\n    json.query ??\n    json.q ??\n    null;\n\n  const urls = [];\n  const dominios = [];\n  const motores = [];\n\n  for (const resultado of resultados) {\n    const url =\n      typeof resultado?.url === 'string'\n        ? resultado.url.trim()\n        : '';\n\n    if (url) {\n      urls.push(url);\n\n      const domain = getDomain(url);\n\n      if (domain) {\n        dominios.push(domain);\n      }\n    }\n\n    if (typeof resultado?.engine === 'string') {\n      motores.push(resultado.engine);\n    }\n\n    if (Array.isArray(resultado?.engines)) {\n      for (const engine of resultado.engines) {\n        if (typeof engine === 'string') {\n          motores.push(engine);\n        }\n      }\n    }\n  }\n\n  const urlsUnicas = [...new Set(urls)];\n  const dominiosUnicos = [...new Set(dominios)];\n  const motoresUnicos = [...new Set(motores)];\n\n  const unresponsive = normalizeUnresponsiveEngines(\n    payload.unresponsive_engines ??\n    json.unresponsive_engines\n  );\n\n  let estadoTecnico;\n\n  if (!existeArrayResultados) {\n    estadoTecnico = 'RESPUESTA_INVALIDA';\n  } else if (unresponsive.length > 0) {\n    estadoTecnico = 'RESPUESTA_CON_ALERTAS';\n  } else {\n    estadoTecnico = 'RESPUESTA_VALIDA';\n  }\n\n  let estadoResultados;\n\n  if (!existeArrayResultados) {\n    estadoResultados = 'NO_EVALUABLE';\n  } else if (resultados.length === 0) {\n    estadoResultados = 'SIN_RESULTADOS';\n  } else {\n    estadoResultados = 'CON_RESULTADOS';\n  }\n\n  let cobertura;\n\n  if (resultados.length === 0) {\n    cobertura = 'NULA';\n  } else if (\n    resultados.length >= 10 &&\n    dominiosUnicos.length >= 5\n  ) {\n    cobertura = 'ALTA';\n  } else if (\n    resultados.length >= 3 &&\n    dominiosUnicos.length >= 2\n  ) {\n    cobertura = 'MEDIA';\n  } else {\n    cobertura = 'BAJA';\n  }\n\n  let siguienteAccion;\n\n  if (!existeArrayResultados) {\n    siguienteAccion = 'REVISAR_RESPUESTA_BUSCADOR';\n  } else if (resultados.length === 0) {\n    siguienteAccion = 'REFORMULAR_CONSULTA';\n  } else {\n    siguienteAccion = 'EVALUAR_EVIDENCIA_ENTIDAD';\n  }\n\n  return {\n    index,\n    query,\n\n    diagnostico: {\n      estructura_respuesta_valida: existeArrayResultados,\n\n      estado_tecnico: estadoTecnico,\n      estado_resultados: estadoResultados,\n      cobertura_resultados: cobertura,\n\n      total_resultados: resultados.length,\n\n      resultados_con_url: urls.length,\n      urls_unicas: urlsUnicas.length,\n      dominios_unicos: dominiosUnicos.length,\n\n      dominios_detectados: dominiosUnicos,\n      motores_detectados: motoresUnicos,\n\n      motores_no_responden: unresponsive,\n\n      siguiente_accion_consulta: siguienteAccion,\n    },\n  };\n});\n\n// ============================================================\n// 2. DIAGNÓSTICO GLOBAL DE LAS 18 CONSULTAS\n// ============================================================\n\nconst totalConsultas = diagnosticos.length;\n\nconst consultasRespuestaValida =\n  diagnosticos.filter(\n    d => d.diagnostico.estructura_respuesta_valida\n  ).length;\n\nconst consultasConResultados =\n  diagnosticos.filter(\n    d => d.diagnostico.total_resultados > 0\n  ).length;\n\nconst consultasSinResultados =\n  diagnosticos.filter(\n    d =>\n      d.diagnostico.estructura_respuesta_valida &&\n      d.diagnostico.total_resultados === 0\n  ).length;\n\nconst consultasInvalidas =\n  totalConsultas - consultasRespuestaValida;\n\nconst consultasConAlertasMotor =\n  diagnosticos.filter(\n    d =>\n      d.diagnostico.motores_no_responden.length > 0\n  ).length;\n\nconst totalResultados =\n  diagnosticos.reduce(\n    (sum, d) =>\n      sum + d.diagnostico.total_resultados,\n    0\n  );\n\nconst todasUrls = new Set();\nconst todosDominios = new Set();\n\nfor (const item of items) {\n  const payload = getPayload(item.json ?? {});\n\n  if (!Array.isArray(payload.results)) {\n    continue;\n  }\n\n  for (const resultado of payload.results) {\n    const url =\n      typeof resultado?.url === 'string'\n        ? resultado.url.trim()\n        : '';\n\n    if (!url) {\n      continue;\n    }\n\n    todasUrls.add(url);\n\n    const domain = getDomain(url);\n\n    if (domain) {\n      todosDominios.add(domain);\n    }\n  }\n}\n\nconst porcentajeRespuestaValida =\n  totalConsultas > 0\n    ? consultasRespuestaValida / totalConsultas\n    : 0;\n\nconst porcentajeConResultados =\n  totalConsultas > 0\n    ? consultasConResultados / totalConsultas\n    : 0;\n\n// ============================================================\n// 3. SALUD TÉCNICA GLOBAL\n// ============================================================\n\nlet saludTecnicaGlobal;\n\nif (totalConsultas === 0) {\n  saludTecnicaGlobal = 'SIN_ENTRADA';\n} else if (porcentajeRespuestaValida < 0.80) {\n  saludTecnicaGlobal = 'CRITICA';\n} else if (\n  consultasConAlertasMotor / totalConsultas > 0.25\n) {\n  saludTecnicaGlobal = 'DEGRADADA';\n} else {\n  saludTecnicaGlobal = 'SALUDABLE';\n}\n\n// ============================================================\n// 4. COBERTURA GLOBAL\n// ============================================================\n\nlet coberturaGlobal;\n\nif (porcentajeConResultados >= 0.80) {\n  coberturaGlobal = 'ALTA';\n} else if (porcentajeConResultados >= 0.50) {\n  coberturaGlobal = 'MEDIA';\n} else if (porcentajeConResultados > 0) {\n  coberturaGlobal = 'BAJA';\n} else {\n  coberturaGlobal = 'NULA';\n}\n\n// ============================================================\n// 5. DIAGNÓSTICO GLOBAL\n// ============================================================\n\nlet estadoBusquedaGlobal;\nlet siguienteAccionGlobal;\n\nif (\n  saludTecnicaGlobal === 'CRITICA' ||\n  saludTecnicaGlobal === 'SIN_ENTRADA'\n) {\n  estadoBusquedaGlobal = 'FALLA_TECNICA_BUSQUEDA';\n  siguienteAccionGlobal = 'REVISAR_SEARXNG';\n\n} else if (consultasConResultados === 0) {\n\n  estadoBusquedaGlobal =\n    'BUSQUEDA_OPERATIVA_SIN_RESULTADOS';\n\n  siguienteAccionGlobal =\n    'REFORMULAR_CONSULTAS';\n\n} else if (coberturaGlobal === 'BAJA') {\n\n  estadoBusquedaGlobal =\n    'BUSQUEDA_OPERATIVA_COBERTURA_BAJA';\n\n  siguienteAccionGlobal =\n    'EVALUAR_Y_REINTENTAR_CONSULTAS';\n\n} else {\n\n  estadoBusquedaGlobal =\n    'BUSQUEDA_OPERATIVA';\n\n  siguienteAccionGlobal =\n    'EVALUAR_EVIDENCIA_ENTIDAD';\n}\n\nconst resumenGlobal = {\n  version: 'RHIA_SEARCH_HEALTH_V1',\n\n  total_consultas: totalConsultas,\n\n  consultas_respuesta_valida:\n    consultasRespuestaValida,\n\n  consultas_invalidas:\n    consultasInvalidas,\n\n  consultas_con_resultados:\n    consultasConResultados,\n\n  consultas_sin_resultados:\n    consultasSinResultados,\n\n  consultas_con_alertas_motor:\n    consultasConAlertasMotor,\n\n  total_resultados:\n    totalResultados,\n\n  urls_unicas_globales:\n    todasUrls.size,\n\n  dominios_unicos_globales:\n    todosDominios.size,\n\n  porcentaje_respuestas_validas:\n    Math.round(porcentajeRespuestaValida * 100),\n\n  porcentaje_consultas_con_resultados:\n    Math.round(porcentajeConResultados * 100),\n\n  salud_tecnica_global:\n    saludTecnicaGlobal,\n\n  cobertura_global:\n    coberturaGlobal,\n\n  estado_busqueda_global:\n    estadoBusquedaGlobal,\n\n  siguiente_accion_global:\n    siguienteAccionGlobal,\n};\n\n// ============================================================\n// 6. SALIDA\n// Conservamos los mismos items y agregamos el diagnóstico.\n// ============================================================\n\nreturn items.map((item, index) => ({\n  json: {\n    ...item.json,\n\n    diagnostico_busqueda:\n      diagnosticos[index].diagnostico,\n\n    salud_busqueda_global:\n      resumenGlobal,\n  },\n\n  pairedItem: {\n    item: index,\n  },\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -256,
+        -112
+      ],
+      "id": "915781e9-81e2-4b4b-a0df-154b289760e0",
+      "name": "Diagnosticar salud búsqueda"
+    }
+  ],
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Preparar contexto regional",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar contexto regional": {
+      "main": [
+        [
+          {
+            "node": "Resolver ubicación regional",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolver ubicación regional": {
+      "main": [
+        [
+          {
+            "node": "Clasificar contexto geográfico",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "TEST - Entrada regional",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TEST - Entrada regional": {
+      "main": [
+        [
+          {
+            "node": "Preparar contexto regional",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clasificar contexto geográfico": {
+      "main": [
+        [
+          {
+            "node": "Preparar resolución entidad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar resolución entidad": {
+      "main": [
+        [
+          {
+            "node": "Separar consultas entidad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separar consultas entidad": {
+      "main": [
+        [
+          {
+            "node": "Buscar evidencia entidad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar evidencia entidad": {
+      "main": [
+        [
+          {
+            "node": "Diagnosticar salud búsqueda",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Empaquetar evidencia entidad": {
+      "main": [
+        [
+          {
+            "node": "Evaluar evidencia entidad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluar evidencia entidad": {
+      "main": [
+        [
+          {
+            "node": "Consolidar evidencia por mercado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Diagnosticar salud búsqueda": {
+      "main": [
+        [
+          {
+            "node": "Empaquetar evidencia entidad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "nodeGroups": [],
+  "versionId": "c67ba75d-a44f-4ddf-affd-d30ea4f111a1",
+  "activeVersionId": null,
+  "versionCounter": 126,
+  "triggerCount": 0,
+  "sourceWorkflowId": null,
+  "tags": [],
+  "versionMetadata": {
+    "name": null,
+    "description": null
+  }
+}

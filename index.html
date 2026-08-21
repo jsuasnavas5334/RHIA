@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Panel local de seguimiento y control de cambios de RHIA">
+  <title>RHIA Control Center</title>
+  <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">R</span>
+        <div><strong>RHIA</strong><small>Control Center</small></div>
+      </div>
+      <nav aria-label="Navegación principal">
+        <a class="nav-link active" href="#resumen">Resumen</a>
+        <a class="nav-link" href="#cambios">Control de cambios</a>
+        <a class="nav-link" href="#bitacora">Bitácora de sesiones</a>
+        <a class="nav-link" href="#fases">Fases y gates</a>
+      </nav>
+      <div class="sidebar-note">
+        <span class="pulse" aria-hidden="true"></span>
+        <span id="environment-label">Conectando…</span>
+      </div>
+    </aside>
+
+    <main>
+      <header class="topbar" id="resumen">
+        <div>
+          <p class="eyebrow">Plataforma de agentes empresariales</p>
+          <h1>Estado del proyecto</h1>
+          <p class="subtitle">Seguimiento operativo de la construcción de RHIA.</p>
+        </div>
+        <div class="version-box"><span>Versión monitor</span><strong id="version">1.0.0</strong></div>
+      </header>
+
+      <section class="metrics" aria-label="Métricas del proyecto">
+        <article class="metric-card"><span>Fase actual</span><strong id="current-phase">PH01</strong><small id="phase-name">Auditoría y baseline</small></article>
+        <article class="metric-card"><span>Cambios Git</span><strong id="change-count">0</strong><small id="git-summary">Sincronizando estado</small></article>
+        <article class="metric-card"><span>Quality gates</span><strong id="gate-count">0 / 8</strong><small>Gates aprobados</small></article>
+        <article class="metric-card"><span>Tareas</span><strong id="task-count">0 / 51</strong><small id="task-summary">Tareas completadas</small></article>
+      </section>
+
+      <section class="panel progress-panel">
+        <div class="section-heading">
+          <div><p class="eyebrow">Avance global</p><h2>Plan Maestro</h2></div>
+          <strong id="progress-label">0%</strong>
+        </div>
+        <div class="progress-track" role="progressbar" aria-label="Avance del Plan Maestro" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div id="progress-bar" class="progress-fill"></div>
+        </div>
+      </section>
+
+      <div class="content-grid">
+        <section class="panel next-task">
+          <p class="eyebrow">Siguiente unidad verificable</p>
+          <div class="task-id" id="current-task-id">PH01-T001</div>
+          <h2 id="current-task-name">Inventariar infraestructura actual</h2>
+          <p id="current-task-objective">Crear un inventario verificable sin modificar el comportamiento existente.</p>
+          <div class="task-state"><span id="task-status-dot"></span><strong id="current-task-status">Lista para iniciar</strong></div>
+        </section>
+
+        <section class="panel guardrails">
+          <p class="eyebrow">Límites activos</p>
+          <h2>Autonomía controlada</h2>
+          <ul id="guardrail-list"></ul>
+        </section>
+      </div>
+
+      <section class="panel" id="cambios">
+        <div class="section-heading">
+          <div><p class="eyebrow">Repositorio local</p><h2>Control de cambios</h2></div>
+          <button type="button" id="refresh-button">Actualizar ahora</button>
+        </div>
+        <div class="repo-meta">
+          <span>Rama: <strong id="git-branch">—</strong></span>
+          <span>Commit: <strong id="git-commit">Sin commits</strong></span>
+          <span>Archivos: <strong id="file-count">—</strong></span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Estado</th><th>Archivo</th><th>Interpretación</th></tr></thead>
+            <tbody id="changes-body"><tr><td colspan="3" class="empty">Cargando cambios…</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="bitacora">
+        <div class="section-heading">
+          <div><p class="eyebrow">Trabajo verificable</p><h2>Bitácora de sesiones</h2></div>
+          <span id="session-count" class="updated-at">—</span>
+        </div>
+        <p class="section-intro">Cada ciclo registra qué cambió, qué se probó, la evidencia obtenida, los riesgos y el siguiente paso del DAG.</p>
+        <div id="session-list" class="session-list" aria-live="polite">
+          <p class="empty">Cargando bitácora…</p>
+        </div>
+      </section>
+
+      <section class="panel" id="fases">
+        <div class="section-heading">
+          <div><p class="eyebrow">Ruta de ejecución</p><h2>Fases y quality gates</h2></div>
+          <span id="updated-at" class="updated-at">—</span>
+        </div>
+        <div id="phase-list" class="phase-list"></div>
+      </section>
+
+      <footer>RHIA v1.0 Monitor · La fuente de verdad continúa siendo <code>PLAN_MAESTRO.md</code>.</footer>
+    </main>
+  </div>
+  <script src="/assets/app.js" defer></script>
+</body>
+</html>

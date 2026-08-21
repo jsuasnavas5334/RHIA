@@ -1,0 +1,98 @@
+{
+  "version": 1,
+  "workflowCount": 10,
+  "workflows": [
+    {
+      "id": "0dMjxOujIFKDSkek",
+      "name": "RHIA AI CORE - Ollama Local - BACKUP PRE-MODULARIZACION",
+      "active": false,
+      "nodeCount": 31,
+      "credentialTypes": [
+        "postgres"
+      ],
+      "file": "0dMjxOujIFKDSkek.json"
+    },
+    {
+      "id": "KV6AIXyIPWKSaTAp",
+      "name": "RHIA - Resolución Entidad y País",
+      "active": false,
+      "nodeCount": 13,
+      "credentialTypes": [
+        "postgres"
+      ],
+      "file": "KV6AIXyIPWKSaTAp.json"
+    },
+    {
+      "id": "SABQvxTRr1mrpmJI",
+      "name": "RHIA CORE - Heartbeat",
+      "active": true,
+      "nodeCount": 3,
+      "credentialTypes": [
+        "postgres"
+      ],
+      "file": "SABQvxTRr1mrpmJI.json"
+    },
+    {
+      "id": "WsN7YI1FAeOIFGrR",
+      "name": "RHIA - Orquestador Prospector",
+      "active": true,
+      "nodeCount": 13,
+      "credentialTypes": [],
+      "file": "WsN7YI1FAeOIFGrR.json"
+    },
+    {
+      "id": "dYu54NZ7QgYjPBeb",
+      "name": "RHIA AI CORE - Prueba Ollama",
+      "active": false,
+      "nodeCount": 1,
+      "credentialTypes": [],
+      "file": "dYu54NZ7QgYjPBeb.json"
+    },
+    {
+      "id": "j4maQyGj457W4yFs",
+      "name": "RHIA - Investigación Empresa",
+      "active": true,
+      "nodeCount": 7,
+      "credentialTypes": [],
+      "file": "j4maQyGj457W4yFs.json"
+    },
+    {
+      "id": "kxUFfTOkwhEOkxnd",
+      "name": "RHIA - Verificación Personas",
+      "active": true,
+      "nodeCount": 6,
+      "credentialTypes": [
+        "postgres"
+      ],
+      "file": "kxUFfTOkwhEOkxnd.json"
+    },
+    {
+      "id": "lCtxsiSAcHEQFgou",
+      "name": "RHIA AI CORE - BACKUP POST-MODULARIZACION",
+      "active": false,
+      "nodeCount": 12,
+      "credentialTypes": [],
+      "file": "lCtxsiSAcHEQFgou.json"
+    },
+    {
+      "id": "njuTLU32Gy0BB0yy",
+      "name": "RHIA - Contactabilidad",
+      "active": true,
+      "nodeCount": 4,
+      "credentialTypes": [
+        "postgres"
+      ],
+      "file": "njuTLU32Gy0BB0yy.json"
+    },
+    {
+      "id": "v7JqlLLIME4NwJo0",
+      "name": "RHIA - Descubrimiento RRHH",
+      "active": true,
+      "nodeCount": 13,
+      "credentialTypes": [
+        "postgres"
+      ],
+      "file": "v7JqlLLIME4NwJo0.json"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "code": "RHIA_SEARCH_RATE_LIMITED",
+  "message": "El proveedor limitó temporalmente la consulta.",
+  "retryable": true,
+  "correlationId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "category": "RATE_LIMIT",
+  "safeDetails": {
+    "provider": "motor-secundario",
+    "retryAfterSeconds": 60
+  }
+}

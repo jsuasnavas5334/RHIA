@@ -1,0 +1,16 @@
+{
+  "version": "1.0",
+  "schemas": [
+    "RhiaError",
+    "JobRequest",
+    "JobResult",
+    "ExecutionEvent",
+    "SearchRequest",
+    "SearchResponse",
+    "ToolCall",
+    "ToolResult",
+    "ApprovalRequest",
+    "ApprovalDecision",
+    "CallbackEnvelope"
+  ]
+}

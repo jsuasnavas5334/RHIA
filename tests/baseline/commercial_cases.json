@@ -1,0 +1,169 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "RHIA-COM-001",
+      "name": "Entidad clara con dos fuentes independientes",
+      "category": "CLEAR_ENTITY",
+      "evaluationInputs": [
+        {
+          "empresa_mencionada": "Acme RHIA Demo",
+          "empresa_key": "acme rhia demo",
+          "market_iso2_consulta": "CR",
+          "pais_consulta_entidad": "Costa Rica",
+          "ciudad_consulta_entidad": "San Jose",
+          "tipo_consulta": "SITIO_OFICIAL",
+          "query_original": "Acme RHIA Demo Costa Rica San Jose sitio oficial",
+          "total_resultados": 1,
+          "resultados_searxng": [
+            {
+              "title": "Acme RHIA Demo — sitio oficial Costa Rica",
+              "content": "Sitio oficial corporativo de Acme RHIA Demo en San Jose, Costa Rica.",
+              "url": "https://acme-rhia.invalid/costa-rica",
+              "positions": [1]
+            }
+          ]
+        },
+        {
+          "empresa_mencionada": "Acme RHIA Demo",
+          "empresa_key": "acme rhia demo",
+          "market_iso2_consulta": "CR",
+          "pais_consulta_entidad": "Costa Rica",
+          "ciudad_consulta_entidad": "San Jose",
+          "tipo_consulta": "ENTIDAD_LEGAL",
+          "query_original": "Acme RHIA Demo Costa Rica entidad legal",
+          "total_resultados": 1,
+          "resultados_searxng": [
+            {
+              "title": "Registro de Acme RHIA Demo",
+              "content": "Razón social de Acme RHIA Demo, compañía registrada en San Jose, Costa Rica.",
+              "url": "https://registro-acme-rhia.invalid/entidad",
+              "positions": [1]
+            }
+          ]
+        }
+      ],
+      "searchResponses": [
+        {
+          "query": "Acme RHIA Demo Costa Rica San Jose sitio oficial",
+          "results": [{ "url": "https://acme-rhia.invalid/costa-rica", "engine": "fixture" }],
+          "unresponsive_engines": []
+        },
+        {
+          "query": "Acme RHIA Demo Costa Rica entidad legal",
+          "results": [{ "url": "https://registro-acme-rhia.invalid/entidad", "engine": "fixture" }],
+          "unresponsive_engines": []
+        }
+      ],
+      "expected": {
+        "marketCount": 1,
+        "marketState": "MERCADO_CON_EVIDENCIA_FUERTE",
+        "marketAction": "RESOLVER_ENTIDAD_COMERCIAL",
+        "minimumStrongEvidence": 2,
+        "minimumUniqueSources": 2,
+        "searchHealth": "SALUDABLE",
+        "searchCoverage": "ALTA"
+      }
+    },
+    {
+      "id": "RHIA-COM-002",
+      "name": "Empresa X con San Jose multigeografía",
+      "category": "AMBIGUOUS_GEOGRAPHY",
+      "evaluationInputs": [
+        {
+          "empresa_mencionada": "Empresa X",
+          "empresa_key": "empresa x",
+          "market_iso2_consulta": "CR",
+          "pais_consulta_entidad": "Costa Rica",
+          "ciudad_consulta_entidad": "San Jose",
+          "tipo_consulta": "SITIO_OFICIAL",
+          "query_original": "Empresa X Costa Rica San Jose sitio oficial",
+          "total_resultados": 1,
+          "resultados_searxng": [{ "title": "Empresa X sitio oficial", "content": "Empresa X corporativo San Jose Costa Rica", "url": "https://empresa-x-cr.invalid/", "positions": [1] }]
+        },
+        {
+          "empresa_mencionada": "Empresa X",
+          "empresa_key": "empresa x",
+          "market_iso2_consulta": "US",
+          "pais_consulta_entidad": "United States",
+          "ciudad_consulta_entidad": "San Jose",
+          "tipo_consulta": "SITIO_OFICIAL",
+          "query_original": "Empresa X United States San Jose sitio oficial",
+          "total_resultados": 1,
+          "resultados_searxng": [{ "title": "Empresa X official site", "content": "Empresa X corporate San Jose United States official", "url": "https://empresa-x-us.invalid/", "positions": [1] }]
+        },
+        {
+          "empresa_mencionada": "Empresa X",
+          "empresa_key": "empresa x",
+          "market_iso2_consulta": "BZ",
+          "pais_consulta_entidad": "Belize",
+          "ciudad_consulta_entidad": "San Jose",
+          "tipo_consulta": "SITIO_OFICIAL",
+          "query_original": "Empresa X Belize San Jose sitio oficial",
+          "total_resultados": 1,
+          "resultados_searxng": [{ "title": "Empresa X sitio oficial", "content": "Empresa X corporativo San Jose Belize", "url": "https://empresa-x-bz.invalid/", "positions": [1] }]
+        }
+      ],
+      "expected": {
+        "marketCount": 3,
+        "forbiddenState": "MERCADO_CON_EVIDENCIA_FUERTE",
+        "marketAction": "AMPLIAR_O_VALIDAR_EVIDENCIA",
+        "requiresMoreEvidence": true,
+        "rule": "La prioridad comercial nunca decide identidad y ningún San Jose se selecciona automáticamente."
+      }
+    },
+    {
+      "id": "RHIA-COM-003",
+      "name": "Entidad no encontrada con buscador saludable",
+      "category": "NO_RESULTS_HEALTHY",
+      "evaluationInputs": [
+        {
+          "empresa_mencionada": "Entidad Fantasma RHIA 9F2",
+          "empresa_key": "entidad fantasma rhia 9f2",
+          "market_iso2_consulta": "EC",
+          "pais_consulta_entidad": "Ecuador",
+          "ciudad_consulta_entidad": "Quito",
+          "tipo_consulta": "SITIO_OFICIAL",
+          "query_original": "Entidad Fantasma RHIA 9F2 Ecuador sitio oficial",
+          "total_resultados": 0,
+          "resultados_searxng": []
+        }
+      ],
+      "searchResponses": [
+        { "query": "Entidad Fantasma RHIA 9F2 sitio oficial", "results": [], "unresponsive_engines": [] },
+        { "query": "Entidad Fantasma RHIA 9F2 entidad legal", "results": [], "unresponsive_engines": [] },
+        { "query": "Entidad Fantasma RHIA 9F2 empleador", "results": [], "unresponsive_engines": [] },
+        { "query": "Entidad Fantasma RHIA 9F2 operador", "results": [], "unresponsive_engines": [] },
+        { "query": "Entidad Fantasma RHIA 9F2 grupo", "results": [], "unresponsive_engines": [] },
+        { "query": "Entidad Fantasma RHIA 9F2 presencia", "results": [], "unresponsive_engines": [] }
+      ],
+      "expected": {
+        "marketCount": 1,
+        "marketState": "SIN_EVIDENCIA_UTIL",
+        "marketAction": "AMPLIAR_O_VALIDAR_EVIDENCIA",
+        "searchHealth": "SALUDABLE",
+        "searchCoverage": "NULA",
+        "searchState": "BUSQUEDA_OPERATIVA_SIN_RESULTADOS",
+        "searchAction": "REFORMULAR_CONSULTAS",
+        "rule": "SIN_RESULTADOS no autoriza afirmar que la empresa no existe."
+      }
+    },
+    {
+      "id": "RHIA-COM-004",
+      "name": "Empresa X con motores degradados",
+      "category": "TECHNICAL_DEGRADATION",
+      "fixture": "tests/fixtures/searxng/empresa_x_busqueda_degradada.json",
+      "expected": {
+        "queryCount": 18,
+        "queriesWithResults": 1,
+        "totalResults": 20,
+        "searchHealth": "DEGRADADA",
+        "searchCoverage": "BAJA",
+        "searchState": "BUSQUEDA_OPERATIVA_COBERTURA_BAJA",
+        "searchAction": "EVALUAR_Y_REINTENTAR_CONSULTAS",
+        "knownDomainParserGap": true,
+        "knownEmptyQueryActionGap": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,1139 @@
+{
+  "updatedAt": "2026-08-17T20:58:59.309Z",
+  "createdAt": "2026-08-17T20:58:59.309Z",
+  "id": "0dMjxOujIFKDSkek",
+  "name": "RHIA AI CORE - Ollama Local - BACKUP PRE-MODULARIZACION",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -464,
+        0
+      ],
+      "id": "95655ea1-8116-4d64-8871-55aac2b87733",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://ollama:11434/api/chat",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"qwen3.5:2b-q4_K_M\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Eres RHIA AI y actuas como analista de prospeccion comercial para empresas. Tu objetivo es convertir informacion de una oportunidad en datos estructurados para segmentacion, investigacion y contacto comercial. REGLA 1: nunca inventes informacion. Utiliza exclusivamente informacion existente en la entrada. Si un dato descriptivo no existe utiliza NO IDENTIFICADO. Si un dato de contacto no existe utiliza NO ENCONTRADO. Nunca dejes campos vacios. REGLA 2: toda organizacion con 10 o mas colaboradores puede ser prospecto valido. Si conoces numero_colaboradores calcula rango_empresa: 10-49, 50-199, 200-499 o 500+. REGLA 3: registra solamente necesidades expresamente mencionadas. No agregues necesidades que no aparezcan en la informacion recibida. REGLA 4: tipo_negocio significa el giro o tipo real de organizacion, no la necesidad que tenga. sector y subsector corresponden a la industria. Si no se conocen utiliza NO IDENTIFICADO. REGLA 5 - PRIORIDAD ABSOLUTA DE INVESTIGACION: siempre intentar identificar persona de contacto, cargo, correo electronico y WhatsApp o telefono. El contacto no necesita tener capacidad de decision. Cualquier contacto profesional valido sirve. La capacidad de decision es solamente un factor adicional y nunca una condicion para aceptar o descartar un prospecto. Nunca inventes nombres, cargos, correos o telefonos. REGLA 6: CONTACTABILIDAD ALTA cuando existe persona identificada, correo y WhatsApp o telefono; MEDIA cuando existe persona o area y al menos un medio de contacto; BAJA cuando solamente existe un canal general; SIN_CONTACTO cuando no existe ningun medio conocido. REGLA 7: si existen 10 o mas colaboradores y una necesidad empresarial explicita, la prioridad comercial puede ser ALTA. Si cumple tamaño pero no existe necesidad clara utiliza MEDIA. REGLA 8: si solamente existe una necesidad explicita utiliza NECESIDAD_IDENTIFICADA. No asumas que esta cotizando o buscando proveedor salvo que la entrada lo diga. REGLA 9: fuentes debe incluir solamente fuentes realmente recibidas o consultadas. Nunca declares haber consultado LinkedIn, Google u otro sitio si no se consulto realmente. Devuelve exclusivamente JSON valido.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"{{$json.tarea}}\"\n    }\n  ],\n  \"format\": {\n    \"type\": \"object\",\n    \"properties\": {\n      \"empresa\": {\"type\": \"string\"},\n      \"estado_validacion\": {\n        \"type\": \"string\",\n        \"enum\": [\"VALIDO\", \"PENDIENTE\", \"NO_VALIDO\"]\n      },\n      \"prospecto_valido\": {\"type\": \"boolean\"},\n      \"prioridad_comercial\": {\n        \"type\": \"string\",\n        \"enum\": [\"ALTA\", \"MEDIA\", \"BAJA\"]\n      },\n      \"tipo_negocio\": {\"type\": \"string\"},\n      \"sector\": {\"type\": \"string\"},\n      \"subsector\": {\"type\": \"string\"},\n      \"numero_colaboradores\": {\"type\": \"integer\"},\n      \"rango_empresa\": {\n        \"type\": \"string\",\n        \"enum\": [\"10-49\", \"50-199\", \"200-499\", \"500+\", \"NO IDENTIFICADO\"]\n      },\n      \"pais\": {\"type\": \"string\"},\n      \"ciudad\": {\"type\": \"string\"},\n      \"necesidades_detectadas\": {\n        \"type\": \"array\",\n        \"items\": {\"type\": \"string\"}\n      },\n      \"soluciones_potenciales\": {\n        \"type\": \"array\",\n        \"items\": {\"type\": \"string\"}\n      },\n      \"nivel_intencion\": {\"type\": \"string\"},\n      \"persona_contacto\": {\"type\": \"string\"},\n      \"cargo_contacto\": {\"type\": \"string\"},\n      \"email\": {\"type\": \"string\"},\n      \"whatsapp\": {\"type\": \"string\"},\n      \"telefono\": {\"type\": \"string\"},\n      \"nivel_contacto\": {\"type\": \"string\"},\n      \"capacidad_decision_estimada\": {\"type\": \"string\"},\n      \"contactabilidad\": {\"type\": \"string\"},\n      \"busqueda_contacto_requerida\": {\"type\": \"boolean\"},\n      \"datos_contacto_faltantes\": {\n        \"type\": \"array\",\n        \"items\": {\"type\": \"string\"}\n      },\n      \"fuentes\": {\n        \"type\": \"array\",\n        \"items\": {\"type\": \"string\"}\n      },\n      \"motivo_prioridad\": {\"type\": \"string\"},\n      \"accion_recomendada\": {\"type\": \"string\"},\n      \"datos_faltantes\": {\n        \"type\": \"array\",\n        \"items\": {\"type\": \"string\"}\n      },\n      \"resumen_comercial\": {\"type\": \"string\"}\n    },\n    \"required\": [\n      \"empresa\",\n      \"estado_validacion\",\n      \"prospecto_valido\",\n      \"prioridad_comercial\",\n      \"tipo_negocio\",\n      \"sector\",\n      \"subsector\",\n      \"numero_colaboradores\",\n      \"rango_empresa\",\n      \"pais\",\n      \"ciudad\",\n      \"necesidades_detectadas\",\n      \"soluciones_potenciales\",\n      \"nivel_intencion\",\n      \"persona_contacto\",\n      \"cargo_contacto\",\n      \"email\",\n      \"whatsapp\",\n      \"telefono\",\n      \"nivel_contacto\",\n      \"capacidad_decision_estimada\",\n      \"contactabilidad\",\n      \"busqueda_contacto_requerida\",\n      \"datos_contacto_faltantes\",\n      \"fuentes\",\n      \"motivo_prioridad\",\n      \"accion_recomendada\",\n      \"datos_faltantes\",\n      \"resumen_comercial\"\n    ],\n    \"additionalProperties\": false\n  },\n  \"stream\": false,\n  \"think\": false,\n  \"options\": {\n    \"temperature\": 0\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -64,
+        0
+      ],
+      "id": "4565cd62-8c55-42b3-987f-164445c6db65",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3d7aa7ed-c0e8-418d-a46e-613777c2e1d3",
+              "name": "tarea",
+              "value": "Analiza esta oportunidad comercial: la empresa Corporación Favorita busca mejorar sus procesos de selección y evaluación de talento. La organización tiene más de 10 colaboradores.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -256,
+        0
+      ],
+      "id": "6b480f91-1edf-471f-814e-d0092de81942",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nfunction estaVacio(valor) {\n  if (valor === null || valor === undefined) return true;\n\n  const texto = String(valor).trim().toUpperCase();\n\n  return [\n    \"\",\n    \"NO ENCONTRADO\",\n    \"NO ENCONTRADA\",\n    \"NO IDENTIFICADO\",\n    \"NO IDENTIFICADA\",\n    \"NO_IDENTIFICADO\",\n    \"NO_IDENTIFICADA\",\n    \"SIN_CONTACTO\",\n    \"N/A\",\n    \"NULL\"\n  ].includes(texto);\n}\n\nfunction normalizarDescriptivo(valor) {\n  return estaVacio(valor) ? \"NO IDENTIFICADO\" : String(valor).trim();\n}\n\nfunction normalizarContacto(valor) {\n  return estaVacio(valor) ? \"NO ENCONTRADO\" : String(valor).trim();\n}\n\nreturn items.map((item) => {\n\n  // ============================================================\n  // 1. LEER LA RESPUESTA JSON DE OLLAMA\n  // ============================================================\n\n  let datos;\n\n  try {\n    const contenido = item.json.message?.content;\n\n    if (!contenido) {\n      throw new Error(\"Ollama no devolvió message.content\");\n    }\n\n    datos = typeof contenido === \"string\"\n      ? JSON.parse(contenido)\n      : contenido;\n\n  } catch (error) {\n    throw new Error(\n      \"RHIA CORE no pudo interpretar la respuesta de Ollama: \" +\n      error.message\n    );\n  }\n\n\n  // ============================================================\n  // 2. DATOS BÁSICOS\n  // ============================================================\n\n  const empresa = normalizarDescriptivo(datos.empresa);\n  const tipoNegocio = normalizarDescriptivo(datos.tipo_negocio);\n  const sector = normalizarDescriptivo(datos.sector);\n  const subsector = normalizarDescriptivo(datos.subsector);\n  const pais = normalizarDescriptivo(datos.pais);\n  const ciudad = normalizarDescriptivo(datos.ciudad);\n\n  const numeroColaboradores =\n    Number.isFinite(Number(datos.numero_colaboradores))\n      ? Number(datos.numero_colaboradores)\n      : 0;\n\n  const necesidades = Array.isArray(datos.necesidades_detectadas)\n    ? datos.necesidades_detectadas\n        .filter(Boolean)\n        .map(x => String(x).trim())\n    : [];\n\n  const soluciones = Array.isArray(datos.soluciones_potenciales)\n    ? datos.soluciones_potenciales\n        .filter(Boolean)\n        .map(x => String(x).trim())\n    : [];\n\n\n  // ============================================================\n  // 3. RANGO DE EMPRESA — REGLA DETERMINÍSTICA\n  // ============================================================\n\n  let rangoEmpresa = \"NO IDENTIFICADO\";\n\n  if (numeroColaboradores >= 500) {\n    rangoEmpresa = \"500+\";\n  } else if (numeroColaboradores >= 200) {\n    rangoEmpresa = \"200-499\";\n  } else if (numeroColaboradores >= 50) {\n    rangoEmpresa = \"50-199\";\n  } else if (numeroColaboradores >= 10) {\n    rangoEmpresa = \"10-49\";\n  }\n\n\n  // ============================================================\n  // 4. VALIDACIÓN DEL PROSPECTO\n  // ============================================================\n\n  let estadoValidacion;\n  let prospectoValido;\n\n  if (numeroColaboradores >= 10) {\n    estadoValidacion = \"VALIDO\";\n    prospectoValido = true;\n\n  } else if (numeroColaboradores > 0) {\n    estadoValidacion = \"NO_VALIDO\";\n    prospectoValido = false;\n\n  } else {\n    estadoValidacion = \"PENDIENTE\";\n    prospectoValido = false;\n  }\n\n\n  // ============================================================\n  // 5. PRIORIDAD COMERCIAL\n  //\n  // 10+ colaboradores + necesidad concreta = ALTA\n  // 10+ colaboradores sin necesidad clara = MEDIA\n  // ============================================================\n\n  let prioridadComercial;\n\n  if (numeroColaboradores >= 10 && necesidades.length > 0) {\n    prioridadComercial = \"ALTA\";\n  } else if (numeroColaboradores >= 10) {\n    prioridadComercial = \"MEDIA\";\n  } else {\n    prioridadComercial = \"BAJA\";\n  }\n\n\n  // ============================================================\n  // 6. DATOS DE CONTACTO\n  //\n  // PRIORIDAD OPERATIVA #1:\n  // Persona + cargo + email + WhatsApp/teléfono\n  // ============================================================\n\n  const persona = normalizarContacto(datos.persona_contacto);\n  const cargo = normalizarContacto(datos.cargo_contacto);\n  const email = normalizarContacto(datos.email);\n  const whatsapp = normalizarContacto(datos.whatsapp);\n  const telefono = normalizarContacto(datos.telefono);\n\n  const tienePersona = persona !== \"NO ENCONTRADO\";\n  const tieneCargo = cargo !== \"NO ENCONTRADO\";\n  const tieneEmail = email !== \"NO ENCONTRADO\";\n  const tieneWhatsapp = whatsapp !== \"NO ENCONTRADO\";\n  const tieneTelefono = telefono !== \"NO ENCONTRADO\";\n\n  const tieneTelefonoOWhatsapp =\n    tieneWhatsapp || tieneTelefono;\n\n\n  // ============================================================\n  // 7. CONTACTABILIDAD\n  // ============================================================\n\n  let contactabilidad;\n\n  if (\n    tienePersona &&\n    tieneEmail &&\n    tieneTelefonoOWhatsapp\n  ) {\n    contactabilidad = \"ALTA\";\n\n  } else if (\n    (tienePersona || tieneCargo) &&\n    (tieneEmail || tieneTelefonoOWhatsapp)\n  ) {\n    contactabilidad = \"MEDIA\";\n\n  } else if (\n    tieneEmail || tieneTelefonoOWhatsapp\n  ) {\n    contactabilidad = \"BAJA\";\n\n  } else {\n    contactabilidad = \"SIN_CONTACTO\";\n  }\n\n\n  // ============================================================\n  // 8. QUÉ CONTACTOS FALTAN\n  // ============================================================\n\n  const datosContactoFaltantes = [];\n\n  if (!tienePersona) {\n    datosContactoFaltantes.push(\"PERSONA_CONTACTO\");\n  }\n\n  if (!tieneCargo) {\n    datosContactoFaltantes.push(\"CARGO_CONTACTO\");\n  }\n\n  if (!tieneEmail) {\n    datosContactoFaltantes.push(\"EMAIL\");\n  }\n\n  if (!tieneTelefonoOWhatsapp) {\n    datosContactoFaltantes.push(\"WHATSAPP_O_TELEFONO\");\n  }\n\n  const busquedaContactoRequerida =\n    datosContactoFaltantes.length > 0;\n\n\n  // ============================================================\n  // 9. NIVEL DEL CONTACTO\n  //\n  // La capacidad de decisión es SOLO un factor.\n  // Nunca invalida un contacto.\n  // ============================================================\n\n  let nivelContacto = normalizarDescriptivo(\n    datos.nivel_contacto\n  );\n\n  let capacidadDecision = normalizarDescriptivo(\n    datos.capacidad_decision_estimada\n  );\n\n  if (!tienePersona) {\n    nivelContacto = \"NO IDENTIFICADO\";\n    capacidadDecision = \"NO IDENTIFICADA\";\n  }\n\n\n  // ============================================================\n  // 10. NIVEL DE INTENCIÓN\n  //\n  // No asumir que está cotizando o buscando proveedor.\n  // ============================================================\n\n  let nivelIntencion = \"NO_IDENTIFICADO\";\n\n  const intencionOriginal =\n    String(datos.nivel_intencion || \"\")\n      .trim()\n      .toUpperCase();\n\n  const intencionesFuertesPermitidas = [\n    \"BUSCANDO_PROVEEDOR\",\n    \"COTIZANDO\",\n    \"COMPRA_PROXIMA\"\n  ];\n\n  if (\n    intencionesFuertesPermitidas.includes(intencionOriginal)\n  ) {\n    nivelIntencion = intencionOriginal;\n\n  } else if (necesidades.length > 0) {\n    nivelIntencion = \"NECESIDAD_IDENTIFICADA\";\n  }\n\n\n  // ============================================================\n  // 11. MOTIVO DE PRIORIDAD\n  // ============================================================\n\n  let motivoPrioridad;\n\n  if (\n    numeroColaboradores >= 10 &&\n    necesidades.length > 0\n  ) {\n    motivoPrioridad =\n      `Cumple el mínimo de ${numeroColaboradores} colaboradores ` +\n      `y presenta una necesidad comercial concreta: ` +\n      `${necesidades.join(\", \")}.`;\n\n  } else if (numeroColaboradores >= 10) {\n    motivoPrioridad =\n      \"Cumple el mínimo de 10 colaboradores, pero todavía debe identificarse una necesidad comercial concreta.\";\n\n  } else if (numeroColaboradores > 0) {\n    motivoPrioridad =\n      \"No cumple actualmente el mínimo de 10 colaboradores.\";\n\n  } else {\n    motivoPrioridad =\n      \"Falta determinar el número de colaboradores antes de validar el prospecto.\";\n  }\n\n\n  // ============================================================\n  // 12. ACCIÓN RECOMENDADA\n  //\n  // PRIMERO CONTACTABILIDAD.\n  // ============================================================\n\n  let accionRecomendada;\n\n  if (\n    prospectoValido &&\n    busquedaContactoRequerida\n  ) {\n    accionRecomendada =\n      \"INVESTIGAR_CONTACTO_PRIORITARIAMENTE\";\n\n  } else if (\n    prospectoValido &&\n    !busquedaContactoRequerida\n  ) {\n    accionRecomendada =\n      \"INICIAR_CONTACTO_COMERCIAL\";\n\n  } else if (\n    estadoValidacion === \"PENDIENTE\"\n  ) {\n    accionRecomendada =\n      \"COMPLETAR_INVESTIGACION\";\n\n  } else {\n    accionRecomendada =\n      \"NO_PRIORIZAR\";\n  }\n\n\n  // ============================================================\n  // 13. DATOS GENERALES FALTANTES\n  // ============================================================\n\n  const datosFaltantes = [];\n\n  if (empresa === \"NO IDENTIFICADO\") {\n    datosFaltantes.push(\"EMPRESA\");\n  }\n\n  if (tipoNegocio === \"NO IDENTIFICADO\") {\n    datosFaltantes.push(\"TIPO_NEGOCIO\");\n  }\n\n  if (sector === \"NO IDENTIFICADO\") {\n    datosFaltantes.push(\"SECTOR\");\n  }\n\n  if (subsector === \"NO IDENTIFICADO\") {\n    datosFaltantes.push(\"SUBSECTOR\");\n  }\n\n  if (pais === \"NO IDENTIFICADO\") {\n    datosFaltantes.push(\"PAIS\");\n  }\n\n  if (ciudad === \"NO IDENTIFICADO\") {\n    datosFaltantes.push(\"CIUDAD\");\n  }\n\n\n  // ============================================================\n  // 14. FUENTES\n  // ============================================================\n\n  const fuentes = Array.isArray(datos.fuentes)\n    ? datos.fuentes.filter(Boolean)\n    : [];\n\n\n  // ============================================================\n  // 15. RESUMEN COMERCIAL CONSISTENTE\n  // ============================================================\n\n  const nombreResumen =\n    empresa === \"NO IDENTIFICADO\"\n      ? \"La organización\"\n      : empresa;\n\n  let resumenComercial = \"\";\n\n  if (numeroColaboradores > 0) {\n    resumenComercial +=\n      `${nombreResumen} tiene ${numeroColaboradores} colaboradores ` +\n      `y pertenece al rango ${rangoEmpresa}. `;\n  } else {\n    resumenComercial +=\n      `${nombreResumen} no tiene aún un tamaño identificado. `;\n  }\n\n  if (necesidades.length > 0) {\n    resumenComercial +=\n      `Necesidades detectadas: ${necesidades.join(\", \")}. `;\n  } else {\n    resumenComercial +=\n      \"Todavía no se ha identificado una necesidad comercial concreta. \";\n  }\n\n  resumenComercial +=\n    `Prioridad comercial: ${prioridadComercial}. ` +\n    `Contactabilidad: ${contactabilidad}. `;\n\n  if (busquedaContactoRequerida) {\n    resumenComercial +=\n      `La prioridad operativa es localizar ${datosContactoFaltantes.join(\", \")}.`;\n  } else {\n    resumenComercial +=\n      \"Los datos básicos para iniciar contacto comercial están disponibles.\";\n  }\n\n\n  // ============================================================\n  // 16. RESULTADO FINAL RHIA CORE\n  // ============================================================\n\n  return {\n    json: {\n\n      empresa,\n\n      estado_validacion: estadoValidacion,\n      prospecto_valido: prospectoValido,\n      prioridad_comercial: prioridadComercial,\n\n      tipo_negocio: tipoNegocio,\n      sector,\n      subsector,\n\n      numero_colaboradores: numeroColaboradores,\n      rango_empresa: rangoEmpresa,\n\n      pais,\n      ciudad,\n\n      necesidades_detectadas: necesidades,\n      soluciones_potenciales: soluciones,\n\n      nivel_intencion: nivelIntencion,\n\n      persona_contacto: persona,\n      cargo_contacto: cargo,\n      email,\n      whatsapp,\n      telefono,\n\n      nivel_contacto: nivelContacto,\n      capacidad_decision_estimada: capacidadDecision,\n\n      contactabilidad,\n\n      busqueda_contacto_requerida: busquedaContactoRequerida,\n      datos_contacto_faltantes: datosContactoFaltantes,\n\n      fuentes,\n\n      motivo_prioridad: motivoPrioridad,\n      accion_recomendada: accionRecomendada,\n\n      datos_faltantes: datosFaltantes,\n\n      resumen_comercial: resumenComercial\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        112,
+        0
+      ],
+      "id": "e2d28b67-7914-403b-9d52-e2293d90acdb",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f080ab36-23fa-4afd-a226-f771ac8b1104",
+              "leftValue": "={{$json.busqueda_contacto_requerida}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        304,
+        0
+      ],
+      "id": "702ad350-ce49-4955-aaf5-4d9b0df8238a",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3be6a03c-85e9-47c8-abd4-76920607eed2",
+              "name": "instruccion_investigacion",
+              "value": "Investiga este prospecto utilizando únicamente información pública y verificable.  PRIORIDAD 1 ABSOLUTA: conseguir datos reales que permitan contactar a la organización.  Debes intentar encontrar siempre:  1. WhatsApp o teléfono. 2. Correo electrónico. 3. Persona de contacto. 4. Cargo de la persona de contacto.  No es obligatorio que la persona tenga capacidad de decisión. Cualquier contacto profesional válido sirve. La capacidad de decisión es únicamente un dato adicional y nunca una razón para rechazar un contacto.  Después intenta completar:  - Nombre correcto de la empresa. - Tipo de negocio. - Sector. - Subsector. - País. - Ciudad. - Sitio web oficial.  Nunca inventes nombres, correos electrónicos, números telefónicos, cargos, sectores ni ubicaciones.  No construyas correos suponiendo el formato de la empresa.  No declares que un número tiene WhatsApp si no existe evidencia.  Para cada dato encontrado conserva la fuente donde fue localizado.  Si un dato no puede encontrarse, registra NO ENCONTRADO.  Si no es posible identificar qué empresa debe investigarse, registra IDENTIFICACION_EMPRESA_REQUERIDA.  El objetivo principal es conseguir la mayor cantidad posible de datos de contacto reales y verificables para iniciar una gestión comercial.",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        512,
+        -16
+      ],
+      "id": "a2fdc9ab-d8da-4c00-a19b-067845caf786",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "27acacf1-e4da-44c0-9f22-844188fb8779",
+              "leftValue": "={{$json.empresa}}",
+              "rightValue": "NO IDENTIFICADO",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        752,
+        -144
+      ],
+      "id": "a19c00b4-7fd3-444c-9b20-749fb4a0d959",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "12ff5d4a-c2ba-49a7-a115-296def09efcf",
+              "name": "estado_investigacion",
+              "value": "IDENTIFICACION_EMPRESA_REQUERIDA",
+              "type": "string"
+            },
+            {
+              "id": "8c89b450-2054-44e6-b916-ec9022fe8271",
+              "name": "accion_siguiente",
+              "value": "Identificar primero el nombre exacto de la empresa antes de iniciar la búsqueda de persona de contacto, cargo, correo electrónico y WhatsApp o teléfono. No intentar adivinar la empresa ni generar datos que no estén verificados.",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1008,
+        -80
+      ],
+      "id": "b948cd4d-efb9-46e2-926e-ebea309be6f1",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "url": "http://searxng:8080/search",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ '\"' + $json.empresa + '\" contacto correo email telefono whatsapp' + (($json.pais && $json.pais !== 'NO IDENTIFICADO') ? ' ' + $json.pais : '') }}"
+            },
+            {
+              "name": "format",
+              "value": "json"
+            },
+            {
+              "name": "safesearch",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        720,
+        -336
+      ],
+      "id": "db1fffd0-64a0-4d83-a0a6-f8f9ceaed900",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const busqueda = $input.first().json;\nconst contexto = $(\"Edit Fields1\").first().json;\n\nconst empresa = String(\n  contexto.empresa || \"NO IDENTIFICADO\"\n).trim();\n\nif (\n  !empresa ||\n  empresa === \"NO IDENTIFICADO\" ||\n  empresa === \"NO ENCONTRADO\"\n) {\n  throw new Error(\n    \"RHIA INVESTIGADOR: no existe una empresa identificada para investigar.\"\n  );\n}\n\nconst resultados = Array.isArray(busqueda.results)\n  ? busqueda.results\n  : [];\n\n\n// ============================================================\n// FUNCIONES GENERALES\n// ============================================================\n\nfunction limpiarTexto(valor) {\n  return String(valor || \"\")\n    .replace(/\\s+/g, \" \")\n    .trim();\n}\n\nfunction textoComparable(valor) {\n  return limpiarTexto(valor)\n    .toLowerCase()\n    .normalize(\"NFD\")\n    .replace(/[\\u0300-\\u036f]/g, \"\");\n}\n\n\n// ============================================================\n// RECUPERAR URL DESDE SEARXNG\n// ============================================================\n\nfunction obtenerUrl(resultado) {\n\n  if (\n    typeof resultado.url === \"string\" &&\n    resultado.url.trim()\n  ) {\n    return resultado.url.trim();\n  }\n\n  const parsed = resultado.parsed_url;\n\n  if (\n    Array.isArray(parsed) &&\n    parsed.length >= 3 &&\n    parsed[0] &&\n    parsed[1]\n  ) {\n\n    const protocolo = String(parsed[0]);\n    const dominio = String(parsed[1]);\n    const ruta = String(parsed[2] || \"\");\n    const query = String(parsed[4] || \"\");\n    const fragmento = String(parsed[5] || \"\");\n\n    let url =\n      `${protocolo}://${dominio}${ruta}`;\n\n    if (query) {\n      url += `?${query}`;\n    }\n\n    if (fragmento) {\n      url += `#${fragmento}`;\n    }\n\n    return url;\n  }\n\n  return \"\";\n}\n\n\n// ============================================================\n// EXTRAER DOMINIO\n// ============================================================\n\nfunction obtenerDominio(url) {\n\n  const coincidencia =\n    String(url || \"\").match(\n      /^https?:\\/\\/([^\\/?#]+)/i\n    );\n\n  if (!coincidencia) {\n    return \"\";\n  }\n\n  return coincidencia[1]\n    .replace(/^www\\./i, \"\")\n    .toLowerCase();\n}\n\n\n// ============================================================\n// TOKENS REALES DEL NOMBRE EMPRESARIAL\n// ============================================================\n\nfunction palabrasMarca(nombre) {\n\n  const legales = new Set([\n    \"sa\",\n    \"sas\",\n    \"s\",\n    \"a\",\n    \"cia\",\n    \"ltda\",\n    \"limitada\",\n    \"inc\",\n    \"llc\",\n    \"plc\"\n  ]);\n\n  return textoComparable(nombre)\n    .split(/[^a-z0-9]+/)\n    .filter(\n      palabra =>\n        palabra.length >= 2 &&\n        !legales.has(palabra)\n    );\n}\n\n\n// ============================================================\n// IDENTIDAD DE LA EMPRESA\n// ============================================================\n\nconst empresaComparable =\n  textoComparable(empresa);\n\nconst tokensEmpresa =\n  palabrasMarca(empresa);\n\nconst empresaCompacta =\n  tokensEmpresa.join(\"\");\n\n\n// ============================================================\n// PALABRAS IMPORTANTES\n// ============================================================\n\nconst palabrasContacto = [\n  \"contacto\",\n  \"contact\",\n  \"telefono\",\n  \"teléfono\",\n  \"phone\",\n  \"celular\",\n  \"movil\",\n  \"móvil\",\n  \"whatsapp\",\n  \"correo\",\n  \"email\",\n  \"e-mail\",\n  \"dirección\",\n  \"direccion\",\n  \"directorio\"\n];\n\nconst palabrasPersonas = [\n  \"linkedin\",\n  \"talento humano\",\n  \"recursos humanos\",\n  \"rrhh\",\n  \"human resources\",\n  \"gerente\",\n  \"director\",\n  \"jefe\",\n  \"coordinador\",\n  \"analista\",\n  \"asistente\",\n  \"administracion\",\n  \"administración\",\n  \"recepcion\",\n  \"recepción\"\n];\n\nconst dominiosSociales = [\n  \"linkedin.com\",\n  \"facebook.com\",\n  \"instagram.com\",\n  \"x.com\",\n  \"twitter.com\"\n];\n\nconst dominiosDirectorios = [\n  \"google.com\",\n  \"maps.google\",\n  \"paginasamarillas\",\n  \"yellowpages\",\n  \"zoominfo\",\n  \"apollo\",\n  \"crunchbase\"\n];\n\n\n// ============================================================\n// ANALIZAR RESULTADOS\n// ============================================================\n\nconst procesados = [];\n\nfor (const resultado of resultados) {\n\n  const titulo =\n    limpiarTexto(resultado.title);\n\n  const contenido =\n    limpiarTexto(resultado.content);\n\n  const url =\n    obtenerUrl(resultado);\n\n  const dominio =\n    obtenerDominio(url);\n\n  const engine =\n    limpiarTexto(resultado.engine);\n\n  if (!url || !dominio) {\n    continue;\n  }\n\n  const combinado =\n    textoComparable(\n      `${titulo} ${contenido} ${url}`\n    );\n\n  const dominioComparable =\n    textoComparable(dominio)\n      .replace(/[^a-z0-9]/g, \"\");\n\n  let puntuacion = 0;\n  const razones = [];\n\n  let dominioEmpresaExacto = false;\n  let dominioEmpresaFuerte = false;\n\n\n  // ==========================================================\n  // 1. NOMBRE COMPLETO DE EMPRESA EN RESULTADO\n  // ==========================================================\n\n  if (\n    empresaComparable &&\n    combinado.includes(empresaComparable)\n  ) {\n    puntuacion += 50;\n    razones.push(\"NOMBRE_EMPRESA\");\n  }\n\n\n  // ==========================================================\n  // 2. COINCIDENCIA DE PALABRAS DEL NOMBRE\n  // ==========================================================\n\n  const tokensCoincidentes =\n    tokensEmpresa.filter(\n      token =>\n        combinado.includes(token)\n    );\n\n  if (tokensEmpresa.length > 0) {\n\n    const proporcion =\n      tokensCoincidentes.length /\n      tokensEmpresa.length;\n\n    if (proporcion === 1) {\n\n      puntuacion += 40;\n\n      razones.push(\n        \"COINCIDENCIA_COMPLETA_EMPRESA\"\n      );\n\n    } else if (proporcion >= 0.75) {\n\n      puntuacion += 30;\n\n      razones.push(\n        \"ALTA_COINCIDENCIA_EMPRESA\"\n      );\n\n    } else if (proporcion >= 0.5) {\n\n      puntuacion += 15;\n\n      razones.push(\n        \"COINCIDENCIA_PARCIAL_EMPRESA\"\n      );\n    }\n  }\n\n\n  // ==========================================================\n  // 3. DOMINIO CON NOMBRE COMPLETO DE LA EMPRESA\n  //\n  // Corporación Favorita\n  // → corporacionfavorita\n  // → corporacionfavorita.com\n  //\n  // PRIORIDAD MUY ALTA\n  // ==========================================================\n\n  if (\n    empresaCompacta.length >= 5 &&\n    dominioComparable.includes(\n      empresaCompacta\n    )\n  ) {\n\n    puntuacion += 180;\n\n    dominioEmpresaExacto = true;\n\n    razones.push(\n      \"DOMINIO_EMPRESA_EXACTO\"\n    );\n  }\n\n\n  // ==========================================================\n  // 4. TODOS LOS TOKENS DE LA EMPRESA DENTRO DEL DOMINIO\n  // ==========================================================\n\n  const tokensEnDominio =\n    tokensEmpresa.filter(\n      token =>\n        dominioComparable.includes(token)\n    );\n\n  if (\n    !dominioEmpresaExacto &&\n    tokensEmpresa.length >= 2 &&\n    tokensEnDominio.length ===\n      tokensEmpresa.length\n  ) {\n\n    puntuacion += 110;\n\n    dominioEmpresaFuerte = true;\n\n    razones.push(\n      \"DOMINIO_EMPRESA_FUERTE\"\n    );\n  }\n\n\n  // ==========================================================\n  // 5. SOLO UNA PALABRA DE LA EMPRESA EN EL DOMINIO\n  //\n  // Ejemplo:\n  // Favorita → favoritabananas.com\n  //\n  // NO debe considerarse automáticamente web oficial.\n  // ==========================================================\n\n  if (\n    !dominioEmpresaExacto &&\n    !dominioEmpresaFuerte &&\n    tokensEnDominio.length === 1 &&\n    tokensEmpresa.length >= 2\n  ) {\n\n    puntuacion += 5;\n\n    razones.push(\n      \"DOMINIO_COINCIDENCIA_DEBIL\"\n    );\n  }\n\n\n  // ==========================================================\n  // 6. CONTACTO\n  // ==========================================================\n\n  const coincidenciasContacto =\n    palabrasContacto.filter(\n      palabra =>\n        combinado.includes(\n          textoComparable(palabra)\n        )\n    );\n\n  if (\n    coincidenciasContacto.length > 0\n  ) {\n\n    puntuacion += Math.min(\n      40,\n      coincidenciasContacto.length * 10\n    );\n\n    razones.push(\n      \"POSIBLE_DATO_CONTACTO\"\n    );\n  }\n\n\n  // ==========================================================\n  // 7. PÁGINA ESPECÍFICA DE CONTACTO\n  // ==========================================================\n\n  if (\n    combinado.includes(\"contacto\") ||\n    combinado.includes(\"contact us\") ||\n    /\\/contact(o)?\\/?$/i.test(url)\n  ) {\n\n    puntuacion += 35;\n\n    razones.push(\n      \"PAGINA_CONTACTO\"\n    );\n  }\n\n\n  // ==========================================================\n  // 8. PERSONA / CARGO\n  // ==========================================================\n\n  const coincidenciasPersonas =\n    palabrasPersonas.filter(\n      palabra =>\n        combinado.includes(\n          textoComparable(palabra)\n        )\n    );\n\n  if (\n    coincidenciasPersonas.length > 0\n  ) {\n\n    puntuacion += Math.min(\n      30,\n      coincidenciasPersonas.length * 6\n    );\n\n    razones.push(\n      \"POSIBLE_PERSONA_CARGO\"\n    );\n  }\n\n\n  // ==========================================================\n  // 9. TIPO DE FUENTE\n  // ==========================================================\n\n  let tipoFuente = \"WEB\";\n\n  if (\n    dominiosSociales.some(\n      d => dominio.includes(d)\n    )\n  ) {\n\n    tipoFuente =\n      \"RED_PROFESIONAL_SOCIAL\";\n\n    puntuacion += 5;\n  }\n\n\n  if (\n    dominiosDirectorios.some(\n      d => dominio.includes(d)\n    )\n  ) {\n\n    tipoFuente =\n      \"DIRECTORIO\";\n\n    puntuacion += 8;\n  }\n\n\n  if (\n    dominioEmpresaExacto ||\n    dominioEmpresaFuerte\n  ) {\n\n    tipoFuente =\n      \"POSIBLE_WEB_OFICIAL\";\n  }\n\n\n  // ==========================================================\n  // 10. PENALIZAR POSIBLES FALSOS POSITIVOS\n  // ==========================================================\n\n  if (\n    tokensEmpresa.length >= 2 &&\n    tokensEnDominio.length === 1 &&\n    !combinado.includes(\n      empresaComparable\n    )\n  ) {\n\n    puntuacion -= 30;\n\n    razones.push(\n      \"POSIBLE_EMPRESA_HOMONIMA\"\n    );\n  }\n\n\n  // ==========================================================\n  // 11. NOTICIAS\n  // ==========================================================\n\n  if (\n    /\\/20\\d{2}\\//.test(url) ||\n    combinado.includes(\"noticia\") ||\n    combinado.includes(\"news\")\n  ) {\n\n    puntuacion -= 15;\n\n    razones.push(\n      \"ARTICULO_NOTICIA\"\n    );\n  }\n\n\n  // ==========================================================\n  // GUARDAR RESULTADO\n  // ==========================================================\n\n  procesados.push({\n\n    titulo,\n    url,\n    dominio,\n    contenido,\n    engine,\n\n    tipo_fuente: tipoFuente,\n\n    puntuacion,\n\n    razones,\n\n    identidad_empresa: {\n      dominio_empresa_exacto:\n        dominioEmpresaExacto,\n\n      dominio_empresa_fuerte:\n        dominioEmpresaFuerte,\n\n      tokens_empresa:\n        tokensEmpresa,\n\n      tokens_en_dominio:\n        tokensEnDominio\n    }\n  });\n}\n\n\n// ============================================================\n// ELIMINAR DUPLICADOS\n// ============================================================\n\nconst urlsVistas =\n  new Set();\n\nconst unicos =\n  procesados.filter(resultado => {\n\n    const clave =\n      resultado.url\n        .replace(/\\/$/, \"\")\n        .toLowerCase();\n\n    if (\n      urlsVistas.has(clave)\n    ) {\n      return false;\n    }\n\n    urlsVistas.add(clave);\n\n    return true;\n  });\n\n\n// ============================================================\n// ORDENAR\n// ============================================================\n\nunicos.sort(\n  (a, b) =>\n    b.puntuacion -\n    a.puntuacion\n);\n\n\n// ============================================================\n// TOP 12\n// ============================================================\n\nconst mejores =\n  unicos\n    .slice(0, 12)\n    .map(\n      (resultado, indice) => ({\n\n        ranking:\n          indice + 1,\n\n        titulo:\n          resultado.titulo,\n\n        url:\n          resultado.url,\n\n        dominio:\n          resultado.dominio,\n\n        contenido:\n          resultado.contenido,\n\n        engine:\n          resultado.engine,\n\n        tipo_fuente:\n          resultado.tipo_fuente,\n\n        puntuacion:\n          resultado.puntuacion,\n\n        razones:\n          resultado.razones,\n\n        identidad_empresa:\n          resultado.identidad_empresa\n      })\n    );\n\n\n// ============================================================\n// FUENTES CON IDENTIDAD EMPRESARIAL FUERTE\n// ============================================================\n\nconst fuentesEmpresaVerificada =\n  unicos.filter(\n    r =>\n      r.identidad_empresa\n        .dominio_empresa_exacto ||\n      r.identidad_empresa\n        .dominio_empresa_fuerte\n  );\n\n\n// ============================================================\n// SALIDA\n// ============================================================\n\nreturn [\n  {\n    json: {\n\n      empresa,\n\n      prioridad_investigacion: [\n        \"WHATSAPP_O_TELEFONO\",\n        \"EMAIL\",\n        \"PERSONA_CONTACTO\",\n        \"CARGO_CONTACTO\"\n      ],\n\n      datos_comerciales_previos: {\n\n        prioridad_comercial:\n          contexto.prioridad_comercial ||\n          \"NO IDENTIFICADO\",\n\n        numero_colaboradores:\n          contexto.numero_colaboradores ||\n          0,\n\n        rango_empresa:\n          contexto.rango_empresa ||\n          \"NO IDENTIFICADO\",\n\n        necesidades_detectadas:\n          contexto.necesidades_detectadas ||\n          [],\n\n        tipo_negocio:\n          contexto.tipo_negocio ||\n          \"NO IDENTIFICADO\",\n\n        sector:\n          contexto.sector ||\n          \"NO IDENTIFICADO\",\n\n        pais:\n          contexto.pais ||\n          \"NO IDENTIFICADO\",\n\n        ciudad:\n          contexto.ciudad ||\n          \"NO IDENTIFICADO\"\n      },\n\n      total_resultados_searxng:\n        resultados.length,\n\n      total_fuentes_analizadas:\n        unicos.length,\n\n      fuentes_identidad_fuerte:\n        fuentesEmpresaVerificada.length,\n\n      fuentes_candidatas:\n        mejores,\n\n      siguiente_accion:\n        fuentesEmpresaVerificada.length > 0\n          ? \"EXTRAER_Y_VERIFICAR_CONTACTOS\"\n          : \"VERIFICAR_IDENTIDAD_EMPRESA\",\n\n      diagnostico:\n        null\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        912,
+        -336
+      ],
+      "id": "60ac1d4c-1dde-44f5-b524-187d23a112ba",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const entrada = $input.first().json;\n\nconst empresa = String(\n  entrada.empresa || \"NO IDENTIFICADO\"\n).trim();\n\nconst fuentes = Array.isArray(entrada.fuentes_candidatas)\n  ? entrada.fuentes_candidatas\n  : [];\n\n\n// ============================================================\n// 1. FUNCIONES GENERALES\n// ============================================================\n\nfunction limpiarTexto(valor) {\n  return String(valor || \"\")\n    .replace(/\\s+/g, \" \")\n    .trim();\n}\n\nfunction normalizarTexto(valor) {\n  return limpiarTexto(valor)\n    .toLowerCase()\n    .normalize(\"NFD\")\n    .replace(/[\\u0300-\\u036f]/g, \"\");\n}\n\nfunction contextoAlrededor(texto, inicio, fin, margen = 100) {\n  const desde = Math.max(0, inicio - margen);\n  const hasta = Math.min(texto.length, fin + margen);\n\n  return texto\n    .slice(desde, hasta)\n    .replace(/\\s+/g, \" \")\n    .trim();\n}\n\n\n// ============================================================\n// 2. CONFIANZA DE FUENTE\n// ============================================================\n\nfunction nivelConfianza(fuente) {\n\n  const identidad =\n    fuente.identidad_empresa || {};\n\n  if (identidad.dominio_empresa_exacto === true) {\n    return \"MUY_ALTA\";\n  }\n\n  if (identidad.dominio_empresa_fuerte === true) {\n    return \"ALTA\";\n  }\n\n  const razones = Array.isArray(fuente.razones)\n    ? fuente.razones\n    : [];\n\n  if (\n    razones.includes(\"NOMBRE_EMPRESA\") &&\n    razones.includes(\"COINCIDENCIA_COMPLETA_EMPRESA\")\n  ) {\n    return \"MEDIA\";\n  }\n\n  return \"BAJA\";\n}\n\n\n// ============================================================\n// 3. DETECTAR FUENTES PELIGROSAS / ALERTAS\n//\n// Evita tomar como teléfono comercial un número que aparezca\n// dentro de una alerta de estafa, fraude o suplantación.\n// ============================================================\n\nfunction fuenteConAlerta(fuente) {\n\n  const texto = normalizarTexto(\n    `${fuente.titulo || \"\"} ${fuente.contenido || \"\"}`\n  );\n\n  const alertas = [\n    \"estafa\",\n    \"estafas\",\n    \"fraude\",\n    \"fraud\",\n    \"phishing\",\n    \"suplantacion\",\n    \"suplantación\",\n    \"alerta de estafas\",\n    \"numero falso\",\n    \"número falso\",\n    \"no corresponde\",\n    \"no pertenece\"\n  ];\n\n  return alertas.some(\n    palabra =>\n      texto.includes(normalizarTexto(palabra))\n  );\n}\n\n\n// ============================================================\n// 4. EXTRAER EMAILS\n// ============================================================\n\nfunction extraerEmails(texto) {\n\n  const regex =\n    /[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/gi;\n\n  const encontrados =\n    texto.match(regex) || [];\n\n  return [...new Set(\n    encontrados.map(\n      email =>\n        email\n          .trim()\n          .replace(/[),.;:]+$/g, \"\")\n          .toLowerCase()\n    )\n  )];\n}\n\n\n// ============================================================\n// 5. NORMALIZAR TELÉFONOS\n// ============================================================\n\nfunction normalizarTelefono(valor) {\n\n  let original = String(valor || \"\").trim();\n\n  const tieneMas =\n    original.startsWith(\"+\");\n\n  const digitos =\n    original.replace(/\\D/g, \"\");\n\n  if (\n    digitos.length < 8 ||\n    digitos.length > 15\n  ) {\n    return null;\n  }\n\n  return tieneMas\n    ? `+${digitos}`\n    : digitos;\n}\n\n\n// ============================================================\n// 6. EXTRAER TELÉFONOS / WHATSAPP\n//\n// Solo aceptamos números cuando alrededor existe una señal\n// de contacto: teléfono, celular, WhatsApp, etc.\n// ============================================================\n\nfunction extraerNumeros(texto) {\n\n  const resultados = [];\n\n  const regex =\n    /(?:\\+?\\d[\\d\\s().-]{6,}\\d)/g;\n\n  let match;\n\n  while ((match = regex.exec(texto)) !== null) {\n\n    const numero =\n      normalizarTelefono(match[0]);\n\n    if (!numero) {\n      continue;\n    }\n\n    const contexto =\n      contextoAlrededor(\n        texto,\n        match.index,\n        match.index + match[0].length,\n        100\n      );\n\n    const comparable =\n      normalizarTexto(contexto);\n\n    const señalesTelefono = [\n      \"telefono\",\n      \"teléfono\",\n      \"phone\",\n      \"celular\",\n      \"movil\",\n      \"móvil\",\n      \"contacto\",\n      \"contact\",\n      \"call\",\n      \"llamar\",\n      \"central\",\n      \"oficina\",\n      \"office\"\n    ];\n\n    const señalesWhatsapp = [\n      \"whatsapp\",\n      \"wa.me\",\n      \"api.whatsapp.com\"\n    ];\n\n    const esWhatsapp =\n      señalesWhatsapp.some(\n        x => comparable.includes(\n          normalizarTexto(x)\n        )\n      );\n\n    const esTelefono =\n      señalesTelefono.some(\n        x => comparable.includes(\n          normalizarTexto(x)\n        )\n      );\n\n    // Si no hay ninguna señal de contacto,\n    // evitamos capturar fechas u otros números.\n    if (!esWhatsapp && !esTelefono) {\n      continue;\n    }\n\n    resultados.push({\n      tipo: esWhatsapp\n        ? \"WHATSAPP\"\n        : \"TELEFONO\",\n      valor: numero,\n      contexto\n    });\n  }\n\n  return resultados;\n}\n\n\n// ============================================================\n// 7. BUSCAR CONTEXTOS CON PERSONAS / CARGOS\n//\n// Aquí NO inventamos una persona.\n// Guardamos fragmentos prometedores para que posteriormente\n// Ollama identifique nombre y cargo de forma controlada.\n// ============================================================\n\nfunction encontrarContextosPersona(fuente) {\n\n  const texto =\n    limpiarTexto(\n      `${fuente.titulo || \"\"}. ${fuente.contenido || \"\"}`\n    );\n\n  const comparable =\n    normalizarTexto(texto);\n\n  const cargos = [\n    \"gerente\",\n    \"director\",\n    \"directora\",\n    \"jefe\",\n    \"jefa\",\n    \"coordinador\",\n    \"coordinadora\",\n    \"analista\",\n    \"asistente\",\n    \"recursos humanos\",\n    \"talento humano\",\n    \"rrhh\",\n    \"human resources\",\n    \"talent\",\n    \"seleccion\",\n    \"selección\",\n    \"administracion\",\n    \"administración\"\n  ];\n\n  const encontrados =\n    cargos.filter(\n      cargo =>\n        comparable.includes(\n          normalizarTexto(cargo)\n        )\n    );\n\n  if (encontrados.length === 0) {\n    return null;\n  }\n\n  return {\n    url: fuente.url,\n    dominio: fuente.dominio,\n    texto,\n    palabras_cargo_detectadas:\n      encontrados,\n    confianza_fuente:\n      nivelConfianza(fuente)\n  };\n}\n\n\n// ============================================================\n// 8. RECORRER FUENTES\n// ============================================================\n\nconst contactos = [];\nconst contextosPersonaCargo = [];\nconst fuentesUtilizadas = [];\n\nfor (const fuente of fuentes) {\n\n  const url =\n    limpiarTexto(fuente.url);\n\n  if (!url) {\n    continue;\n  }\n\n  const confianza =\n    nivelConfianza(fuente);\n\n  // Ignoramos fuentes de confianza baja para extraer\n  // directamente información de contacto.\n  if (confianza === \"BAJA\") {\n    continue;\n  }\n\n  const alerta =\n    fuenteConAlerta(fuente);\n\n  const texto =\n    limpiarTexto(\n      `${fuente.titulo || \"\"} ${fuente.contenido || \"\"}`\n    );\n\n  fuentesUtilizadas.push({\n    ranking: fuente.ranking,\n    url,\n    dominio: fuente.dominio,\n    confianza,\n    alerta\n  });\n\n\n  // ----------------------------------------------------------\n  // EMAIL\n  // ----------------------------------------------------------\n\n  if (!alerta) {\n\n    const emails =\n      extraerEmails(texto);\n\n    for (const email of emails) {\n\n      contactos.push({\n        tipo: \"EMAIL\",\n        valor: email,\n        fuente: url,\n        dominio: fuente.dominio,\n        ranking_fuente: fuente.ranking,\n        confianza_fuente: confianza\n      });\n    }\n\n\n    // --------------------------------------------------------\n    // TELÉFONO / WHATSAPP\n    // --------------------------------------------------------\n\n    const numeros =\n      extraerNumeros(texto);\n\n    for (const numero of numeros) {\n\n      contactos.push({\n        tipo: numero.tipo,\n        valor: numero.valor,\n        fuente: url,\n        dominio: fuente.dominio,\n        ranking_fuente: fuente.ranking,\n        confianza_fuente: confianza,\n        contexto: numero.contexto\n      });\n    }\n  }\n\n\n  // ----------------------------------------------------------\n  // POSIBLE PERSONA / CARGO\n  // ----------------------------------------------------------\n\n  const contextoPersona =\n    encontrarContextosPersona(fuente);\n\n  if (contextoPersona) {\n    contextosPersonaCargo.push(\n      contextoPersona\n    );\n  }\n}\n\n\n// ============================================================\n// 9. ELIMINAR CONTACTOS DUPLICADOS\n// ============================================================\n\nconst clavesVistas =\n  new Set();\n\nconst contactosUnicos =\n  contactos.filter(contacto => {\n\n    const clave =\n      `${contacto.tipo}|${contacto.valor}`;\n\n    if (clavesVistas.has(clave)) {\n      return false;\n    }\n\n    clavesVistas.add(clave);\n\n    return true;\n  });\n\n\n// ============================================================\n// 10. ORDEN DE CONFIANZA\n// ============================================================\n\nconst pesoConfianza = {\n  MUY_ALTA: 4,\n  ALTA: 3,\n  MEDIA: 2,\n  BAJA: 1\n};\n\ncontactosUnicos.sort((a, b) => {\n\n  const confianzaA =\n    pesoConfianza[a.confianza_fuente] || 0;\n\n  const confianzaB =\n    pesoConfianza[b.confianza_fuente] || 0;\n\n  if (confianzaA !== confianzaB) {\n    return confianzaB - confianzaA;\n  }\n\n  return (\n    Number(a.ranking_fuente || 999) -\n    Number(b.ranking_fuente || 999)\n  );\n});\n\n\n// ============================================================\n// 11. SEPARAR CONTACTOS\n// ============================================================\n\nconst emails =\n  contactosUnicos.filter(\n    x => x.tipo === \"EMAIL\"\n  );\n\nconst whatsapps =\n  contactosUnicos.filter(\n    x => x.tipo === \"WHATSAPP\"\n  );\n\nconst telefonos =\n  contactosUnicos.filter(\n    x => x.tipo === \"TELEFONO\"\n  );\n\n\n// ============================================================\n// 12. SITIO WEB PROBABLE\n// ============================================================\n\nconst fuenteOficial =\n  fuentes.find(f => {\n\n    const identidad =\n      f.identidad_empresa || {};\n\n    return (\n      identidad.dominio_empresa_exacto === true ||\n      identidad.dominio_empresa_fuerte === true\n    );\n  });\n\nconst sitioWebProbable =\n  fuenteOficial\n    ? `https://${fuenteOficial.dominio}`\n    : \"NO IDENTIFICADO\";\n\n\n// ============================================================\n// 13. RESUMEN DE CONTACTABILIDAD\n// ============================================================\n\nlet contactabilidadInvestigada =\n  \"SIN_CONTACTO\";\n\nif (\n  emails.length > 0 &&\n  (telefonos.length > 0 ||\n   whatsapps.length > 0)\n) {\n  contactabilidadInvestigada =\n    \"ALTA\";\n\n} else if (\n  emails.length > 0 ||\n  telefonos.length > 0 ||\n  whatsapps.length > 0\n) {\n  contactabilidadInvestigada =\n    \"MEDIA\";\n}\n\n\n// ============================================================\n// 14. QUÉ FALTA BUSCAR\n// ============================================================\n\nconst datosFaltantes = [];\n\nif (whatsapps.length === 0 &&\n    telefonos.length === 0) {\n  datosFaltantes.push(\n    \"WHATSAPP_O_TELEFONO\"\n  );\n}\n\nif (emails.length === 0) {\n  datosFaltantes.push(\n    \"EMAIL\"\n  );\n}\n\n// Persona y cargo todavía deben pasar por extracción semántica.\ndatosFaltantes.push(\n  \"PERSONA_CONTACTO\",\n  \"CARGO_CONTACTO\"\n);\n\n\n// ============================================================\n// 15. URLS PRIORITARIAS PARA VERIFICAR DESPUÉS\n// ============================================================\n\nconst urlsParaVerificar =\n  fuentes\n    .filter(f => {\n\n      const identidad =\n        f.identidad_empresa || {};\n\n      return (\n        identidad.dominio_empresa_exacto === true ||\n        identidad.dominio_empresa_fuerte === true\n      );\n    })\n    .slice(0, 5)\n    .map(f => ({\n      url: f.url,\n      dominio: f.dominio,\n      titulo: f.titulo,\n      puntuacion: f.puntuacion\n    }));\n\n\n// ============================================================\n// 16. RESULTADO FINAL\n// ============================================================\n\nreturn [\n  {\n    json: {\n\n      empresa,\n\n      sitio_web_probable:\n        sitioWebProbable,\n\n      estado_investigacion:\n        \"CONTACTOS_EXTRAIDOS_DE_BUSQUEDA\",\n\n      prioridad_contacto: [\n        \"WHATSAPP_O_TELEFONO\",\n        \"EMAIL\",\n        \"PERSONA_CONTACTO\",\n        \"CARGO_CONTACTO\"\n      ],\n\n      contactabilidad_investigada:\n        contactabilidadInvestigada,\n\n      whatsapp_encontrados:\n        whatsapps,\n\n      telefonos_encontrados:\n        telefonos,\n\n      emails_encontrados:\n        emails,\n\n      persona_contacto:\n        \"NO ENCONTRADO\",\n\n      cargo_contacto:\n        \"NO ENCONTRADO\",\n\n      contextos_persona_cargo:\n        contextosPersonaCargo.slice(0, 8),\n\n      datos_contacto_faltantes:\n        datosFaltantes,\n\n      urls_para_verificar:\n        urlsParaVerificar,\n\n      fuentes_utilizadas:\n        fuentesUtilizadas,\n\n      siguiente_accion:\n        \"VERIFICAR_PAGINAS_Y_EXTRAER_PERSONA_CARGO\"\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        -320
+      ],
+      "id": "985e4efd-bce8-42d1-a159-aabeabcbd887",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "urls_para_verificar",
+        "include": "allOtherFields",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        736,
+        192
+      ],
+      "id": "d00431e0-6bf1-4736-8ecb-9bdfb71005ba",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "url": "={{$json.urls_para_verificar.url}}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        880,
+        208
+      ],
+      "id": "1b205749-70a4-43bb-9107-6bc502079f82",
+      "name": "HTTP Request2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const paginasHttp = $input.all();\nconst paginasOrigen = $(\"Split Out\").all();\n\nconst empresaBase = $(\"Code in JavaScript2\").first().json;\nconst empresa = empresaBase.empresa || \"NO IDENTIFICADO\";\n\n\n// ============================================================\n// FUNCIONES\n// ============================================================\n\nfunction limpiarEspacios(texto) {\n  return String(texto || \"\")\n    .replace(/\\s+/g, \" \")\n    .trim();\n}\n\nfunction decodificarHtml(texto) {\n  return String(texto || \"\")\n    .replace(/&nbsp;/gi, \" \")\n    .replace(/&amp;/gi, \"&\")\n    .replace(/&quot;/gi, '\"')\n    .replace(/&#39;/gi, \"'\")\n    .replace(/&lt;/gi, \"<\")\n    .replace(/&gt;/gi, \">\")\n    .replace(/&#(\\d+);/g, (_, n) => {\n      try {\n        return String.fromCharCode(Number(n));\n      } catch {\n        return \"\";\n      }\n    });\n}\n\nfunction htmlATexto(html) {\n  return limpiarEspacios(\n    decodificarHtml(\n      String(html || \"\")\n        .replace(/<script[\\s\\S]*?<\\/script>/gi, \" \")\n        .replace(/<style[\\s\\S]*?<\\/style>/gi, \" \")\n        .replace(/<noscript[\\s\\S]*?<\\/noscript>/gi, \" \")\n        .replace(/<svg[\\s\\S]*?<\\/svg>/gi, \" \")\n        .replace(/<!--[\\s\\S]*?-->/g, \" \")\n        .replace(/<br\\s*\\/?>/gi, \" \")\n        .replace(/<\\/p>/gi, \" \")\n        .replace(/<\\/div>/gi, \" \")\n        .replace(/<\\/li>/gi, \" \")\n        .replace(/<[^>]+>/g, \" \")\n    )\n  );\n}\n\nfunction normalizarTelefono(valor) {\n  const original = String(valor || \"\").trim();\n\n  let limpio = original\n    .replace(/^tel:/i, \"\")\n    .replace(/^phone:/i, \"\")\n    .trim();\n\n  const tieneMas = limpio.startsWith(\"+\");\n  const digitos = limpio.replace(/\\D/g, \"\");\n\n  if (digitos.length < 7 || digitos.length > 15) {\n    return null;\n  }\n\n  return tieneMas\n    ? `+${digitos}`\n    : digitos;\n}\n\nfunction unicos(lista) {\n  return [...new Set(\n    lista\n      .filter(Boolean)\n      .map(x => String(x).trim())\n  )];\n}\n\nfunction obtenerTitulo(html) {\n  const match = String(html || \"\")\n    .match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i);\n\n  return match\n    ? limpiarEspacios(decodificarHtml(match[1]))\n    : \"\";\n}\n\nfunction extraerEmails(html, texto) {\n  const encontrados = [];\n\n  // mailto: es la señal más fuerte\n  const mailto =\n    /href\\s*=\\s*[\"']mailto:([^\"'?]+)[^\"']*[\"']/gi;\n\n  let m;\n\n  while ((m = mailto.exec(html)) !== null) {\n    encontrados.push(\n      String(m[1]).trim().toLowerCase()\n    );\n  }\n\n  // Correos visibles en la página\n  const regexEmail =\n    /[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/gi;\n\n  const visibles =\n    String(texto || \"\").match(regexEmail) || [];\n\n  encontrados.push(\n    ...visibles.map(x =>\n      x\n        .replace(/[),.;:]+$/g, \"\")\n        .toLowerCase()\n    )\n  );\n\n  return unicos(encontrados);\n}\n\nfunction extraerTelefonosTel(html) {\n  const telefonos = [];\n\n  const regex =\n    /href\\s*=\\s*[\"']tel:([^\"']+)[\"']/gi;\n\n  let m;\n\n  while ((m = regex.exec(html)) !== null) {\n    const tel = normalizarTelefono(m[1]);\n\n    if (tel) {\n      telefonos.push(tel);\n    }\n  }\n\n  return unicos(telefonos);\n}\n\nfunction extraerWhatsapps(html) {\n  const whatsapps = [];\n\n  const patrones = [\n    /https?:\\/\\/wa\\.me\\/(\\d+)/gi,\n    /https?:\\/\\/api\\.whatsapp\\.com\\/send\\?[^\"']*phone=(\\d+)/gi,\n    /https?:\\/\\/(?:www\\.)?whatsapp\\.com\\/send\\?[^\"']*phone=(\\d+)/gi\n  ];\n\n  for (const regex of patrones) {\n    let m;\n\n    while ((m = regex.exec(html)) !== null) {\n      const numero =\n        normalizarTelefono(m[1]);\n\n      if (numero) {\n        whatsapps.push(numero);\n      }\n    }\n  }\n\n  return unicos(whatsapps);\n}\n\nfunction extraerLinksSociales(html) {\n  const links = {\n    linkedin: [],\n    facebook: [],\n    instagram: [],\n    youtube: [],\n    x_twitter: []\n  };\n\n  const regex =\n    /href\\s*=\\s*[\"'](https?:\\/\\/[^\"']+)[\"']/gi;\n\n  let m;\n\n  while ((m = regex.exec(html)) !== null) {\n    const url =\n      decodificarHtml(m[1]).trim();\n\n    const low = url.toLowerCase();\n\n    if (low.includes(\"linkedin.com\")) {\n      links.linkedin.push(url);\n    }\n\n    if (low.includes(\"facebook.com\")) {\n      links.facebook.push(url);\n    }\n\n    if (low.includes(\"instagram.com\")) {\n      links.instagram.push(url);\n    }\n\n    if (low.includes(\"youtube.com\") ||\n        low.includes(\"youtu.be\")) {\n      links.youtube.push(url);\n    }\n\n    if (low.includes(\"twitter.com\") ||\n        low.includes(\"x.com\")) {\n      links.x_twitter.push(url);\n    }\n  }\n\n  for (const key of Object.keys(links)) {\n    links[key] = unicos(links[key]);\n  }\n\n  return links;\n}\n\n\n// ============================================================\n// EXTRAER FRAGMENTOS IMPORTANTES\n// ============================================================\n\nfunction obtenerFragmentos(texto) {\n\n  const palabras = [\n    \"correo\",\n    \"email\",\n    \"teléfono\",\n    \"telefono\",\n    \"whatsapp\",\n    \"contacto\",\n    \"trabaja con nosotros\",\n    \"talento\",\n    \"recursos humanos\",\n    \"selección\",\n    \"seleccion\",\n    \"colaboradores\",\n    \"empleados\",\n    \"quiénes somos\",\n    \"quienes somos\",\n    \"ecuador\",\n    \"quito\",\n    \"guayaquil\"\n  ];\n\n  const textoLower =\n    texto.toLowerCase();\n\n  const fragmentos = [];\n\n  for (const palabra of palabras) {\n\n    let posicion =\n      textoLower.indexOf(palabra);\n\n    while (posicion >= 0) {\n\n      const inicio =\n        Math.max(0, posicion - 250);\n\n      const fin =\n        Math.min(\n          texto.length,\n          posicion + palabra.length + 450\n        );\n\n      fragmentos.push(\n        limpiarEspacios(\n          texto.slice(inicio, fin)\n        )\n      );\n\n      posicion =\n        textoLower.indexOf(\n          palabra,\n          posicion + palabra.length\n        );\n    }\n  }\n\n  return unicos(fragmentos)\n    .slice(0, 15);\n}\n\n\n// ============================================================\n// PROCESAR LAS PÁGINAS\n// ============================================================\n\nconst paginasProcesadas = [];\n\nfor (let i = 0; i < paginasHttp.length; i++) {\n\n  const respuesta =\n    paginasHttp[i]?.json || {};\n\n  const origen =\n    paginasOrigen[i]?.json\n      ?.urls_para_verificar || {};\n\n  const html =\n    String(respuesta.data || \"\");\n\n  if (!html) {\n    continue;\n  }\n\n  const texto =\n    htmlATexto(html);\n\n  const titulo =\n    obtenerTitulo(html) ||\n    origen.titulo ||\n    \"\";\n\n  const emails =\n    extraerEmails(html, texto);\n\n  const telefonos =\n    extraerTelefonosTel(html);\n\n  const whatsapps =\n    extraerWhatsapps(html);\n\n  const redes =\n    extraerLinksSociales(html);\n\n  const fragmentos =\n    obtenerFragmentos(texto);\n\n  paginasProcesadas.push({\n\n    url:\n      origen.url || \"NO IDENTIFICADA\",\n\n    dominio:\n      origen.dominio || \"NO IDENTIFICADO\",\n\n    titulo,\n\n    emails,\n\n    telefonos,\n\n    whatsapps,\n\n    redes_sociales:\n      redes,\n\n    fragmentos_relevantes:\n      fragmentos,\n\n    texto_limpio_muestra:\n      texto.slice(0, 5000)\n  });\n}\n\n\n// ============================================================\n// CONSOLIDAR CONTACTOS\n// ============================================================\n\nconst emailsConFuente = [];\nconst telefonosConFuente = [];\nconst whatsappsConFuente = [];\n\nfor (const pagina of paginasProcesadas) {\n\n  for (const email of pagina.emails) {\n\n    emailsConFuente.push({\n      email,\n      fuente: pagina.url,\n      dominio: pagina.dominio\n    });\n  }\n\n  for (const telefono of pagina.telefonos) {\n\n    telefonosConFuente.push({\n      telefono,\n      fuente: pagina.url,\n      dominio: pagina.dominio\n    });\n  }\n\n  for (const whatsapp of pagina.whatsapps) {\n\n    whatsappsConFuente.push({\n      whatsapp,\n      fuente: pagina.url,\n      dominio: pagina.dominio\n    });\n  }\n}\n\n\n// ============================================================\n// ELIMINAR DUPLICADOS CONSERVANDO FUENTE\n// ============================================================\n\nfunction deduplicarPor(lista, campo) {\n\n  const vistos = new Set();\n  const salida = [];\n\n  for (const item of lista) {\n\n    const valor =\n      String(item[campo] || \"\").toLowerCase();\n\n    if (!valor || vistos.has(valor)) {\n      continue;\n    }\n\n    vistos.add(valor);\n    salida.push(item);\n  }\n\n  return salida;\n}\n\n\n// ============================================================\n// DETECTAR POSIBLE NÚMERO DE COLABORADORES\n// SIN INVENTAR\n// ============================================================\n\nconst candidatosColaboradores = [];\n\nfor (const pagina of paginasProcesadas) {\n\n  const fragmentos =\n    pagina.fragmentos_relevantes || [];\n\n  for (const fragmento of fragmentos) {\n\n    if (\n      /colaboradores|empleados/i.test(\n        fragmento\n      )\n    ) {\n\n      candidatosColaboradores.push({\n        texto: fragmento,\n        fuente: pagina.url\n      });\n    }\n  }\n}\n\n\n// ============================================================\n// RESULTADO FINAL\n// ============================================================\n\nreturn [\n  {\n    json: {\n\n      empresa,\n\n      estado:\n        \"PAGINAS_OFICIALES_PROCESADAS\",\n\n      total_paginas_procesadas:\n        paginasProcesadas.length,\n\n      emails_oficiales:\n        deduplicarPor(\n          emailsConFuente,\n          \"email\"\n        ),\n\n      telefonos_oficiales:\n        deduplicarPor(\n          telefonosConFuente,\n          \"telefono\"\n        ),\n\n      whatsapp_oficiales:\n        deduplicarPor(\n          whatsappsConFuente,\n          \"whatsapp\"\n        ),\n\n      candidatos_numero_colaboradores:\n        candidatosColaboradores\n          .slice(0, 10),\n\n      paginas:\n        paginasProcesadas,\n\n      siguiente_accion:\n        \"ANALIZAR_EMPRESA_Y_BUSCAR_PERSONA_CONTACTO\"\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1056,
+        176
+      ],
+      "id": "77a76332-98ea-4d7f-ba22-0c77ec20e699",
+      "name": "Code in JavaScript3"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2795304d-0158-4daa-9405-eb9497f3e80e",
+              "name": "consulta_persona_contacto",
+              "value": "={{ '\"' + $json.empresa + '\" (\"Talento Humano\" OR \"Recursos Humanos\" OR RRHH OR \"Human Resources\" OR People OR Selección OR Seleccion) (gerente OR director OR directora OR jefe OR jefa OR coordinador OR coordinadora OR analista)' }}",
+              "type": "string"
+            },
+            {
+              "id": "337dfa8f-5325-4a42-8533-631ddee8306a",
+              "name": "tipo_busqueda",
+              "value": "PERSONA_CONTACTO_RRHH",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -816,
+        448
+      ],
+      "id": "6d2e9812-2b6a-4374-9866-43876a416210",
+      "name": "Edit Fields3"
+    },
+    {
+      "parameters": {
+        "url": "http://searxng:8080/search?format=json",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{$json.consulta_persona_contacto}}"
+            },
+            {
+              "name": "safesearch",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -672,
+        448
+      ],
+      "id": "356c65ac-0c60-4e6f-9f20-5697f478cf98",
+      "name": "HTTP Request3"
+    },
+    {
+      "parameters": {
+        "jsCode": "const busqueda = $input.first().json;\nconst contexto = $(\"Edit Fields3\").first().json;\n\nconst empresa = contexto.empresa || \"NO IDENTIFICADO\";\n\nconst resultados = Array.isArray(busqueda.results)\n  ? busqueda.results\n  : [];\n\n\n// ============================================================\n// 1. FUNCIONES GENERALES\n// ============================================================\n\nfunction limpiar(texto) {\n  return String(texto || \"\")\n    .replace(/\\s+/g, \" \")\n    .trim();\n}\n\nfunction normalizar(texto) {\n  return limpiar(texto)\n    .toLowerCase()\n    .normalize(\"NFD\")\n    .replace(/[\\u0300-\\u036f]/g, \"\");\n}\n\n\n// ============================================================\n// 2. EXTRAER DOMINIO SIN USAR new URL()\n// ============================================================\n\nfunction dominioDe(url) {\n\n  let texto = String(url || \"\")\n    .trim()\n    .toLowerCase();\n\n  texto = texto\n    .replace(/^https?:\\/\\//, \"\")\n    .replace(/^www\\./, \"\");\n\n  texto = texto.split(\"/\")[0];\n  texto = texto.split(\"?\")[0];\n  texto = texto.split(\"#\")[0];\n  texto = texto.split(\":\")[0];\n\n  return texto;\n}\n\n\n// ============================================================\n// 3. DETECTAR ALERTAS / FRAUDE\n// ============================================================\n\nfunction esAlerta(titulo, contenido, url) {\n\n  const t = normalizar(\n    `${titulo} ${contenido} ${url}`\n  );\n\n  const señales = [\n    \"alerta\",\n    \"estafa\",\n    \"estafas\",\n    \"fraude\",\n    \"fraud\",\n    \"phishing\",\n    \"suplantacion\",\n    \"oferta falsa\",\n    \"ofertas falsas\",\n    \"oferta laboral falsa\",\n    \"ofertas laborales falsas\",\n    \"numero falso\",\n    \"mensajes falsos\",\n    \"no solicita pagos\",\n    \"no solicita transferencias\",\n    \"no realizar pagos\",\n    \"cuidado\"\n  ];\n\n  return señales.some(\n    señal =>\n      t.includes(normalizar(señal))\n  );\n}\n\n\n// ============================================================\n// 4. VALIDAR EMPRESA\n// ============================================================\n\nfunction tieneEmpresa(texto) {\n\n  const t = normalizar(texto);\n\n  return (\n    t.includes(\"corporacion favorita\") ||\n    t.includes(\"corporacion favorita c.a\") ||\n    t.includes(\"corporacion favorita ca\")\n  );\n}\n\n\n// ============================================================\n// 5. VALIDAR ÁREA RRHH\n// ============================================================\n\nfunction tieneRRHH(texto) {\n\n  const t = normalizar(texto);\n\n  const palabras = [\n    \"talento humano\",\n    \"recursos humanos\",\n    \"rrhh\",\n    \"human resources\",\n    \"people\",\n    \"seleccion\",\n    \"selección\",\n    \"talent acquisition\",\n    \"reclutamiento\"\n  ];\n\n  return palabras.some(\n    palabra =>\n      t.includes(normalizar(palabra))\n  );\n}\n\n\n// ============================================================\n// 6. IDENTIFICAR PERFIL PERSONAL LINKEDIN\n// ============================================================\n\nfunction esPerfilLinkedInPersonal(url) {\n\n  const u = normalizar(url);\n\n  return (\n    u.includes(\"linkedin.com/in/\") ||\n    u.includes(\"ec.linkedin.com/in/\")\n  );\n}\n\n\n// ============================================================\n// 7. EXTRAER NOMBRE DESDE TÍTULO LINKEDIN\n//\n// Ejemplos:\n// Eva Crespo - Sub Jefe...\n// Gitta Bajana - Corporacion Favorita...\n// ============================================================\n\nfunction nombreDesdeTituloLinkedIn(titulo, url) {\n\n  if (!esPerfilLinkedInPersonal(url)) {\n    return \"NO ENCONTRADO\";\n  }\n\n  const tituloLimpio =\n    limpiar(titulo);\n\n  const primeraParte =\n    tituloLimpio.split(\" - \")[0].trim();\n\n  if (!primeraParte) {\n    return \"NO ENCONTRADO\";\n  }\n\n  const palabras =\n    primeraParte.split(/\\s+/);\n\n  if (\n    palabras.length < 2 ||\n    palabras.length > 5\n  ) {\n    return \"NO ENCONTRADO\";\n  }\n\n  const prohibidos = [\n    \"corporacion favorita\",\n    \"corporación favorita\",\n    \"linkedin\",\n    \"contacto\",\n    \"empleos\",\n    \"trabajo\"\n  ];\n\n  const comparacion =\n    normalizar(primeraParte);\n\n  if (\n    prohibidos.some(\n      p => comparacion.includes(normalizar(p))\n    )\n  ) {\n    return \"NO ENCONTRADO\";\n  }\n\n  return primeraParte;\n}\n\n\n// ============================================================\n// 8. EXTRAER PERSONA DESDE CONTENIDO\n//\n// Ejemplo:\n// Diana Terán,. Sub Jefe de talento Humano\n// ============================================================\n\nfunction nombreDesdeContenido(texto) {\n\n  const limpio =\n    limpiar(texto);\n\n  const patrones = [\n\n    /([A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚáéíóúñÑ'-]+(?:\\s+[A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚáéíóúñÑ'-]+){1,3})\\s*,?\\.?\\s*(?:Sub\\s+Jefe|Sub\\s+Jefa|Jefe|Jefa|Gerente|Director|Directora|Coordinador|Coordinadora)\\s+de\\s+(?:Talento\\s+Humano|Recursos\\s+Humanos)/i\n\n  ];\n\n  for (const regex of patrones) {\n\n    const match =\n      limpio.match(regex);\n\n    if (\n      match &&\n      match[1]\n    ) {\n      return limpiar(match[1]);\n    }\n  }\n\n  return \"NO ENCONTRADO\";\n}\n\n\n// ============================================================\n// 9. EXTRAER CARGO\n// ============================================================\n\nfunction extraerCargo(texto) {\n\n  const limpio =\n    limpiar(texto);\n\n  const patrones = [\n\n    /Sub\\s+Jefe\\s+de\\s+Talento\\s+Humano(?:,\\s*Zona\\s+[A-Za-zÁÉÍÓÚáéíóúñÑ]+)?/i,\n\n    /Sub\\s+Jefa\\s+de\\s+Talento\\s+Humano(?:,\\s*Zona\\s+[A-Za-zÁÉÍÓÚáéíóúñÑ]+)?/i,\n\n    /Jefe\\s+Corporativo\\s+de\\s+Talento\\s+Humano/i,\n\n    /Jefa\\s+Corporativa\\s+de\\s+Talento\\s+Humano/i,\n\n    /Jefe\\s+de\\s+Talento\\s+Humano/i,\n\n    /Jefa\\s+de\\s+Talento\\s+Humano/i,\n\n    /Gerente\\s+de\\s+Talento\\s+Humano/i,\n\n    /Gerente\\s+de\\s+Recursos\\s+Humanos/i,\n\n    /Director\\s+de\\s+Talento\\s+Humano/i,\n\n    /Directora\\s+de\\s+Talento\\s+Humano/i,\n\n    /Director\\s+de\\s+Recursos\\s+Humanos/i,\n\n    /Directora\\s+de\\s+Recursos\\s+Humanos/i,\n\n    /Coordinador\\s+de\\s+Talento\\s+Humano/i,\n\n    /Coordinadora\\s+de\\s+Talento\\s+Humano/i,\n\n    /Coordinador\\s+de\\s+Recursos\\s+Humanos/i,\n\n    /Coordinadora\\s+de\\s+Recursos\\s+Humanos/i,\n\n    /Analista\\s+de\\s+Talento\\s+Humano/i,\n\n    /Analista\\s+de\\s+Recursos\\s+Humanos/i\n\n  ];\n\n  for (const regex of patrones) {\n\n    const match =\n      limpio.match(regex);\n\n    if (match) {\n      return limpiar(match[0]);\n    }\n  }\n\n  return \"NO IDENTIFICADO\";\n}\n\n\n// ============================================================\n// 10. CLASIFICAR TIPO DE FUENTE\n// ============================================================\n\nfunction tipoFuente(url, dominio) {\n\n  if (\n    esPerfilLinkedInPersonal(url)\n  ) {\n    return \"LINKEDIN_PERSONAL\";\n  }\n\n  if (\n    dominio === \"corporacionfavorita.com\"\n  ) {\n    return \"WEB_CORPORATIVA\";\n  }\n\n  if (\n    dominio.includes(\"maxionline.ec\")\n  ) {\n    return \"FUENTE_RELACIONADA_EMPRESA\";\n  }\n\n  if (\n    dominio.includes(\"facebook.com\") ||\n    dominio.includes(\"instagram.com\")\n  ) {\n    return \"RED_SOCIAL\";\n  }\n\n  return \"FUENTE_PUBLICA_EXTERNA\";\n}\n\n\n// ============================================================\n// 11. ANALIZAR RESULTADOS\n// ============================================================\n\nconst candidatos = [];\nconst descartados = [];\n\nfor (\n  let i = 0;\n  i < resultados.length;\n  i++\n) {\n\n  const r =\n    resultados[i] || {};\n\n  const titulo =\n    limpiar(r.title);\n\n  const contenido =\n    limpiar(r.content);\n\n  const url =\n    limpiar(r.url);\n\n  const dominio =\n    dominioDe(url);\n\n  const textoCompleto =\n    `${titulo} ${contenido}`;\n\n  // ----------------------------------------------------------\n  // ALERTAS / FRAUDE\n  // ----------------------------------------------------------\n\n  if (\n    esAlerta(\n      titulo,\n      contenido,\n      url\n    )\n  ) {\n\n    descartados.push({\n\n      ranking_original:\n        i + 1,\n\n      titulo,\n\n      url,\n\n      dominio,\n\n      motivo:\n        \"ALERTA_O_POSIBLE_ESTAFA\"\n\n    });\n\n    continue;\n  }\n\n\n  // ----------------------------------------------------------\n  // VALIDACIÓN CONTEXTUAL\n  // ----------------------------------------------------------\n\n  const relacionEmpresa =\n    tieneEmpresa(textoCompleto);\n\n  const relacionRRHH =\n    tieneRRHH(textoCompleto);\n\n  if (!relacionEmpresa) {\n    continue;\n  }\n\n  // Para candidatos RRHH exigimos evidencia explícita\n  // del área correspondiente.\n  if (!relacionRRHH) {\n    continue;\n  }\n\n\n  // ----------------------------------------------------------\n  // PERSONA\n  // ----------------------------------------------------------\n\n  let persona =\n    nombreDesdeTituloLinkedIn(\n      titulo,\n      url\n    );\n\n  if (\n    persona ===\n    \"NO ENCONTRADO\"\n  ) {\n\n    persona =\n      nombreDesdeContenido(\n        textoCompleto\n      );\n  }\n\n\n  // ----------------------------------------------------------\n  // CARGO\n  // ----------------------------------------------------------\n\n  const cargo =\n    extraerCargo(\n      textoCompleto\n    );\n\n\n  // ----------------------------------------------------------\n  // TIPO FUENTE\n  // ----------------------------------------------------------\n\n  const fuenteTipo =\n    tipoFuente(\n      url,\n      dominio\n    );\n\n\n  // ----------------------------------------------------------\n  // PUNTUACIÓN\n  // ----------------------------------------------------------\n\n  let puntuacion = 0;\n\n  const razones = [];\n\n\n  if (relacionEmpresa) {\n\n    puntuacion += 30;\n\n    razones.push(\n      \"EMPRESA_COINCIDE\"\n    );\n  }\n\n\n  if (relacionRRHH) {\n\n    puntuacion += 35;\n\n    razones.push(\n      \"AREA_RRHH_COINCIDE\"\n    );\n  }\n\n\n  if (\n    esPerfilLinkedInPersonal(url)\n  ) {\n\n    puntuacion += 40;\n\n    razones.push(\n      \"PERFIL_LINKEDIN_PERSONAL\"\n    );\n  }\n\n\n  if (\n    persona !==\n    \"NO ENCONTRADO\"\n  ) {\n\n    puntuacion += 30;\n\n    razones.push(\n      \"PERSONA_IDENTIFICADA\"\n    );\n  }\n\n\n  if (\n    cargo !==\n    \"NO IDENTIFICADO\"\n  ) {\n\n    puntuacion += 35;\n\n    razones.push(\n      \"CARGO_RRHH_IDENTIFICADO\"\n    );\n  }\n\n\n  if (\n    dominio ===\n    \"corporacionfavorita.com\"\n  ) {\n\n    puntuacion += 25;\n\n    razones.push(\n      \"DOMINIO_CORPORATIVO\"\n    );\n  }\n\n\n  if (\n    dominio.includes(\n      \"maxionline.ec\"\n    )\n  ) {\n\n    puntuacion += 20;\n\n    razones.push(\n      \"FUENTE_RELACIONADA_EMPRESA\"\n    );\n  }\n\n\n  // ----------------------------------------------------------\n  // NIVEL DE CONFIANZA\n  // ----------------------------------------------------------\n\n  let confianza =\n    \"BAJA\";\n\n  if (\n    puntuacion >= 130 &&\n    persona !== \"NO ENCONTRADO\" &&\n    cargo !== \"NO IDENTIFICADO\"\n  ) {\n\n    confianza =\n      \"ALTA\";\n\n  } else if (\n    puntuacion >= 85\n  ) {\n\n    confianza =\n      \"MEDIA\";\n  }\n\n\n  // ----------------------------------------------------------\n  // GUARDAR CANDIDATO\n  // ----------------------------------------------------------\n\n  candidatos.push({\n\n    persona_contacto:\n      persona,\n\n    cargo_contacto:\n      cargo,\n\n    empresa,\n\n    fuente_url:\n      url,\n\n    fuente_dominio:\n      dominio,\n\n    tipo_fuente:\n      fuenteTipo,\n\n    titulo_fuente:\n      titulo,\n\n    evidencia:\n      contenido,\n\n    puntuacion,\n\n    confianza,\n\n    razones,\n\n    requiere_verificacion:\n      true\n\n  });\n}\n\n\n// ============================================================\n// 12. ORDENAR POR PUNTUACIÓN\n// ============================================================\n\ncandidatos.sort(\n  (a, b) =>\n    b.puntuacion -\n    a.puntuacion\n);\n\n\n// ============================================================\n// 13. DEDUPLICAR\n// ============================================================\n\nconst vistos =\n  new Set();\n\nconst candidatosUnicos =\n  candidatos.filter(c => {\n\n    const persona =\n      normalizar(\n        c.persona_contacto\n      );\n\n    let clave;\n\n    if (\n      persona !==\n      normalizar(\n        \"NO ENCONTRADO\"\n      )\n    ) {\n\n      clave =\n        `PERSONA:${persona}`;\n\n    } else {\n\n      clave =\n        `SIN_PERSONA:${normalizar(\n          c.cargo_contacto\n        )}|${c.fuente_dominio}`;\n    }\n\n    if (\n      vistos.has(clave)\n    ) {\n      return false;\n    }\n\n    vistos.add(clave);\n\n    return true;\n  });\n\n\n// ============================================================\n// 14. MEJOR CANDIDATO\n// ============================================================\n\nconst mejor =\n  candidatosUnicos.length > 0\n    ? candidatosUnicos[0]\n    : null;\n\n\n// ============================================================\n// 15. RESULTADO FINAL\n// ============================================================\n\nreturn [\n  {\n    json: {\n\n      empresa,\n\n      estado:\n        \"CANDIDATOS_RRHH_FILTRADOS\",\n\n      total_resultados_busqueda:\n        resultados.length,\n\n      total_candidatos:\n        candidatosUnicos.length,\n\n      mejor_candidato:\n        mejor || {\n\n          persona_contacto:\n            \"NO ENCONTRADO\",\n\n          cargo_contacto:\n            \"NO IDENTIFICADO\"\n\n        },\n\n      candidatos_contacto:\n        candidatosUnicos.slice(\n          0,\n          10\n        ),\n\n      resultados_descartados_peligrosos:\n        descartados,\n\n      siguiente_accion:\n        candidatosUnicos.length > 0\n          ? \"VERIFICAR_CANDIDATOS_Y_BUSCAR_CONTACTO_DIRECTO\"\n          : \"AMPLIAR_BUSQUEDA_PERSONA_CONTACTO\"\n\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -512,
+        464
+      ],
+      "id": "ef5cbf1c-b9d5-47d5-9f56-c0a7b8f65d57",
+      "name": "Code in JavaScript4"
+    },
+    {
+      "parameters": {
+        "jsCode": "const entrada = $input.first().json;\n\nconst empresa =\n  entrada.empresa || \"NO IDENTIFICADO\";\n\nconst candidatos =\n  Array.isArray(entrada.candidatos_contacto)\n    ? entrada.candidatos_contacto\n    : [];\n\n\n// ============================================================\n// SOLO PERSONAS REALES DE ALTA CONFIANZA\n// ============================================================\n\nconst candidatosVerificar =\n  candidatos\n    .filter(c =>\n      c.persona_contacto &&\n      c.persona_contacto !== \"NO ENCONTRADO\" &&\n      c.confianza === \"ALTA\"\n    )\n    .slice(0, 5)\n    .map((c, index) => {\n\n      const persona =\n        c.persona_contacto;\n\n      const cargo =\n        c.cargo_contacto || \"NO IDENTIFICADO\";\n\n      return {\n\n        prioridad:\n          index + 1,\n\n        empresa,\n\n        persona_contacto:\n          persona,\n\n        cargo_contacto:\n          cargo,\n\n        fuente_persona:\n          c.fuente_url,\n\n        confianza_persona:\n          c.confianza,\n\n        consulta_contacto_directo:\n          `\"${persona}\" \"${empresa}\" (email OR correo OR contacto OR telefono OR teléfono OR whatsapp)`,\n\n        consulta_profesional:\n          `\"${persona}\" \"${empresa}\" \"${cargo}\"`,\n\n        reglas_busqueda: {\n          no_inventar_email: true,\n          no_asumir_whatsapp: true,\n          aceptar_solo_datos_publicos: true,\n          conservar_fuente: true\n        }\n      };\n    });\n\n\n// ============================================================\n// RESULTADO\n// ============================================================\n\nreturn [\n  {\n    json: {\n\n      empresa,\n\n      estado:\n        \"CANDIDATOS_LISTOS_PARA_CONTACTO\",\n\n      total_candidatos_verificar:\n        candidatosVerificar.length,\n\n      candidatos_verificar:\n        candidatosVerificar,\n\n      siguiente_accion:\n        candidatosVerificar.length > 0\n          ? \"BUSCAR_CONTACTO_PUBLICO_POR_PERSONA\"\n          : \"AMPLIAR_BUSQUEDA_PERSONAS\"\n\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -368,
+        464
+      ],
+      "id": "dd8cf26d-b32c-4a5e-a0a8-9ad58ab27848",
+      "name": "Code in JavaScript5"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "candidatos_verificar",
+        "include": "allOtherFields",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -224,
+        464
+      ],
+      "id": "93efc835-2cd2-49ed-a754-6714da85cbff",
+      "name": "Split Out1"
+    },
+    {
+      "parameters": {
+        "url": "http://searxng:8080/search?format=json",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{$json.candidatos_verificar.consulta_contacto_directo}}"
+            },
+            {
+              "name": "safesearch",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -96,
+        464
+      ],
+      "id": "d4f9c1b5-95bb-4d84-b86d-d6107da01bd7",
+      "name": "HTTP Request4"
+    },
+    {
+      "parameters": {
+        "jsCode": "const busquedas = $input.all();\nconst originales = $(\"Split Out1\").all();\n\nlet datosWebOficial = {};\n\ntry {\n  datosWebOficial =\n    $(\"Code in JavaScript3\").first().json || {};\n} catch {\n  datosWebOficial = {};\n}\n\n\n// ============================================================\n// FUNCIONES GENERALES\n// ============================================================\n\nfunction limpiar(texto) {\n  return String(texto || \"\")\n    .replace(/\\s+/g, \" \")\n    .trim();\n}\n\nfunction normalizar(texto) {\n  return limpiar(texto)\n    .toLowerCase()\n    .normalize(\"NFD\")\n    .replace(/[\\u0300-\\u036f]/g, \"\");\n}\n\nfunction dominioDe(url) {\n  let texto = String(url || \"\")\n    .trim()\n    .toLowerCase();\n\n  texto = texto\n    .replace(/^https?:\\/\\//, \"\")\n    .replace(/^www\\./, \"\");\n\n  return texto\n    .split(\"/\")[0]\n    .split(\"?\")[0]\n    .split(\"#\")[0]\n    .split(\":\")[0];\n}\n\nfunction contiene(texto, valor) {\n  return normalizar(texto)\n    .includes(normalizar(valor));\n}\n\n\n// ============================================================\n// FUENTES\n// ============================================================\n\nfunction esLinkedInPersonal(url) {\n  const u = normalizar(url);\n\n  return u.includes(\"linkedin.com/in/\");\n}\n\nfunction esLinkedInEmpresa(url) {\n  const u = normalizar(url);\n\n  return (\n    u.includes(\"linkedin.com/company/corporacionfavorita\") ||\n    u.includes(\"linkedin.com/company/corporacion-favorita\")\n  );\n}\n\nfunction esWebCorporativa(url) {\n  return dominioDe(url) === \"corporacionfavorita.com\";\n}\n\nfunction esFuenteRelacionada(url) {\n  return dominioDe(url).includes(\"maxionline.ec\");\n}\n\nfunction nivelFuente(url) {\n\n  if (esLinkedInPersonal(url)) {\n    return 100;\n  }\n\n  if (esWebCorporativa(url)) {\n    return 95;\n  }\n\n  if (esLinkedInEmpresa(url)) {\n    return 90;\n  }\n\n  if (esFuenteRelacionada(url)) {\n    return 80;\n  }\n\n  return 50;\n}\n\nfunction tipoFuente(url) {\n\n  if (esLinkedInPersonal(url)) {\n    return \"LINKEDIN_PERSONAL\";\n  }\n\n  if (esWebCorporativa(url)) {\n    return \"WEB_OFICIAL_EMPRESA\";\n  }\n\n  if (esLinkedInEmpresa(url)) {\n    return \"LINKEDIN_OFICIAL_EMPRESA\";\n  }\n\n  if (esFuenteRelacionada(url)) {\n    return \"FUENTE_RELACIONADA_EMPRESA\";\n  }\n\n  return \"FUENTE_PUBLICA_EXTERNA\";\n}\n\n\n// ============================================================\n// FRAUDE / EMPRESA INCORRECTA\n// ============================================================\n\nfunction esEmpresaIncorrecta(texto, url) {\n\n  const t =\n    normalizar(`${texto} ${url}`);\n\n  return (\n    t.includes(\"favoritabananas\") ||\n    t.includes(\"favoritafc.com\")\n  );\n}\n\nfunction esAlertaFraude(texto) {\n\n  const t = normalizar(texto);\n\n  const señales = [\n    \"estafa\",\n    \"fraude\",\n    \"fraudulenta\",\n    \"oferta falsa\",\n    \"ofertas falsas\",\n    \"oferta laboral falsa\",\n    \"ofertas laborales falsas\",\n    \"phishing\",\n    \"suplantacion\",\n    \"cuidado\"\n  ];\n\n  return señales.some(\n    s => t.includes(normalizar(s))\n  );\n}\n\n\n// ============================================================\n// RRHH\n// ============================================================\n\nfunction tieneRRHH(texto) {\n\n  const t = normalizar(texto);\n\n  const palabras = [\n    \"talento humano\",\n    \"recursos humanos\",\n    \"rrhh\",\n    \"tthh\",\n    \"human resources\",\n    \"people\",\n    \"talent acquisition\",\n    \"reclutamiento\",\n    \"seleccion\",\n    \"selección\"\n  ];\n\n  return palabras.some(\n    p => t.includes(normalizar(p))\n  );\n}\n\n\n// ============================================================\n// CARGOS\n// ============================================================\n\nfunction extraerCargo(texto) {\n\n  const limpio = limpiar(texto);\n\n  const patrones = [\n\n    /Gerente\\s+de\\s+Recursos\\s+Humanos/i,\n    /Gerente\\s+de\\s+Talento\\s+Humano/i,\n\n    /Jefe\\s+Corporativo\\s+de\\s+Talento\\s+Humano/i,\n    /Jefa\\s+Corporativa\\s+de\\s+Talento\\s+Humano/i,\n\n    /Jefe\\s+de\\s+Talento\\s+Humano/i,\n    /Jefa\\s+de\\s+Talento\\s+Humano/i,\n\n    /Jefe\\s+de\\s+TTHH/i,\n    /Jefa\\s+de\\s+TTHH/i,\n\n    /Sub\\s+Jefe\\s+de\\s+Talento\\s+Humano(?:,\\s*Zona\\s+[A-Za-zÁÉÍÓÚáéíóúñÑ]+)?/i,\n    /Sub\\s+Jefa\\s+de\\s+Talento\\s+Humano(?:,\\s*Zona\\s+[A-Za-zÁÉÍÓÚáéíóúñÑ]+)?/i,\n\n    /Asistente\\s+de\\s+Talento\\s+Humano/i,\n\n    /Coordinador\\s+de\\s+Talento\\s+Humano/i,\n    /Coordinadora\\s+de\\s+Talento\\s+Humano/i,\n\n    /Analista\\s+de\\s+Talento\\s+Humano/i,\n    /Analista\\s+de\\s+Recursos\\s+Humanos/i\n  ];\n\n  for (const regex of patrones) {\n\n    const match = limpio.match(regex);\n\n    if (match) {\n      return limpiar(match[0]);\n    }\n  }\n\n  return \"NO IDENTIFICADO\";\n}\n\n\n// ============================================================\n// PERSONAS\n// ============================================================\n\nfunction personaDesdeLinkedIn(titulo, url) {\n\n  if (!esLinkedInPersonal(url)) {\n    return \"NO ENCONTRADO\";\n  }\n\n  const primera =\n    limpiar(titulo)\n      .split(\" - \")[0]\n      .trim();\n\n  if (!primera) {\n    return \"NO ENCONTRADO\";\n  }\n\n  const palabras = primera.split(/\\s+/);\n\n  if (\n    palabras.length < 2 ||\n    palabras.length > 6\n  ) {\n    return \"NO ENCONTRADO\";\n  }\n\n  return primera\n    .replace(/\\.$/, \"\")\n    .trim();\n}\n\n\nfunction personaDesdeRocketReach(titulo) {\n\n  const t = limpiar(titulo);\n\n  let match = t.match(\n    /(?:correo electrónico y teléfono de|correo electronico y telefono de)\\s+([^|]+)\\s*\\|/i\n  );\n\n  if (match && match[1]) {\n    return limpiar(match[1]);\n  }\n\n  match = t.match(\n    /^([^|]+?)\\s+Email\\s*&\\s*Phone/i\n  );\n\n  if (match && match[1]) {\n    return limpiar(match[1]);\n  }\n\n  return \"NO ENCONTRADO\";\n}\n\n\nfunction personaDesdeZoomInfo(titulo) {\n\n  const t = limpiar(titulo);\n\n  const match = t.match(\n    /^Contact\\s+([^,]+),/i\n  );\n\n  if (match && match[1]) {\n    return limpiar(match[1]);\n  }\n\n  return \"NO ENCONTRADO\";\n}\n\n\nfunction extraerOtraPersona(titulo, url) {\n\n  let persona =\n    personaDesdeLinkedIn(titulo, url);\n\n  if (persona !== \"NO ENCONTRADO\") {\n    return persona;\n  }\n\n  persona =\n    personaDesdeRocketReach(titulo);\n\n  if (persona !== \"NO ENCONTRADO\") {\n    return persona;\n  }\n\n  persona =\n    personaDesdeZoomInfo(titulo);\n\n  return persona;\n}\n\n\n// ============================================================\n// EMAILS\n// ============================================================\n\nfunction extraerEmails(texto) {\n\n  const matches =\n    String(texto || \"\").match(\n      /\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}\\b/gi\n    ) || [];\n\n  return [\n    ...new Set(\n      matches.map(x => x.toLowerCase())\n    )\n  ];\n}\n\nfunction tieneEmailEnmascarado(texto) {\n\n  return (\n    /[a-z0-9]\\*{2,}@[a-z0-9.-]+\\.[a-z]{2,}/i.test(texto) ||\n    /\\*+@[a-z0-9.-]+\\.[a-z]{2,}/i.test(texto)\n  );\n}\n\n\n// ============================================================\n// TELÉFONOS ECUADOR\n// ============================================================\n\nfunction extraerTelefonos(texto) {\n\n  const encontrados = [];\n\n  const bruto = String(texto || \"\");\n\n  const patrones = [\n\n    /\\+593[\\s-]?\\d{1,2}[\\s-]?\\d{3}[\\s-]?\\d{4,6}/g,\n\n    /\\b09\\d{8}\\b/g,\n\n    /\\b1800[\\s-]?\\d{3}[\\s-]?\\d{3}\\b/g\n  ];\n\n  for (const regex of patrones) {\n\n    const matches =\n      bruto.match(regex) || [];\n\n    for (const numero of matches) {\n\n      encontrados.push(\n        numero.replace(/[^\\d+]/g, \"\")\n      );\n    }\n  }\n\n  return [...new Set(encontrados)];\n}\n\n\n// ============================================================\n// DEDUPLICAR\n// ============================================================\n\nfunction deduplicar(lista, claveFn) {\n\n  const vistos = new Set();\n\n  return lista.filter(item => {\n\n    const clave =\n      normalizar(claveFn(item));\n\n    if (!clave || vistos.has(clave)) {\n      return false;\n    }\n\n    vistos.add(clave);\n\n    return true;\n  });\n}\n\n\n// ============================================================\n// CONTACTOS OFICIALES YA VERIFICADOS EN WEB\n// ============================================================\n\nconst contactosWebOficial = [];\n\nfor (\n  const item of\n  Array.isArray(datosWebOficial.emails_oficiales)\n    ? datosWebOficial.emails_oficiales\n    : []\n) {\n\n  let categoria =\n    \"EMAIL_GENERAL_EMPRESA\";\n\n  if (\n    normalizar(item.email)\n      .includes(\"accionistas\")\n  ) {\n    categoria =\n      \"EMAIL_AREA_ACCIONISTAS\";\n  }\n\n  contactosWebOficial.push({\n\n    tipo: categoria,\n\n    valor: item.email,\n\n    fuente: item.fuente,\n\n    verificacion:\n      \"VERIFICADO_WEB_OFICIAL\"\n  });\n}\n\n\nfor (\n  const item of\n  Array.isArray(datosWebOficial.telefonos_oficiales)\n    ? datosWebOficial.telefonos_oficiales\n    : []\n) {\n\n  let categoria =\n    \"TELEFONO_GENERAL_EMPRESA\";\n\n  if (\n    item.telefono === \"+59302418035\"\n  ) {\n    categoria =\n      \"TELEFONO_AREA_ACCIONISTAS\";\n  }\n\n  contactosWebOficial.push({\n\n    tipo: categoria,\n\n    valor: item.telefono,\n\n    fuente: item.fuente,\n\n    verificacion:\n      \"VERIFICADO_WEB_OFICIAL\"\n  });\n}\n\n\n// ============================================================\n// PROCESAMIENTO\n// ============================================================\n\nconst salida = [];\n\nfor (\n  let i = 0;\n  i < busquedas.length;\n  i++\n) {\n\n  const respuesta =\n    busquedas[i]?.json || {};\n\n  const origen =\n    originales[i]?.json\n      ?.candidatos_verificar || {};\n\n  const personaObjetivo =\n    origen.persona_contacto ||\n    \"NO ENCONTRADO\";\n\n  const empresa =\n    origen.empresa ||\n    \"NO IDENTIFICADO\";\n\n  const cargoOriginal =\n    origen.cargo_contacto ||\n    \"NO IDENTIFICADO\";\n\n  const fuenteOriginal =\n    origen.fuente_persona ||\n    \"\";\n\n  const resultados =\n    Array.isArray(respuesta.results)\n      ? respuesta.results\n      : [];\n\n\n  // ==========================================================\n  // EVIDENCIA DE CARGO\n  // ==========================================================\n\n  const cargosEncontrados = [];\n\n  if (\n    cargoOriginal !==\n    \"NO IDENTIFICADO\"\n  ) {\n\n    cargosEncontrados.push({\n\n      cargo:\n        cargoOriginal,\n\n      fuente:\n        fuenteOriginal,\n\n      tipo_fuente:\n        tipoFuente(fuenteOriginal),\n\n      nivel_fuente:\n        nivelFuente(fuenteOriginal),\n\n      origen:\n        \"CANDIDATO_ORIGINAL\"\n    });\n  }\n\n\n  // ==========================================================\n  // CONTACTOS\n  // ==========================================================\n\n  const emailsDirectos = [];\n\n  const telefonosDirectos = [];\n\n  const whatsappsDirectos = [];\n\n  const contactosGeneralesVerificados = [\n    ...contactosWebOficial\n  ];\n\n  const contactosGeneralesNoVerificados = [];\n\n  const datosEnmascarados = [];\n\n  const fuentesPersona = [];\n\n  const alertasFraude = [];\n\n  const descartados = [];\n\n  const nuevosCandidatosRRHH = [];\n\n\n  // ==========================================================\n  // RESULTADOS DE BÚSQUEDA\n  // ==========================================================\n\n  for (const r of resultados) {\n\n    const titulo =\n      limpiar(r.title);\n\n    const contenido =\n      limpiar(r.content);\n\n    const url =\n      limpiar(r.url);\n\n    const dominio =\n      dominioDe(url);\n\n    const texto =\n      `${titulo} ${contenido}`;\n\n    const mencionaEmpresa =\n      contiene(\n        texto,\n        \"Corporacion Favorita\"\n      );\n\n    const mencionaObjetivo =\n      contiene(\n        texto,\n        personaObjetivo\n      );\n\n    const contextoRRHH =\n      tieneRRHH(texto);\n\n\n    // --------------------------------------------------------\n    // EMPRESA INCORRECTA\n    // --------------------------------------------------------\n\n    if (\n      esEmpresaIncorrecta(\n        texto,\n        url\n      )\n    ) {\n\n      descartados.push({\n\n        titulo,\n        url,\n\n        motivo:\n          \"EMPRESA_HOMONIMA_O_INCORRECTA\"\n      });\n\n      continue;\n    }\n\n\n    // --------------------------------------------------------\n    // CONTACTO OFICIAL EN ALERTA CORPORATIVA\n    // --------------------------------------------------------\n\n    if (\n      esAlertaFraude(texto)\n    ) {\n\n      if (\n        esLinkedInEmpresa(url) &&\n        normalizar(texto)\n          .includes(\"contacto oficial\")\n      ) {\n\n        const telefonos =\n          extraerTelefonos(texto);\n\n        for (const telefono of telefonos) {\n\n          contactosGeneralesVerificados.push({\n\n            tipo:\n              \"TELEFONO_GENERAL_EMPRESA\",\n\n            valor:\n              telefono,\n\n            fuente:\n              url,\n\n            verificacion:\n              \"DECLARADO_CONTACTO_OFICIAL_EN_CANAL_CORPORATIVO\"\n          });\n        }\n      }\n\n      alertasFraude.push({\n\n        titulo,\n        url,\n\n        motivo:\n          \"CONTENIDO_ALERTA_FRAUDE\"\n      });\n\n      continue;\n    }\n\n\n    // --------------------------------------------------------\n    // EMAIL ENMASCARADO\n    // --------------------------------------------------------\n\n    if (\n      tieneEmailEnmascarado(texto)\n    ) {\n\n      datosEnmascarados.push({\n\n        tipo:\n          \"EMAIL_ENMASCARADO\",\n\n        evidencia:\n          texto,\n\n        fuente:\n          url\n      });\n    }\n\n\n    // --------------------------------------------------------\n    // PERSONA OBJETIVO\n    // --------------------------------------------------------\n\n    if (\n      mencionaObjetivo &&\n      mencionaEmpresa\n    ) {\n\n      fuentesPersona.push({\n\n        titulo,\n        url,\n        dominio,\n\n        tipo_fuente:\n          tipoFuente(url),\n\n        evidencia:\n          contenido\n      });\n\n\n      const cargo =\n        extraerCargo(texto);\n\n      if (\n        cargo !==\n        \"NO IDENTIFICADO\"\n      ) {\n\n        cargosEncontrados.push({\n\n          cargo,\n\n          fuente:\n            url,\n\n          tipo_fuente:\n            tipoFuente(url),\n\n          nivel_fuente:\n            nivelFuente(url),\n\n          origen:\n            \"BUSQUEDA_CONTACTO\"\n        });\n      }\n\n\n      // EMAIL DIRECTO CANDIDATO\n\n      const emails =\n        extraerEmails(texto);\n\n      for (const email of emails) {\n\n        emailsDirectos.push({\n\n          email,\n\n          fuente:\n            url,\n\n          tipo:\n            \"POSIBLE_EMAIL_DIRECTO\",\n\n          requiere_verificacion:\n            true\n        });\n      }\n\n\n      // TELÉFONO DIRECTO CANDIDATO\n\n      const telefonos =\n        extraerTelefonos(texto);\n\n      for (const telefono of telefonos) {\n\n        telefonosDirectos.push({\n\n          telefono,\n\n          fuente:\n            url,\n\n          tipo:\n            \"POSIBLE_TELEFONO_DIRECTO\",\n\n          requiere_verificacion:\n            true\n        });\n      }\n\n\n      // WHATSAPP\n\n      if (\n        normalizar(texto)\n          .includes(\"whatsapp\")\n      ) {\n\n        for (\n          const numero of\n          extraerTelefonos(texto)\n        ) {\n\n          whatsappsDirectos.push({\n\n            whatsapp:\n              numero,\n\n            fuente:\n              url,\n\n            tipo:\n              \"POSIBLE_WHATSAPP_DIRECTO\",\n\n            requiere_verificacion:\n              true\n          });\n        }\n      }\n\n      continue;\n    }\n\n\n    // --------------------------------------------------------\n    // NUEVAS PERSONAS RRHH\n    // --------------------------------------------------------\n\n    if (\n      mencionaEmpresa &&\n      contextoRRHH\n    ) {\n\n      const otraPersona =\n        extraerOtraPersona(\n          titulo,\n          url\n        );\n\n      const cargo =\n        extraerCargo(texto);\n\n      if (\n        otraPersona !==\n          \"NO ENCONTRADO\" &&\n        normalizar(otraPersona) !==\n          normalizar(personaObjetivo)\n      ) {\n\n        nuevosCandidatosRRHH.push({\n\n          persona_contacto:\n            otraPersona,\n\n          cargo_contacto:\n            cargo,\n\n          empresa,\n\n          fuente_url:\n            url,\n\n          fuente_dominio:\n            dominio,\n\n          tipo_fuente:\n            tipoFuente(url),\n\n          evidencia:\n            contenido,\n\n          estado:\n            \"NUEVO_CANDIDATO_RRHH\",\n\n          requiere_verificacion:\n            true\n        });\n\n        continue;\n      }\n    }\n\n\n    // --------------------------------------------------------\n    // CONTACTOS GENERALES\n    // --------------------------------------------------------\n\n    if (mencionaEmpresa) {\n\n      const emails =\n        extraerEmails(texto);\n\n      const telefonos =\n        extraerTelefonos(texto);\n\n\n      if (\n        esWebCorporativa(url)\n      ) {\n\n        for (const email of emails) {\n\n          contactosGeneralesVerificados.push({\n\n            tipo:\n              \"EMAIL_GENERAL_EMPRESA\",\n\n            valor:\n              email,\n\n            fuente:\n              url,\n\n            verificacion:\n              \"VERIFICADO_WEB_OFICIAL\"\n          });\n        }\n\n\n        for (\n          const telefono of telefonos\n        ) {\n\n          contactosGeneralesVerificados.push({\n\n            tipo:\n              \"TELEFONO_GENERAL_EMPRESA\",\n\n            valor:\n              telefono,\n\n            fuente:\n              url,\n\n            verificacion:\n              \"VERIFICADO_WEB_OFICIAL\"\n          });\n        }\n\n      } else {\n\n        for (const email of emails) {\n\n          contactosGeneralesNoVerificados.push({\n\n            tipo:\n              \"EMAIL_GENERAL_EMPRESA\",\n\n            valor:\n              email,\n\n            fuente:\n              url,\n\n            verificacion:\n              \"FUENTE_TERCERA_NO_VERIFICADA\"\n          });\n        }\n\n\n        for (\n          const telefono of telefonos\n        ) {\n\n          contactosGeneralesNoVerificados.push({\n\n            tipo:\n              \"TELEFONO_GENERAL_EMPRESA\",\n\n            valor:\n              telefono,\n\n            fuente:\n              url,\n\n            verificacion:\n              \"FUENTE_TERCERA_NO_VERIFICADA\"\n          });\n        }\n      }\n    }\n  }\n\n\n  // ==========================================================\n  // DEDUPLICACIÓN\n  // ==========================================================\n\n  const cargosFinales =\n    deduplicar(\n      cargosEncontrados,\n      x =>\n        `${x.cargo}|${x.fuente}`\n    );\n\n\n  const nuevosCandidatosFinal =\n    deduplicar(\n      nuevosCandidatosRRHH,\n      x =>\n        `${x.persona_contacto}|${x.cargo_contacto}`\n    );\n\n\n  const contactosVerificadosFinal =\n    deduplicar(\n      contactosGeneralesVerificados,\n      x =>\n        `${x.tipo}|${x.valor}`\n    );\n\n\n  const contactosNoVerificadosFinal =\n    deduplicar(\n      contactosGeneralesNoVerificados,\n      x =>\n        `${x.tipo}|${x.valor}`\n    );\n\n\n  const emailsFinal =\n    deduplicar(\n      emailsDirectos,\n      x => x.email\n    );\n\n\n  const telefonosFinal =\n    deduplicar(\n      telefonosDirectos,\n      x => x.telefono\n    );\n\n\n  const whatsappFinal =\n    deduplicar(\n      whatsappsDirectos,\n      x => x.whatsapp\n    );\n\n\n  // ==========================================================\n  // CARGO PREFERIDO\n  // ==========================================================\n\n  const cargosOrdenados =\n    [...cargosFinales]\n      .sort(\n        (a, b) =>\n          b.nivel_fuente -\n          a.nivel_fuente\n      );\n\n\n  const cargoPreferido =\n    cargosOrdenados.length > 0\n      ? cargosOrdenados[0]\n      : {\n          cargo:\n            \"NO IDENTIFICADO\",\n          fuente:\n            \"\"\n        };\n\n\n  const cargosDistintos =\n    [\n      ...new Set(\n        cargosFinales.map(\n          x => normalizar(x.cargo)\n        )\n      )\n    ];\n\n\n  const existeConflictoCargo =\n    cargosDistintos.length > 1;\n\n\n  // ==========================================================\n  // CONTACTABILIDAD\n  // ==========================================================\n\n  let estadoContacto =\n    \"SIN_CONTACTO_DIRECTO_VERIFICADO\";\n\n  if (\n    emailsFinal.length > 0 ||\n    telefonosFinal.length > 0 ||\n    whatsappFinal.length > 0\n  ) {\n\n    estadoContacto =\n      \"CONTACTO_DIRECTO_CANDIDATO_ENCONTRADO\";\n  }\n\n\n  // ==========================================================\n  // SALIDA\n  // ==========================================================\n\n  salida.push({\n\n    json: {\n\n      empresa,\n\n      persona_contacto:\n        personaObjetivo,\n\n      estado_contacto:\n        estadoContacto,\n\n\n      // ------------------------------------------------------\n      // CARGO\n      // ------------------------------------------------------\n\n      cargo_preferido:\n        cargoPreferido.cargo,\n\n      fuente_cargo_preferido:\n        cargoPreferido.fuente,\n\n      conflicto_cargo:\n        existeConflictoCargo,\n\n      cargos_encontrados:\n        cargosFinales,\n\n\n      // ------------------------------------------------------\n      // CONTACTO DIRECTO\n      // ------------------------------------------------------\n\n      emails_directos_candidatos:\n        emailsFinal,\n\n      telefonos_directos_candidatos:\n        telefonosFinal,\n\n      whatsapps_directos_candidatos:\n        whatsappFinal,\n\n\n      // ------------------------------------------------------\n      // CONTACTO EMPRESA\n      // ------------------------------------------------------\n\n      contactos_generales_empresa_verificados:\n        contactosVerificadosFinal,\n\n      contactos_generales_empresa_no_verificados:\n        contactosNoVerificadosFinal,\n\n\n      // ------------------------------------------------------\n      // PERSONA\n      // ------------------------------------------------------\n\n      fuentes_persona:\n        fuentesPersona,\n\n      datos_enmascarados_no_utilizables:\n        datosEnmascarados,\n\n\n      // ------------------------------------------------------\n      // NUEVOS CONTACTOS RRHH\n      // ------------------------------------------------------\n\n      nuevos_candidatos_rrhh:\n        nuevosCandidatosFinal,\n\n\n      // ------------------------------------------------------\n      // SEGURIDAD\n      // ------------------------------------------------------\n\n      alertas_fraude:\n        alertasFraude,\n\n      resultados_descartados:\n        descartados,\n\n\n      regla:\n        \"Nunca reconstruir correos enmascarados, nunca asumir WhatsApp, separar contactos oficiales de fuentes terceras y conservar nuevos contactos RRHH encontrados durante la investigación.\",\n\n\n      siguiente_accion:\n        nuevosCandidatosFinal.length > 0\n          ? \"VERIFICAR_NUEVOS_CANDIDATOS_RRHH\"\n          : estadoContacto ===\n              \"CONTACTO_DIRECTO_CANDIDATO_ENCONTRADO\"\n            ? \"VERIFICAR_CONTACTO_DIRECTO\"\n            : \"UTILIZAR_CONTACTO_EMPRESA_Y_AMPLIAR_BUSQUEDA\"\n\n    }\n  });\n}\n\n\nreturn salida;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        64,
+        464
+      ],
+      "id": "d7c4f364-1c32-488b-ac70-a2af1c7d3cab",
+      "name": "Code in JavaScript6"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\n\n// ============================================================\n// FUNCIONES\n// ============================================================\n\nfunction limpiar(texto) {\n  return String(texto || \"\")\n    .replace(/\\s+/g, \" \")\n    .trim();\n}\n\nfunction normalizar(texto) {\n  return limpiar(texto)\n    .toLowerCase()\n    .normalize(\"NFD\")\n    .replace(/[\\u0300-\\u036f]/g, \"\");\n}\n\n\n// ============================================================\n// PERSONAS YA INVESTIGADAS\n// ============================================================\n\nconst yaInvestigadas = new Set();\n\nfor (const item of items) {\n\n  const persona =\n    normalizar(\n      item.json.persona_contacto\n    );\n\n  if (persona) {\n    yaInvestigadas.add(persona);\n  }\n}\n\n\n// ============================================================\n// RECOPILAR NUEVOS CANDIDATOS\n// ============================================================\n\nconst candidatos = [];\n\nfor (const item of items) {\n\n  const nuevos =\n    Array.isArray(\n      item.json.nuevos_candidatos_rrhh\n    )\n      ? item.json.nuevos_candidatos_rrhh\n      : [];\n\n  for (const candidato of nuevos) {\n\n    const persona =\n      limpiar(\n        candidato.persona_contacto\n      );\n\n    const personaNorm =\n      normalizar(persona);\n\n    if (\n      !persona ||\n      persona === \"NO ENCONTRADO\"\n    ) {\n      continue;\n    }\n\n\n    // Evitar volver a investigar\n    // Eva o Diana\n    if (\n      yaInvestigadas.has(\n        personaNorm\n      )\n    ) {\n      continue;\n    }\n\n\n    const cargo =\n      limpiar(\n        candidato.cargo_contacto\n      ) || \"NO IDENTIFICADO\";\n\n\n    // ========================================================\n    // PUNTUACIÓN\n    // ========================================================\n\n    let puntuacion = 0;\n\n    const razones = [];\n\n\n    if (\n      cargo !== \"NO IDENTIFICADO\"\n    ) {\n\n      puntuacion += 50;\n\n      razones.push(\n        \"CARGO_RRHH_IDENTIFICADO\"\n      );\n    }\n\n\n    if (\n      candidato.tipo_fuente ===\n      \"LINKEDIN_PERSONAL\"\n    ) {\n\n      puntuacion += 40;\n\n      razones.push(\n        \"PERFIL_LINKEDIN_PERSONAL\"\n      );\n    }\n\n\n    if (\n      candidato.tipo_fuente ===\n      \"FUENTE_PUBLICA_EXTERNA\"\n    ) {\n\n      puntuacion += 15;\n\n      razones.push(\n        \"FUENTE_PUBLICA_EXTERNA\"\n      );\n    }\n\n\n    if (\n      normalizar(\n        candidato.evidencia\n      ).includes(\n        \"corporacion favorita\"\n      )\n    ) {\n\n      puntuacion += 20;\n\n      razones.push(\n        \"EMPRESA_COINCIDE\"\n      );\n    }\n\n\n    // ========================================================\n    // CONSULTAS\n    // ========================================================\n\n    const consultaVerificacion =\n      `\"${persona}\" \"Corporación Favorita\" (\"Talento Humano\" OR \"Recursos Humanos\" OR RRHH OR TTHH OR \"Human Resources\")`;\n\n\n    const consultaContacto =\n      `\"${persona}\" \"Corporación Favorita\" (email OR correo OR contacto OR telefono OR teléfono OR whatsapp)`;\n\n\n    // ========================================================\n    // PRIORIDAD\n    // ========================================================\n\n    let prioridad =\n      \"BAJA\";\n\n    if (\n      puntuacion >= 70\n    ) {\n\n      prioridad =\n        \"ALTA\";\n\n    } else if (\n      puntuacion >= 40\n    ) {\n\n      prioridad =\n        \"MEDIA\";\n    }\n\n\n    candidatos.push({\n\n      empresa:\n        \"Corporación Favorita\",\n\n      persona_contacto:\n        persona,\n\n      cargo_declarado:\n        cargo,\n\n      fuente_inicial:\n        candidato.fuente_url,\n\n      tipo_fuente_inicial:\n        candidato.tipo_fuente,\n\n      evidencia_inicial:\n        candidato.evidencia,\n\n      puntuacion_prioridad:\n        puntuacion,\n\n      prioridad_verificacion:\n        prioridad,\n\n      razones,\n\n      consulta_verificacion:\n        consultaVerificacion,\n\n      consulta_contacto:\n        consultaContacto,\n\n      estado:\n        \"PENDIENTE_VERIFICACION_INDEPENDIENTE\",\n\n      reglas: {\n\n        no_asumir_cargo:\n          true,\n\n        no_inventar_email:\n          true,\n\n        no_asumir_whatsapp:\n          true,\n\n        conservar_fuentes:\n          true\n\n      }\n\n    });\n  }\n}\n\n\n// ============================================================\n// DEDUPLICAR PERSONAS\n// ============================================================\n\nconst vistos =\n  new Set();\n\nconst candidatosUnicos =\n  candidatos.filter(c => {\n\n    const clave =\n      normalizar(\n        c.persona_contacto\n      );\n\n    if (\n      vistos.has(clave)\n    ) {\n      return false;\n    }\n\n    vistos.add(clave);\n\n    return true;\n  });\n\n\n// ============================================================\n// ORDENAR\n// ============================================================\n\ncandidatosUnicos.sort(\n  (a, b) =>\n    b.puntuacion_prioridad -\n    a.puntuacion_prioridad\n);\n\n\n// ============================================================\n// ASIGNAR ORDEN\n// ============================================================\n\nconst candidatosOrdenados =\n  candidatosUnicos.map(\n    (c, index) => ({\n\n      orden_verificacion:\n        index + 1,\n\n      ...c\n\n    })\n  );\n\n\n// ============================================================\n// SALIDA\n// ============================================================\n\nreturn [\n  {\n    json: {\n\n      empresa:\n        \"Corporación Favorita\",\n\n      estado:\n        \"NUEVOS_CANDIDATOS_PREPARADOS\",\n\n      total_nuevos_candidatos:\n        candidatosOrdenados.length,\n\n      candidatos_verificar:\n        candidatosOrdenados,\n\n      siguiente_accion:\n        candidatosOrdenados.length > 0\n          ? \"BUSCAR_VERIFICACION_INDEPENDIENTE\"\n          : \"NO_HAY_NUEVOS_CANDIDATOS\"\n\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        464
+      ],
+      "id": "3aafc758-bdbb-48e4-9082-fa8ccba80ef3",
+      "name": "Code in JavaScript7"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "candidatos_verificar",
+        "include": "allOtherFields",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        384,
+        464
+      ],
+      "id": "f5cb6173-1c77-4d26-9f38-bcf8b3301088",
+      "name": "Split Out2"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO prospect_contact_candidates (\n    empresa_key,\n    persona_key,\n    empresa,\n    persona_contacto,\n    cargo_contacto,\n    fuente_inicial,\n    tipo_fuente_inicial,\n    puntuacion_prioridad,\n    prioridad_verificacion,\n    estado,\n    last_seen\n)\nVALUES (\n    translate(lower(trim($1)), 'áéíóúüñ', 'aeiouun'),\n    translate(lower(trim($2)), 'áéíóúüñ', 'aeiouun'),\n    $1,\n    $2,\n    $3,\n    $4,\n    $5,\n    $6::integer,\n    $7,\n    $8,\n    NOW()\n)\nON CONFLICT (empresa_key, persona_key)\nDO UPDATE SET\n\n    cargo_contacto =\n        CASE\n            WHEN prospect_contact_candidates.cargo_contacto = 'NO IDENTIFICADO'\n                 AND EXCLUDED.cargo_contacto <> 'NO IDENTIFICADO'\n            THEN EXCLUDED.cargo_contacto\n            ELSE prospect_contact_candidates.cargo_contacto\n        END,\n\n    fuente_inicial =\n        COALESCE(\n            prospect_contact_candidates.fuente_inicial,\n            EXCLUDED.fuente_inicial\n        ),\n\n    tipo_fuente_inicial =\n        COALESCE(\n            prospect_contact_candidates.tipo_fuente_inicial,\n            EXCLUDED.tipo_fuente_inicial\n        ),\n\n    puntuacion_prioridad =\n        GREATEST(\n            prospect_contact_candidates.puntuacion_prioridad,\n            EXCLUDED.puntuacion_prioridad\n        ),\n\n    prioridad_verificacion =\n        CASE\n            WHEN GREATEST(\n                prospect_contact_candidates.puntuacion_prioridad,\n                EXCLUDED.puntuacion_prioridad\n            ) >= 70\n            THEN 'ALTA'\n\n            WHEN GREATEST(\n                prospect_contact_candidates.puntuacion_prioridad,\n                EXCLUDED.puntuacion_prioridad\n            ) >= 40\n            THEN 'MEDIA'\n\n            ELSE 'BAJA'\n        END,\n\n    last_seen = NOW()\n\nRETURNING\n    empresa,\n    persona_contacto,\n    cargo_contacto,\n    puntuacion_prioridad,\n    prioridad_verificacion,\n    estado;",
+        "options": {
+          "queryReplacement": "={{$json.candidatos_verificar.empresa}},{{$json.candidatos_verificar.persona_contacto}},{{$json.candidatos_verificar.cargo_declarado}},{{$json.candidatos_verificar.fuente_inicial}},{{$json.candidatos_verificar.tipo_fuente_inicial}},{{$json.candidatos_verificar.puntuacion_prioridad}},{{$json.candidatos_verificar.prioridad_verificacion}},{{$json.candidatos_verificar.estado}}\n"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        528,
+        464
+      ],
+      "id": "91c60117-76cc-4885-898b-6dddc8a0c6aa",
+      "name": "Guardar candidato memoria"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n    empresa_key,\n    persona_key,\n    empresa,\n    persona_contacto,\n    cargo_contacto AS cargo_declarado,\n    fuente_inicial,\n    tipo_fuente_inicial,\n    puntuacion_prioridad,\n    prioridad_verificacion,\n    estado,\n    '\"' || persona_contacto || '\" \"' || empresa ||\n    '\" (\"Talento Humano\" OR \"Recursos Humanos\" OR RRHH OR TTHH OR \"Human Resources\")'\n        AS consulta_verificacion,\n    '\"' || persona_contacto || '\" \"' || empresa ||\n    '\" (email OR correo OR contacto OR telefono OR teléfono OR whatsapp)'\n        AS consulta_contacto\nFROM prospect_contact_candidates\nWHERE empresa_key =\n    translate(\n        lower(trim($1)),\n        'áéíóúüñ',\n        'aeiouun'\n    )\nAND estado IN (\n    'PENDIENTE_VERIFICACION_INDEPENDIENTE',\n    'PARCIALMENTE_VERIFICADO'\n)\nORDER BY\n    CASE\n        WHEN estado = 'PENDIENTE_VERIFICACION_INDEPENDIENTE' THEN 1\n        WHEN estado = 'PARCIALMENTE_VERIFICADO' THEN 2\n        ELSE 3\n    END,\n    puntuacion_prioridad DESC,\n    first_seen ASC;",
+        "options": {
+          "queryReplacement": "={{$json.empresa}}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        688,
+        464
+      ],
+      "id": "4ddf2b33-7498-415e-a977-6acbb9bf3998",
+      "name": "Leer candidatos pendientes"
+    },
+    {
+      "parameters": {
+        "url": "http://searxng:8080/search?format=json",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "= {{$json.consulta_verificacion}}"
+            },
+            {
+              "name": "safesearch",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        816,
+        464
+      ],
+      "id": "04ff3176-26d8-4e85-834f-213a265641d0",
+      "name": "HTTP Request5"
+    },
+    {
+      "parameters": {
+        "jsCode": "const respuestas = $input.all();\nconst candidatosMemoria = $(\"Leer candidatos pendientes\").all();\n\n\n// ============================================================\n// FUNCIONES GENERALES\n// ============================================================\n\nfunction limpiar(texto) {\n  return String(texto || \"\")\n    .replace(/\\s+/g, \" \")\n    .trim();\n}\n\nfunction normalizar(texto) {\n  return limpiar(texto)\n    .toLowerCase()\n    .normalize(\"NFD\")\n    .replace(/[\\u0300-\\u036f]/g, \"\");\n}\n\nfunction dominioDe(url) {\n  let texto = String(url || \"\")\n    .trim()\n    .toLowerCase();\n\n  texto = texto\n    .replace(/^https?:\\/\\//, \"\")\n    .replace(/^www\\./, \"\");\n\n  return texto\n    .split(\"/\")[0]\n    .split(\"?\")[0]\n    .split(\"#\")[0]\n    .split(\":\")[0];\n}\n\nfunction contiene(texto, valor) {\n  return normalizar(texto)\n    .includes(normalizar(valor));\n}\n\n\n// ============================================================\n// COINCIDENCIA CONTROLADA DE PERSONA\n//\n// Samantha Alban Arboleda\n// también puede aparecer públicamente como:\n// Samantha Alban\n//\n// Exigimos al menos los dos primeros componentes del nombre.\n// ============================================================\n\nfunction mencionaPersona(texto, personaCompleta) {\n\n  const t =\n    normalizar(texto);\n\n  const persona =\n    normalizar(personaCompleta);\n\n  if (!persona) {\n    return false;\n  }\n\n  // Coincidencia exacta completa\n  if (t.includes(persona)) {\n    return true;\n  }\n\n  const partes =\n    persona\n      .split(/\\s+/)\n      .filter(Boolean);\n\n  // No usamos coincidencias de una sola palabra.\n  if (partes.length >= 2) {\n\n    const nombreCorto =\n      `${partes[0]} ${partes[1]}`;\n\n    if (\n      nombreCorto.length >= 6 &&\n      t.includes(nombreCorto)\n    ) {\n      return true;\n    }\n  }\n\n  return false;\n}\n\n\n// ============================================================\n// FUENTES\n// ============================================================\n\nfunction esLinkedInPersonal(url) {\n\n  const u =\n    normalizar(url);\n\n  return u.includes(\"linkedin.com/in/\");\n}\n\nfunction esWebCorporativa(url) {\n\n  return dominioDe(url) ===\n    \"corporacionfavorita.com\";\n}\n\nfunction esFuenteFuerte(url) {\n\n  return (\n    esLinkedInPersonal(url) ||\n    esWebCorporativa(url)\n  );\n}\n\nfunction esFuenteMedia(url) {\n\n  const dominio =\n    dominioDe(url);\n\n  return (\n    dominio === \"theorg.com\" ||\n    dominio === \"rocketreach.co\" ||\n    dominio === \"zoominfo.com\" ||\n    dominio === \"x.com\"\n  );\n}\n\n\n// ============================================================\n// EXTRAER CARGO\n// ============================================================\n\nfunction extraerCargo(texto) {\n\n  const t =\n    limpiar(texto);\n\n  const patrones = [\n\n    /Gerente\\s+de\\s+Recursos\\s+Humanos/i,\n    /Gerente\\s+de\\s+RRHH/i,\n    /Gerente\\s+de\\s+Talento\\s+Humano/i,\n\n    /Jefe\\s+Corporativo\\s+de\\s+Talento\\s+Humano/i,\n    /Jefa\\s+Corporativa\\s+de\\s+Talento\\s+Humano/i,\n\n    /Jefe\\s+de\\s+Recursos\\s+Humanos/i,\n    /Jefa\\s+de\\s+Recursos\\s+Humanos/i,\n\n    /Jefe\\s+de\\s+Talento\\s+Humano/i,\n    /Jefa\\s+de\\s+Talento\\s+Humano/i,\n\n    /Jefe\\s+de\\s+TTHH/i,\n    /Jefa\\s+de\\s+TTHH/i,\n\n    /Sub\\s+Jefe\\s+de\\s+Talento\\s+Humano(?:,\\s*Zona\\s+[A-Za-zÁÉÍÓÚáéíóúñÑ]+)?/i,\n    /Sub\\s+Jefa\\s+de\\s+Talento\\s+Humano(?:,\\s*Zona\\s+[A-Za-zÁÉÍÓÚáéíóúñÑ]+)?/i,\n\n    /Asistente\\s+de\\s+Talento\\s+Humano/i,\n    /Asistente\\s+De\\s+Talento\\s+Humano/i,\n\n    /Coordinador\\s+de\\s+Talento\\s+Humano/i,\n    /Coordinadora\\s+de\\s+Talento\\s+Humano/i,\n\n    /Analista\\s+de\\s+Talento\\s+Humano/i,\n    /Analista\\s+de\\s+Recursos\\s+Humanos/i,\n\n    /Talento\\s+Humano/i,\n    /Recursos\\s+Humanos/i\n  ];\n\n  for (const regex of patrones) {\n\n    const match =\n      t.match(regex);\n\n    if (match) {\n      return limpiar(match[0]);\n    }\n  }\n\n  return \"NO IDENTIFICADO\";\n}\n\n\n// ============================================================\n// NORMALIZACIÓN SEMÁNTICA DEL CARGO\n//\n// Evita considerar conflicto:\n//\n// Gerente de RRHH\n// Gerente de Recursos Humanos\n// Gerente de Talento Humano\n//\n// porque representan la misma familia de cargo.\n// ============================================================\n\nfunction claveCargo(cargo) {\n\n  const c =\n    normalizar(cargo);\n\n  if (\n    c === \"talento humano\" ||\n    c === \"recursos humanos\"\n  ) {\n    return \"AREA_RRHH\";\n  }\n\n  if (\n    c.includes(\"gerente\") &&\n    (\n      c.includes(\"rrhh\") ||\n      c.includes(\"recursos humanos\") ||\n      c.includes(\"talento humano\")\n    )\n  ) {\n    return \"GERENTE_RRHH\";\n  }\n\n  if (\n    c.includes(\"jefe corporativo\") &&\n    (\n      c.includes(\"talento humano\") ||\n      c.includes(\"recursos humanos\")\n    )\n  ) {\n    return \"JEFE_CORPORATIVO_RRHH\";\n  }\n\n  if (\n    (\n      c.includes(\"sub jefe\") ||\n      c.includes(\"sub jefa\")\n    ) &&\n    c.includes(\"talento humano\")\n  ) {\n    return \"SUBJEFE_RRHH\";\n  }\n\n  if (\n    (\n      c.includes(\"jefe\") ||\n      c.includes(\"jefa\")\n    ) &&\n    (\n      c.includes(\"tthh\") ||\n      c.includes(\"talento humano\") ||\n      c.includes(\"recursos humanos\")\n    )\n  ) {\n    return \"JEFE_RRHH\";\n  }\n\n  if (\n    c.includes(\"asistente\") &&\n    c.includes(\"talento humano\")\n  ) {\n    return \"ASISTENTE_RRHH\";\n  }\n\n  if (\n    c.includes(\"coordinador\") &&\n    c.includes(\"talento humano\")\n  ) {\n    return \"COORDINADOR_RRHH\";\n  }\n\n  if (\n    c.includes(\"analista\") &&\n    (\n      c.includes(\"talento humano\") ||\n      c.includes(\"recursos humanos\")\n    )\n  ) {\n    return \"ANALISTA_RRHH\";\n  }\n\n  return c || \"NO_IDENTIFICADO\";\n}\n\n\n// ============================================================\n// ¿ES CARGO ESPECÍFICO?\n// ============================================================\n\nfunction cargoEspecifico(cargo) {\n\n  const clave =\n    claveCargo(cargo);\n\n  return (\n    clave !== \"AREA_RRHH\" &&\n    clave !== \"NO_IDENTIFICADO\"\n  );\n}\n\n\n// ============================================================\n// EMAIL ENMASCARADO\n// ============================================================\n\nfunction contieneEmailEnmascarado(texto) {\n\n  return (\n    /\\*+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/i.test(texto) ||\n    /[A-Za-z0-9]\\*{2,}@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/i.test(texto)\n  );\n}\n\n\n// ============================================================\n// PROCESAR\n// ============================================================\n\nconst salida = [];\n\nfor (\n  let i = 0;\n  i < respuestas.length;\n  i++\n) {\n\n  const respuesta =\n    respuestas[i]?.json || {};\n\n  const candidato =\n    candidatosMemoria[i]?.json || {};\n\n  const persona =\n    candidato.persona_contacto ||\n    \"NO ENCONTRADO\";\n\n  const empresa =\n    candidato.empresa ||\n    \"NO IDENTIFICADO\";\n\n  const cargoDeclarado =\n    candidato.cargo_declarado ||\n    \"NO IDENTIFICADO\";\n\n  const resultados =\n    Array.isArray(respuesta.results)\n      ? respuesta.results\n      : [];\n\n\n  const evidenciasValidas = [];\n  const cargosDetectados = [];\n  const emailsEnmascarados = [];\n  const resultadosIrrelevantes = [];\n\n  let fuentesFuertes = 0;\n  let fuentesMedias = 0;\n\n  let personaConfirmada = false;\n  let empresaConfirmada = false;\n  let rrhhConfirmado = false;\n\n\n  // ==========================================================\n  // RESULTADOS\n  // ==========================================================\n\n  for (const r of resultados) {\n\n    const titulo =\n      limpiar(r.title);\n\n    const contenido =\n      limpiar(r.content);\n\n    const url =\n      limpiar(r.url);\n\n    const dominio =\n      dominioDe(url);\n\n    const texto =\n      `${titulo} ${contenido}`;\n\n\n    const confirmaPersona =\n      mencionaPersona(\n        texto,\n        persona\n      );\n\n    const mencionaEmpresa =\n      contiene(\n        texto,\n        \"Corporacion Favorita\"\n      );\n\n    const mencionaRRHH =\n      (\n        contiene(texto, \"Talento Humano\") ||\n        contiene(texto, \"Recursos Humanos\") ||\n        contiene(texto, \"RRHH\") ||\n        contiene(texto, \"TTHH\") ||\n        contiene(texto, \"Human Resources\")\n      );\n\n\n    // --------------------------------------------------------\n    // SOLO EVIDENCIA DE PERSONA + EMPRESA\n    // --------------------------------------------------------\n\n    if (\n      !confirmaPersona ||\n      !mencionaEmpresa\n    ) {\n\n      resultadosIrrelevantes.push({\n        titulo,\n        url,\n        motivo:\n          \"NO_CONFIRMA_PERSONA_Y_EMPRESA\"\n      });\n\n      continue;\n    }\n\n\n    personaConfirmada = true;\n    empresaConfirmada = true;\n\n    if (mencionaRRHH) {\n      rrhhConfirmado = true;\n    }\n\n\n    // --------------------------------------------------------\n    // NIVEL DE FUENTE\n    // --------------------------------------------------------\n\n    let nivelFuente =\n      \"BAJA\";\n\n    if (\n      esFuenteFuerte(url)\n    ) {\n\n      nivelFuente =\n        \"FUERTE\";\n\n      fuentesFuertes++;\n\n    } else if (\n      esFuenteMedia(url)\n    ) {\n\n      nivelFuente =\n        \"MEDIA\";\n\n      fuentesMedias++;\n    }\n\n\n    // --------------------------------------------------------\n    // CARGO\n    // --------------------------------------------------------\n\n    const cargo =\n      extraerCargo(texto);\n\n    if (\n      cargo !==\n      \"NO IDENTIFICADO\"\n    ) {\n\n      cargosDetectados.push({\n\n        cargo,\n\n        clave_cargo:\n          claveCargo(cargo),\n\n        fuente:\n          url,\n\n        dominio,\n\n        nivel_fuente:\n          nivelFuente,\n\n        evidencia:\n          contenido\n      });\n    }\n\n\n    // --------------------------------------------------------\n    // EMAIL ENMASCARADO\n    // --------------------------------------------------------\n\n    if (\n      contieneEmailEnmascarado(texto)\n    ) {\n\n      emailsEnmascarados.push({\n\n        evidencia:\n          texto,\n\n        fuente:\n          url,\n\n        utilizable:\n          false\n      });\n    }\n\n\n    // --------------------------------------------------------\n    // EVIDENCIA VÁLIDA\n    // --------------------------------------------------------\n\n    evidenciasValidas.push({\n\n      titulo,\n\n      url,\n\n      dominio,\n\n      nivel_fuente:\n        nivelFuente,\n\n      evidencia:\n        contenido\n    });\n  }\n\n\n  // ==========================================================\n  // DEDUPLICAR VARIANTES EXACTAS\n  // ==========================================================\n\n  const vistosCargo =\n    new Set();\n\n  const cargosUnicos =\n    cargosDetectados.filter(c => {\n\n      const clave =\n        `${c.clave_cargo}|${normalizar(c.cargo)}|${c.fuente}`;\n\n      if (\n        vistosCargo.has(clave)\n      ) {\n        return false;\n      }\n\n      vistosCargo.add(clave);\n\n      return true;\n    });\n\n\n  // ==========================================================\n  // CARGOS ESPECÍFICOS\n  // ==========================================================\n\n  const cargosEspecificos =\n    cargosDetectados.filter(\n      c => cargoEspecifico(c.cargo)\n    );\n\n\n  // ==========================================================\n  // CARGO PREFERIDO\n  //\n  // 1. Fuente fuerte\n  // 2. Fuente media\n  // 3. Cargo declarado\n  // ==========================================================\n\n  let cargoVerificado =\n    cargoDeclarado;\n\n  let fuenteCargo =\n    candidato.fuente_inicial || \"\";\n\n  let nivelCargo =\n    \"NO_VERIFICADO\";\n\n\n  const cargoFuerte =\n    cargosEspecificos.find(\n      c =>\n        c.nivel_fuente ===\n        \"FUERTE\"\n    );\n\n\n  if (cargoFuerte) {\n\n    cargoVerificado =\n      cargoFuerte.cargo;\n\n    fuenteCargo =\n      cargoFuerte.fuente;\n\n    nivelCargo =\n      \"VERIFICADO_FUENTE_FUERTE\";\n\n  } else {\n\n    const cargoMedio =\n      cargosEspecificos.find(\n        c =>\n          c.nivel_fuente ===\n          \"MEDIA\"\n      );\n\n\n    if (cargoMedio) {\n\n      cargoVerificado =\n        cargoMedio.cargo;\n\n      fuenteCargo =\n        cargoMedio.fuente;\n\n      nivelCargo =\n        \"CARGO_FUENTE_MEDIA\";\n    }\n  }\n\n\n  // ==========================================================\n  // CONFLICTO REAL\n  //\n  // Comparamos familias semánticas.\n  // ==========================================================\n\n  const familiasCargo =\n    [\n      ...new Set(\n        cargosEspecificos\n          .map(c =>\n            c.clave_cargo\n          )\n          .filter(Boolean)\n      )\n    ];\n\n\n  const conflictoCargo =\n    familiasCargo.length > 1;\n\n\n  // ==========================================================\n  // ESTADO VERIFICACIÓN\n  // ==========================================================\n\n  let estadoVerificacion =\n    \"NO_VERIFICADO\";\n\n\n  // Persona + empresa + RRHH con fuente fuerte.\n  if (\n    personaConfirmada &&\n    empresaConfirmada &&\n    rrhhConfirmado &&\n    fuentesFuertes >= 1\n  ) {\n\n    if (\n      conflictoCargo\n    ) {\n\n      estadoVerificacion =\n        \"CONFLICTO_DE_CARGO\";\n\n    } else if (\n      nivelCargo ===\n      \"VERIFICADO_FUENTE_FUERTE\"\n    ) {\n\n      estadoVerificacion =\n        \"VERIFICADO\";\n\n    } else {\n\n      // Ejemplo Samantha:\n      // LinkedIn confirma pertenencia a Talento Humano,\n      // pero cargo exacto viene de ZoomInfo.\n      estadoVerificacion =\n        \"PARCIALMENTE_VERIFICADO\";\n    }\n\n  } else if (\n    personaConfirmada &&\n    empresaConfirmada &&\n    rrhhConfirmado\n  ) {\n\n    estadoVerificacion =\n      \"PARCIALMENTE_VERIFICADO\";\n  }\n\n\n  // ==========================================================\n  // CONFIANZA\n  // ==========================================================\n\n  let confianza =\n    \"BAJA\";\n\n  if (\n    estadoVerificacion ===\n    \"VERIFICADO\"\n  ) {\n\n    confianza =\n      \"ALTA\";\n\n  } else if (\n    estadoVerificacion ===\n      \"CONFLICTO_DE_CARGO\" ||\n    estadoVerificacion ===\n      \"PARCIALMENTE_VERIFICADO\"\n  ) {\n\n    confianza =\n      \"MEDIA\";\n  }\n\n\n  // ==========================================================\n  // SALIDA\n  // ==========================================================\n\n  salida.push({\n\n    json: {\n\n      empresa,\n\n      persona_contacto:\n        persona,\n\n      cargo_declarado:\n        cargoDeclarado,\n\n      estado_verificacion:\n        estadoVerificacion,\n\n      confianza_verificacion:\n        confianza,\n\n      cargo_verificado:\n        cargoVerificado,\n\n      fuente_cargo:\n        fuenteCargo,\n\n      nivel_verificacion_cargo:\n        nivelCargo,\n\n      conflicto_cargo:\n        conflictoCargo,\n\n      familias_cargo_detectadas:\n        familiasCargo,\n\n      cargos_encontrados:\n        cargosUnicos,\n\n      total_fuentes_validas:\n        evidenciasValidas.length,\n\n      fuentes_fuertes:\n        fuentesFuertes,\n\n      fuentes_medias:\n        fuentesMedias,\n\n      evidencias_validas:\n        evidenciasValidas,\n\n      emails_enmascarados_no_utilizables:\n        emailsEnmascarados,\n\n      estado_contacto:\n        \"SIN_CONTACTO_DIRECTO_VERIFICADO\",\n\n      resultados_irrelevantes:\n        resultadosIrrelevantes,\n\n      siguiente_accion:\n        estadoVerificacion ===\n          \"VERIFICADO\"\n          ? \"BUSCAR_CONTACTO_PUBLICO_VERIFICABLE\"\n\n          : estadoVerificacion ===\n            \"CONFLICTO_DE_CARGO\"\n            ? \"MANTENER_PERSONA_Y_RESOLVER_CARGO\"\n\n          : estadoVerificacion ===\n            \"PARCIALMENTE_VERIFICADO\"\n            ? \"AMPLIAR_EVIDENCIA_PERSONA\"\n\n          : \"DESCARTAR_O_REINTENTAR_VERIFICACION\"\n\n    }\n  });\n}\n\n\nreturn salida;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        464
+      ],
+      "id": "d707eef5-0714-4187-8139-6cf9c8ecebb5",
+      "name": "Code in JavaScript8"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "prospect_contact_candidates",
+          "mode": "list",
+          "cachedResultName": "prospect_contact_candidates"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "empresa_key": "={{ $json.empresa.toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').replace(/\\s+/g, ' ').trim() }}",
+            "persona_key": "={{ $json.persona_contacto.toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').replace(/\\s+/g, ' ').trim() }}",
+            "estado": "={{ $json.estado_verificacion }}",
+            "cargo_contacto": "={{ $json.estado_verificacion === 'VERIFICADO' ? $json.cargo_verificado : $json.cargo_declarado }}",
+            "last_seen": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [
+            "empresa_key",
+            "persona_key"
+          ],
+          "schema": [
+            {
+              "id": "empresa_key",
+              "displayName": "empresa_key",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "persona_key",
+              "displayName": "persona_key",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "empresa",
+              "displayName": "empresa",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "persona_contacto",
+              "displayName": "persona_contacto",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "cargo_contacto",
+              "displayName": "cargo_contacto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fuente_inicial",
+              "displayName": "fuente_inicial",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "tipo_fuente_inicial",
+              "displayName": "tipo_fuente_inicial",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "evidencia_inicial",
+              "displayName": "evidencia_inicial",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "puntuacion_prioridad",
+              "displayName": "puntuacion_prioridad",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "prioridad_verificacion",
+              "displayName": "prioridad_verificacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "estado",
+              "displayName": "estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "first_seen",
+              "displayName": "first_seen",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "last_seen",
+              "displayName": "last_seen",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1104,
+        464
+      ],
+      "id": "9f35e7c8-ad2f-4a7d-8de6-63c10092d5c5",
+      "name": "Actualizar estado candidato memoria"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n    empresa_key,\n    persona_key,\n    empresa,\n    persona_contacto,\n    cargo_contacto,\n    fuente_inicial,\n    tipo_fuente_inicial,\n    puntuacion_prioridad,\n    prioridad_verificacion,\n    estado,\n\n    '\"' || persona_contacto || '\" \"' || empresa ||\n    '\" (email OR correo OR teléfono OR telefono OR celular OR whatsapp OR contacto)'\n        AS consulta_contacto_directo,\n\n    '\"' || persona_contacto || '\" \"' || empresa ||\n    '\" \"' || cargo_contacto || '\" (email OR correo OR teléfono OR telefono OR celular OR whatsapp)'\n        AS consulta_contacto_cargo\n\nFROM prospect_contact_candidates\n\nWHERE empresa_key =\n    translate(\n        lower(trim($1)),\n        'áéíóúüñ',\n        'aeiouun'\n    )\n\nAND estado = 'VERIFICADO'\n\nORDER BY\n    puntuacion_prioridad DESC,\n    first_seen ASC;",
+        "options": {
+          "queryReplacement": "={{ $json.empresa }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1248,
+        464
+      ],
+      "id": "dc962279-259e-462a-bbe4-e98166195caf",
+      "name": "Leer candidatos para contacto",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "url": "http://searxng:8080/search?format=json",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{$json.consulta_contacto_directo}}"
+            },
+            {
+              "name": "safesearch",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1392,
+        464
+      ],
+      "id": "ae705da1-2f3c-4606-a1b0-d00763a671af",
+      "name": "HTTP Request6"
+    },
+    {
+      "parameters": {
+        "jsCode": "const respuestas = $input.all();\nconst candidatos = $(\"Leer candidatos para contacto\").all();\n\n\n// ============================================================\n// FUNCIONES GENERALES\n// ============================================================\n\nfunction limpiar(texto) {\n  return String(texto || \"\")\n    .replace(/\\s+/g, \" \")\n    .trim();\n}\n\nfunction normalizar(texto) {\n  return limpiar(texto)\n    .toLowerCase()\n    .normalize(\"NFD\")\n    .replace(/[\\u0300-\\u036f]/g, \"\");\n}\n\nfunction dominioDe(url) {\n  return String(url || \"\")\n    .toLowerCase()\n    .replace(/^https?:\\/\\//, \"\")\n    .replace(/^www\\./, \"\")\n    .split(\"/\")[0]\n    .split(\"?\")[0]\n    .split(\"#\")[0]\n    .split(\":\")[0];\n}\n\nfunction contiene(texto, valor) {\n  return normalizar(texto)\n    .includes(normalizar(valor));\n}\n\n\n// ============================================================\n// PERSONA\n// ============================================================\n\nfunction mencionaPersona(texto, personaCompleta) {\n\n  const t = normalizar(texto);\n  const persona = normalizar(personaCompleta);\n\n  if (!persona) return false;\n\n  if (t.includes(persona)) {\n    return true;\n  }\n\n  const partes = persona\n    .split(/\\s+/)\n    .filter(Boolean);\n\n  if (partes.length >= 2) {\n\n    const nombreCorto =\n      `${partes[0]} ${partes[1]}`;\n\n    if (\n      nombreCorto.length >= 6 &&\n      t.includes(nombreCorto)\n    ) {\n      return true;\n    }\n  }\n\n  return false;\n}\n\n\nfunction urlContienePersona(url, personaCompleta) {\n\n  let u = \"\";\n\n  try {\n    u = decodeURIComponent(\n      String(url || \"\")\n    );\n  } catch {\n    u = String(url || \"\");\n  }\n\n  u = normalizar(u)\n    .replace(/[^a-z0-9]+/g, \" \");\n\n  const partes =\n    normalizar(personaCompleta)\n      .split(/\\s+/)\n      .filter(Boolean);\n\n  if (partes.length < 2) {\n    return false;\n  }\n\n  return (\n    u.includes(partes[0]) &&\n    u.includes(partes[1])\n  );\n}\n\n\nfunction fuentePrincipalPersona(\n  titulo,\n  url,\n  persona\n) {\n\n  return (\n    mencionaPersona(\n      titulo,\n      persona\n    ) ||\n    urlContienePersona(\n      url,\n      persona\n    )\n  );\n}\n\n\n// ============================================================\n// EMAILS\n// ============================================================\n\nfunction extraerEmails(texto) {\n\n  const matches =\n    String(texto || \"\").match(\n      /\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}\\b/gi\n    ) || [];\n\n  return [\n    ...new Set(\n      matches.map(e =>\n        e.toLowerCase()\n      )\n    )\n  ];\n}\n\n\nfunction tieneEmailEnmascarado(texto) {\n\n  return (\n    /[A-Za-z0-9]*[*xX]{2,}@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/i\n      .test(String(texto || \"\"))\n  );\n}\n\n\n// ============================================================\n// TELÉFONOS\n// ============================================================\n\nfunction normalizarTelefono(valor) {\n\n  const original =\n    String(valor || \"\").trim();\n\n  const prefijo =\n    original.startsWith(\"+\")\n      ? \"+\"\n      : \"\";\n\n  const digitos =\n    original.replace(/\\D/g, \"\");\n\n  if (\n    digitos.length < 7 ||\n    digitos.length > 15\n  ) {\n    return \"\";\n  }\n\n  return prefijo + digitos;\n}\n\n\nfunction tieneTelefonoEnmascarado(texto) {\n\n  return (\n    /(?:\\+?\\d[\\d\\s().-]*)(?:X{2,}|x{2,}|\\*{2,}|\\.{3,})/i\n      .test(String(texto || \"\"))\n  );\n}\n\n\n// ============================================================\n// ELIMINAR RANGOS DE FECHAS\n//\n// Evita convertir:\n// 1989 - 1990\n// 2017 - 2018\n// 1990 - now\n// en teléfonos.\n// ============================================================\n\nfunction eliminarRangosFechas(texto) {\n\n  return String(texto || \"\")\n    .replace(\n      /\\b(?:19|20)\\d{2}\\s*(?:-|–|—|a|to)\\s*(?:(?:19|20)\\d{2}|now|present|presente|actualidad|hoy)\\b/gi,\n      \" \"\n    );\n}\n\n\nfunction pareceDosAnios(numero) {\n\n  const digitos =\n    String(numero || \"\")\n      .replace(/\\D/g, \"\");\n\n  if (digitos.length !== 8) {\n    return false;\n  }\n\n  const a =\n    Number(digitos.slice(0, 4));\n\n  const b =\n    Number(digitos.slice(4, 8));\n\n  return (\n    a >= 1900 &&\n    a <= 2099 &&\n    b >= 1900 &&\n    b <= 2099\n  );\n}\n\n\n// ============================================================\n// EXTRAER TELÉFONOS REALES\n//\n// Aceptamos:\n//\n// +593...\n// 09...\n// 02...\n// números que estén inmediatamente asociados\n// a palabras como teléfono / phone / celular.\n//\n// No aceptamos secuencias arbitrarias de números.\n// ============================================================\n\nfunction extraerTelefonosCompletos(texto) {\n\n  const t =\n    eliminarRangosFechas(\n      String(texto || \"\")\n    );\n\n  const candidatos = [];\n\n\n  // Internacionales con +\n  const internacionales =\n    t.match(\n      /\\+\\s*\\d[\\d\\s().-]{6,}\\d/g\n    ) || [];\n\n  candidatos.push(\n    ...internacionales\n  );\n\n\n  // Números locales que empiezan por 0\n  const locales =\n    t.match(\n      /\\b0\\d[\\d\\s().-]{6,}\\d\\b/g\n    ) || [];\n\n  candidatos.push(\n    ...locales\n  );\n\n\n  // Número expresamente etiquetado como teléfono\n  const regexContexto =\n    /(?:tel[eé]fono|tel\\.?|phone|celular|m[oó]vil|mobile|whatsapp)\\s*(?:[:\\-]|al|es)?\\s*(\\+?\\d[\\d\\s().-]{6,}\\d)/gi;\n\n  let match;\n\n  while (\n    (match =\n      regexContexto.exec(t)) !== null\n  ) {\n\n    candidatos.push(\n      match[1]\n    );\n  }\n\n\n  const salida = [];\n\n  for (const candidato of candidatos) {\n\n    const numero =\n      normalizarTelefono(\n        candidato\n      );\n\n    if (!numero) {\n      continue;\n    }\n\n    if (\n      pareceDosAnios(numero)\n    ) {\n      continue;\n    }\n\n    salida.push(numero);\n  }\n\n  return [\n    ...new Set(salida)\n  ];\n}\n\n\n// ============================================================\n// 1800 ECUADOR\n// ============================================================\n\nfunction extraer1800(texto) {\n\n  const t =\n    String(texto || \"\");\n\n  const resultados = [];\n\n  const regex =\n    /1800(?:\\s+[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)?\\s*\\(?\\s*(\\d{3})\\s*(\\d{3})\\s*\\)?/gi;\n\n  let match;\n\n  while (\n    (match =\n      regex.exec(t)) !== null\n  ) {\n\n    resultados.push(\n      `1800${match[1]}${match[2]}`\n    );\n  }\n\n  return [\n    ...new Set(resultados)\n  ];\n}\n\n\n// ============================================================\n// WHATSAPP\n//\n// Solo se acepta cuando la fuente dice expresamente WhatsApp.\n// ============================================================\n\nfunction extraerWhatsAppExplicito(texto) {\n\n  const t =\n    String(texto || \"\");\n\n  if (\n    !/\\bwhatsapp\\b/i.test(t)\n  ) {\n    return [];\n  }\n\n  if (\n    tieneTelefonoEnmascarado(t)\n  ) {\n    return [];\n  }\n\n  return extraerTelefonosCompletos(t);\n}\n\n\n// ============================================================\n// FUENTE OFICIAL\n// ============================================================\n\nfunction esWebOficialCorporacionFavorita(url) {\n\n  return dominioDe(url) ===\n    \"corporacionfavorita.com\";\n}\n\n\n// ============================================================\n// DEDUPLICAR\n// ============================================================\n\nfunction deduplicarContactos(lista) {\n\n  const vistos =\n    new Set();\n\n  return lista.filter(c => {\n\n    const clave =\n      `${c.tipo}|${normalizar(c.valor)}|${c.fuente}`;\n\n    if (\n      vistos.has(clave)\n    ) {\n      return false;\n    }\n\n    vistos.add(clave);\n\n    return true;\n  });\n}\n\n\n// ============================================================\n// PROCESAMIENTO\n// ============================================================\n\nconst salida = [];\n\nfor (\n  let i = 0;\n  i < respuestas.length;\n  i++\n) {\n\n  const respuesta =\n    respuestas[i]?.json || {};\n\n  const candidato =\n    candidatos[i]?.json || {};\n\n  const persona =\n    candidato.persona_contacto ||\n    \"NO ENCONTRADO\";\n\n  const empresa =\n    candidato.empresa ||\n    \"NO IDENTIFICADO\";\n\n  const cargo =\n    candidato.cargo_contacto ||\n    \"NO IDENTIFICADO\";\n\n  const resultados =\n    Array.isArray(respuesta.results)\n      ? respuesta.results\n      : [];\n\n\n  const contactosDirectos = [];\n  const contactosEmpresaOficiales = [];\n  const contactosEmpresaSecundarios = [];\n  const contactosEnmascarados = [];\n  const resultadosDescartados = [];\n  const fuentesRevisadas = [];\n\n\n  for (const r of resultados) {\n\n    const titulo =\n      limpiar(r.title);\n\n    const contenido =\n      limpiar(r.content);\n\n    const url =\n      limpiar(r.url);\n\n    const dominio =\n      dominioDe(url);\n\n    const texto =\n      `${titulo} ${contenido}`;\n\n\n    const personaMencionada =\n      mencionaPersona(\n        texto,\n        persona\n      );\n\n\n    // MUY IMPORTANTE:\n    // Para atribuir un contacto a Gitta,\n    // la página debe ser principalmente sobre Gitta.\n    const personaPrincipal =\n      fuentePrincipalPersona(\n        titulo,\n        url,\n        persona\n      );\n\n\n    const empresaPresente =\n      (\n        contiene(\n          texto,\n          \"Corporacion Favorita\"\n        ) ||\n        contiene(\n          texto,\n          \"Corporación Favorita\"\n        )\n      );\n\n\n    // ========================================================\n    // HOMÓNIMOS\n    // ========================================================\n\n    if (\n      dominio ===\n      \"favoritabananas.com\"\n    ) {\n\n      resultadosDescartados.push({\n\n        titulo,\n\n        url,\n\n        motivo:\n          \"EMPRESA_HOMONIMA_NO_CORPORACION_FAVORITA\"\n      });\n\n      continue;\n    }\n\n\n    const emailEnmascarado =\n      tieneEmailEnmascarado(texto);\n\n    const telefonoEnmascarado =\n      tieneTelefonoEnmascarado(texto);\n\n\n    // ========================================================\n    // CONTACTO ENMASCARADO DE LA PERSONA OBJETIVO\n    // ========================================================\n\n    if (\n      personaPrincipal &&\n      empresaPresente &&\n      (\n        emailEnmascarado ||\n        telefonoEnmascarado\n      )\n    ) {\n\n      contactosEnmascarados.push({\n\n        tipo:\n          \"CONTACTO_PERSONA_ENMASCARADO\",\n\n        valor:\n          \"NO UTILIZABLE\",\n\n        persona_contacto:\n          persona,\n\n        fuente:\n          url,\n\n        dominio,\n\n        evidencia:\n          texto,\n\n        utilizable:\n          false,\n\n        motivo:\n          \"CONTACTO_ENMASCARADO\"\n      });\n    }\n\n\n    // ========================================================\n    // CONTACTO DIRECTO DE LA PERSONA\n    // ========================================================\n\n    if (\n      personaPrincipal &&\n      empresaPresente\n    ) {\n\n      // EMAIL\n      if (\n        !emailEnmascarado\n      ) {\n\n        const emails =\n          extraerEmails(texto);\n\n        for (const email of emails) {\n\n          contactosDirectos.push({\n\n            tipo:\n              \"EMAIL\",\n\n            valor:\n              email,\n\n            persona_contacto:\n              persona,\n\n            fuente:\n              url,\n\n            dominio,\n\n            evidencia:\n              texto,\n\n            estado:\n              \"PUBLICO_NO_ENMASCARADO\"\n          });\n        }\n      }\n\n\n      // TELÉFONO\n      if (\n        !telefonoEnmascarado\n      ) {\n\n        const telefonos =\n          extraerTelefonosCompletos(\n            texto\n          );\n\n        for (\n          const telefono of telefonos\n        ) {\n\n          contactosDirectos.push({\n\n            tipo:\n              \"TELEFONO\",\n\n            valor:\n              telefono,\n\n            persona_contacto:\n              persona,\n\n            fuente:\n              url,\n\n            dominio,\n\n            evidencia:\n              texto,\n\n            estado:\n              \"PUBLICO_NO_ENMASCARADO\"\n          });\n        }\n\n\n        const whatsapp =\n          extraerWhatsAppExplicito(\n            texto\n          );\n\n        for (\n          const numero of whatsapp\n        ) {\n\n          contactosDirectos.push({\n\n            tipo:\n              \"WHATSAPP\",\n\n            valor:\n              numero,\n\n            persona_contacto:\n              persona,\n\n            fuente:\n              url,\n\n            dominio,\n\n            evidencia:\n              texto,\n\n            estado:\n              \"WHATSAPP_DECLARADO_EXPLICITAMENTE\"\n          });\n        }\n      }\n    }\n\n\n    // ========================================================\n    // CONTACTO GENERAL OFICIAL\n    // ========================================================\n\n    if (\n      esWebOficialCorporacionFavorita(\n        url\n      )\n    ) {\n\n      const emails =\n        extraerEmails(texto);\n\n      const telefonos =\n        [\n          ...extraerTelefonosCompletos(\n            texto\n          ),\n          ...extraer1800(texto)\n        ];\n\n      const whatsapp =\n        extraerWhatsAppExplicito(\n          texto\n        );\n\n\n      for (const email of emails) {\n\n        contactosEmpresaOficiales.push({\n\n          tipo:\n            \"EMAIL_EMPRESA\",\n\n          valor:\n            email,\n\n          fuente:\n            url,\n\n          evidencia:\n            texto,\n\n          estado:\n            \"VERIFICADO_WEB_OFICIAL\"\n        });\n      }\n\n\n      for (\n        const telefono of telefonos\n      ) {\n\n        contactosEmpresaOficiales.push({\n\n          tipo:\n            \"TELEFONO_EMPRESA\",\n\n          valor:\n            telefono,\n\n          fuente:\n            url,\n\n          evidencia:\n            texto,\n\n          estado:\n            \"VERIFICADO_WEB_OFICIAL\"\n        });\n      }\n\n\n      for (\n        const numero of whatsapp\n      ) {\n\n        contactosEmpresaOficiales.push({\n\n          tipo:\n            \"WHATSAPP_EMPRESA\",\n\n          valor:\n            numero,\n\n          fuente:\n            url,\n\n          evidencia:\n            texto,\n\n          estado:\n            \"WHATSAPP_DECLARADO_WEB_OFICIAL\"\n        });\n      }\n    }\n\n\n    // ========================================================\n    // CONTACTO CORPORATIVO EN FUENTES SECUNDARIAS\n    // ========================================================\n\n    if (\n      !personaPrincipal &&\n      empresaPresente &&\n      !esWebOficialCorporacionFavorita(\n        url\n      )\n    ) {\n\n      const emails =\n        emailEnmascarado\n          ? []\n          : extraerEmails(texto);\n\n      const telefonos =\n        telefonoEnmascarado\n          ? []\n          : extraerTelefonosCompletos(\n              texto\n            );\n\n\n      for (const email of emails) {\n\n        contactosEmpresaSecundarios.push({\n\n          tipo:\n            \"EMAIL_EMPRESA_NO_OFICIAL\",\n\n          valor:\n            email,\n\n          fuente:\n            url,\n\n          evidencia:\n            texto,\n\n          estado:\n            \"FUENTE_SECUNDARIA\"\n        });\n      }\n\n\n      for (\n        const telefono of telefonos\n      ) {\n\n        contactosEmpresaSecundarios.push({\n\n          tipo:\n            \"TELEFONO_EMPRESA_NO_OFICIAL\",\n\n          valor:\n            telefono,\n\n          fuente:\n            url,\n\n          evidencia:\n            texto,\n\n          estado:\n            \"FUENTE_SECUNDARIA\"\n        });\n      }\n    }\n\n\n    fuentesRevisadas.push({\n\n      titulo,\n\n      url,\n\n      dominio,\n\n      persona_mencionada:\n        personaMencionada,\n\n      persona_principal:\n        personaPrincipal,\n\n      empresa_presente:\n        empresaPresente\n    });\n  }\n\n\n  // ==========================================================\n  // DEDUPLICAR\n  // ==========================================================\n\n  const directos =\n    deduplicarContactos(\n      contactosDirectos\n    );\n\n  const oficiales =\n    deduplicarContactos(\n      contactosEmpresaOficiales\n    );\n\n  const secundarios =\n    deduplicarContactos(\n      contactosEmpresaSecundarios\n    );\n\n  const enmascarados =\n    deduplicarContactos(\n      contactosEnmascarados\n    );\n\n\n  // ==========================================================\n  // ESTADO FINAL\n  // ==========================================================\n\n  const estadoContacto =\n    directos.length > 0\n      ? \"CONTACTO_DIRECTO_PUBLICO_ENCONTRADO\"\n      : \"SIN_CONTACTO_DIRECTO_VERIFICADO\";\n\n\n  salida.push({\n\n    json: {\n\n      empresa,\n\n      persona_contacto:\n        persona,\n\n      cargo_contacto:\n        cargo,\n\n      estado_contacto:\n        estadoContacto,\n\n      contactos_directos:\n        directos,\n\n      contactos_empresa_oficiales:\n        oficiales,\n\n      contactos_empresa_secundarios:\n        secundarios,\n\n      contactos_enmascarados_no_utilizables:\n        enmascarados,\n\n      total_contactos_directos:\n        directos.length,\n\n      total_contactos_empresa_oficiales:\n        oficiales.length,\n\n      whatsapp_directo_verificado:\n        directos.some(\n          c =>\n            c.tipo === \"WHATSAPP\"\n        ),\n\n      siguiente_accion:\n        directos.length > 0\n          ? \"VALIDAR_CONTACTO_Y_PREPARAR_PROSPECCION\"\n          : oficiales.length > 0\n            ? \"AMPLIAR_BUSQUEDA_CONTACTO_DIRECTO_MANTENIENDO_CONTACTO_EMPRESA\"\n            : \"AMPLIAR_BUSQUEDA_CONTACTO_DIRECTO\",\n\n      fuentes_revisadas:\n        fuentesRevisadas,\n\n      resultados_descartados:\n        resultadosDescartados\n    }\n  });\n}\n\n\nreturn salida;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1616,
+        464
+      ],
+      "id": "6a04d364-8843-4388-878f-4b6742701c6b",
+      "name": "Code in JavaScript9"
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript3": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request3": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript4": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript5": {
+      "main": [
+        [
+          {
+            "node": "Split Out1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request4": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript6": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript7": {
+      "main": [
+        [
+          {
+            "node": "Split Out2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out2": {
+      "main": [
+        [
+          {
+            "node": "Guardar candidato memoria",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar candidato memoria": {
+      "main": [
+        [
+          {
+            "node": "Leer candidatos pendientes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer candidatos pendientes": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request5": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript8": {
+      "main": [
+        [
+          {
+            "node": "Actualizar estado candidato memoria",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar estado candidato memoria": {
+      "main": [
+        [
+          {
+            "node": "Leer candidatos para contacto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer candidatos para contacto": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request6": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "nodeGroups": [],
+  "versionId": "44fdb64a-82ca-437d-b110-da1565b911fb",
+  "activeVersionId": null,
+  "versionCounter": 1,
+  "triggerCount": 0,
+  "sourceWorkflowId": null,
+  "tags": [],
+  "versionMetadata": {
+    "name": null,
+    "description": null
+  }
+}

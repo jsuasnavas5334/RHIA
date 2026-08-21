@@ -1,0 +1,25 @@
+{
+  "version": "1.0",
+  "callbackId": "99999999-9999-4999-8999-999999999999",
+  "correlationId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "emittedAt": "2026-08-20T20:00:04Z",
+  "callbackType": "JOB_RESULT",
+  "payload": {
+    "version": "1.0",
+    "jobId": "11111111-1111-4111-8111-111111111111",
+    "correlationId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "jobType": "RESOLVE_ENTITY",
+    "status": "SUCCEEDED",
+    "completedAt": "2026-08-20T20:00:03Z",
+    "output": {
+      "kind": "RESOLVE_ENTITY",
+      "resolution": "AMBIGUOUS",
+      "candidateCount": 3,
+      "evidence": []
+    },
+    "metrics": {
+      "durationMs": 3000,
+      "attempt": 1
+    }
+  }
+}

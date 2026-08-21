@@ -1,0 +1,887 @@
+{
+  "updatedAt": "2026-08-21T04:51:00-05:00",
+  "sessions": [
+    {
+      "id": "SES-20260819-01",
+      "startedAt": "2026-08-19T11:30:00-05:00",
+      "taskId": "MONITOR-V1",
+      "status": "DONE",
+      "title": "Crear RHIA Control Center 1.0",
+      "summary": "Se construyó el monitor local para visualizar el Plan Maestro y controlar los cambios Git sin depender de herramientas técnicas.",
+      "changes": [
+        "Panel de estado, tareas, gates y fases.",
+        "STAR.BAT y STOP.BAT para operación local sin preguntas.",
+        "Lectura de cambios Git en vivo y vista estática para Vercel.",
+        "Corrección del flujo seguro de SUBIRALGIT.BAT."
+      ],
+      "tests": [
+        "Health HTTP y API local respondieron 200.",
+        "Diseño probado en escritorio y 390 px de ancho.",
+        "Inicio, reinicio y apagado del servidor verificados."
+      ],
+      "evidence": [
+        "Versión visible 1.0.0-monitor.",
+        "Rama main y cambios locales detectados desde Git."
+      ],
+      "risks": [
+        "El repositorio aún no tiene su primer commit publicado."
+      ],
+      "decisions": [
+        "El monitor no crea commits ni hace push automáticamente.",
+        "PowerShell sirve la aplicación sin dependencias adicionales."
+      ],
+      "next": "Ejecutar PH01-T001 y capturar el baseline real de infraestructura."
+    },
+    {
+      "id": "SES-20260819-02",
+      "startedAt": "2026-08-19T12:19:05-05:00",
+      "taskId": "PH01-T001",
+      "status": "PARTIAL",
+      "title": "Inventariar infraestructura actual",
+      "summary": "Se auditó sin cambios el host, WSL2, Docker Compose y los cuatro servicios RHIA activos. El mapa verificable quedó documentado sin copiar secretos.",
+      "changes": [
+        "Creación del baseline de infraestructura.",
+        "PH01 y PH01-T001 marcadas en curso.",
+        "Bitácora persistente incorporada al monitor."
+      ],
+      "tests": [
+        "PostgreSQL pg_isready: accepting connections.",
+        "n8n /healthz: HTTP 200.",
+        "SearXNG /healthz: OK.",
+        "Ollama respondió y listó el modelo local."
+      ],
+      "evidence": [
+        "Ubuntu 26.04 LTS sobre WSL2.",
+        "Docker Engine 29.7.2 y Compose 5.4.0.",
+        "PostgreSQL, n8n, SearXNG y Ollama activos en rhia_internal."
+      ],
+      "risks": [
+        "n8n, SearXNG y Ollama usan etiquetas latest.",
+        "Tres servicios no tienen healthcheck de Docker.",
+        "El contexto externo de variables de Compose no está documentado."
+      ],
+      "decisions": [
+        "No reiniciar servicios antes del backup verificado de PH01-T002.",
+        "Registrar nombres de variables, nunca valores ni secretos."
+      ],
+      "next": "Completar el inventario reproducible y coordinar el backup/restore de PH01-T002 antes de cualquier prueba de reinicio."
+    },
+    {
+      "id": "SES-20260819-03",
+      "startedAt": "2026-08-19T17:34:41-05:00",
+      "taskId": "PH01-T002",
+      "status": "PARTIAL",
+      "title": "Auditar PostgreSQL y datos existentes",
+      "summary": "Se inventariaron sin cambios los schemas de rhia_core y n8n, se generaron exports DDL sin filas y se comprobó su reconstrucción en PostgreSQL 18 aislado.",
+      "changes": [
+        "Baseline documentado para las bases rhia_core y n8n.",
+        "Exports schema-only versionables de ambas bases.",
+        "Dos tareas PH01 reflejadas como simultáneamente en curso."
+      ],
+      "tests": [
+        "rhia_core restauró 8 tablas y 1 función con exit 0.",
+        "n8n restauró 125 tablas con exit 0.",
+        "El contenedor temporal fue eliminado y los servicios activos permanecieron intactos."
+      ],
+      "evidence": [
+        "119 ejecuciones system_heartbeat completadas en rhia_core.",
+        "10 workflows n8n: 6 activos y 4 inactivos.",
+        "257 ejecuciones n8n: 249 exitosas y 8 con error."
+      ],
+      "risks": [
+        "No se encontró un backup completo de PostgreSQL.",
+        "El backup n8n contendrá datos sensibles y debe cifrarse fuera del repositorio.",
+        "El rol rhia_admin conserva privilegios de superuser."
+      ],
+      "decisions": [
+        "No inspeccionar payloads, resultados, credenciales ni datos personales.",
+        "No crear un backup con datos hasta definir destino, cifrado y retención seguros.",
+        "No alterar roles ni grants durante el baseline."
+      ],
+      "next": "Definir un procedimiento seguro de backup/restore fuera del repositorio y completar los conteos de validación de PH01-T002."
+    },
+    {
+      "id": "SES-20260819-04",
+      "startedAt": "2026-08-19T17:43:41-05:00",
+      "taskId": "PH01-T002",
+      "status": "PARTIAL",
+      "title": "Preparar backup y restore cifrados",
+      "summary": "Se creó un procedimiento seguro para respaldar rhia_core y n8n fuera del repositorio, cifrar los dumps y comprobar un restore aislado con conteos exactos.",
+      "changes": [
+        "Script de backup custom-format cifrado con AES-256.",
+        "Script de restore temporal con validación SHA-256 y conteos.",
+        "Plan operativo y guardas de seguridad documentados."
+      ],
+      "tests": [
+        "Ambos scripts pasaron validación bash -n.",
+        "El backup rechazó un destino dentro del repositorio.",
+        "Backup y verify rechazaron la ausencia de passphrase.",
+        "Las pruebas no crearon directorios ni dumps residuales."
+      ],
+      "evidence": [
+        "GnuPG 2.4.8 y OpenSSL 3.5.5 disponibles en WSL.",
+        "943 GB libres en WSL y 318 GB libres en Windows.",
+        "Los scripts exigen passphrase externa con permisos restrictivos."
+      ],
+      "risks": [
+        "La ejecución real generará archivos con datos sensibles, aunque cifrados.",
+        "Todavía no se definieron destino persistente, segunda copia ni retención.",
+        "Perder la passphrase haría irrecuperable el backup."
+      ],
+      "decisions": [
+        "Prohibir backups dentro del repositorio RHIA.",
+        "No imprimir, almacenar ni crear automáticamente la passphrase.",
+        "No declarar válido un backup sin restore y conteos equivalentes."
+      ],
+      "next": "Obtener decisión humana sobre destino, custodia de passphrase y retención; luego ejecutar backup y restore sin reiniciar servicios activos."
+    },
+    {
+      "id": "SES-20260819-05",
+      "startedAt": "2026-08-19T18:23:31-05:00",
+      "taskId": "PH01-T001",
+      "status": "PARTIAL",
+      "title": "Revalidar baseline de infraestructura",
+      "summary": "Se automatizó y ejecutó una comprobación de drift del baseline de WSL/Docker sin leer secretos, reiniciar servicios ni modificar la infraestructura activa.",
+      "changes": [
+        "Verificador reproducible de solo lectura para PH01-T001.",
+        "Documentación del comando operativo y de la revalidación.",
+        "Monitor actualizado a la versión 1.0.4-monitor."
+      ],
+      "tests": [
+        "Sintaxis Bash validada con bash -n.",
+        "24 controles de infraestructura ejecutados correctamente.",
+        "PostgreSQL, n8n, SearXNG y Ollama respondieron sin reinicios."
+      ],
+      "evidence": [
+        "SHA-256 de compose.yaml sin cambios.",
+        "Cuatro contenedores activos en rhia_internal con imágenes esperadas.",
+        "Cuatro volúmenes persistentes y publicación local de n8n verificadas."
+      ],
+      "risks": [
+        "Continúan las etiquetas latest de n8n, SearXNG y Ollama.",
+        "El reinicio controlado sigue bloqueado por la falta de un backup de datos restaurado y aprobado."
+      ],
+      "decisions": [
+        "Mantener PH01-T001 como PARTIAL hasta completar su prueba de reinicio.",
+        "Usar verificaciones de solo lectura mientras PH01-T002 espera decisiones de custodia del backup."
+      ],
+      "next": "Resolver destino, passphrase y retención del backup; verificar el restore y después realizar el reinicio controlado de PH01-T001."
+    },
+    {
+      "id": "SES-20260819-06",
+      "startedAt": "2026-08-19T18:31:12-05:00",
+      "taskId": "PH01-T002",
+      "status": "PARTIAL",
+      "title": "Completar cobertura de conteos del restore",
+      "summary": "La validación del backup se amplió para comparar todas las tablas de aplicación de rhia_core y n8n después del restore aislado, evitando falsos positivos por revisar solo una muestra.",
+      "changes": [
+        "Enumeración dinámica de tablas durante el backup.",
+        "Conteos identificados por base, schema y tabla.",
+        "Restore preparado para comparar las 133 tablas actuales."
+      ],
+      "tests": [
+        "Sintaxis Bash validada para ambos scripts.",
+        "Catálogos PostgreSQL enumerados mediante consultas de solo lectura.",
+        "8 tablas de rhia_core y 125 de n8n cumplen la validación de identificadores."
+      ],
+      "evidence": [
+        "Cobertura esperada del restore: 133 tablas de aplicación.",
+        "No se crearon dumps, archivos sensibles ni contenedores temporales."
+      ],
+      "risks": [
+        "El backup completo todavía no se ha creado ni restaurado con datos.",
+        "La passphrase y el bundle requerirán custodia externa al repositorio."
+      ],
+      "decisions": [
+        "Verificar todas las tablas para satisfacer el criterio de conteos del Plan Maestro.",
+        "Mantener PH01-T002 como PARTIAL hasta completar un restore real."
+      ],
+      "next": "Ejecutar el backup cifrado y el restore aislado cuando se definan destino, custodia de passphrase, retención y segunda copia."
+    },
+    {
+      "id": "SES-20260819-07",
+      "startedAt": "2026-08-19T18:43:13-05:00",
+      "taskId": "PH01-T002",
+      "status": "PARTIAL",
+      "title": "Endurecer validación del manifest de restore",
+      "summary": "El restore ahora comprueba que el manifest de conteos sea válido, único y cubra exactamente todas las tablas restauradas antes de comparar sus filas.",
+      "changes": [
+        "Validación estricta del encabezado de counts.tsv.",
+        "Detección de manifests vacíos y tablas duplicadas.",
+        "Comparación exacta entre manifest y catálogos restaurados."
+      ],
+      "tests": [
+        "Sintaxis Bash validada para backup y restore.",
+        "Consultas de catálogo comprobadas contra PostgreSQL activo en modo de solo lectura.",
+        "Cobertura esperada confirmada en 133 tablas de aplicación."
+      ],
+      "evidence": [
+        "El restore exige igualdad entre las claves base/schema/tabla del manifest y las bases aisladas.",
+        "No se generaron backups, contenedores temporales ni datos en texto plano."
+      ],
+      "risks": [
+        "La ruta completa solo podrá validarse cuando exista un bundle cifrado real.",
+        "Destino, passphrase, retención y segunda copia siguen sin decisión."
+      ],
+      "decisions": [
+        "Un hash válido no basta si el manifest está estructuralmente incompleto.",
+        "Mantener todas las comprobaciones antes de aprobar el restore."
+      ],
+      "next": "Ejecutar el backup cifrado y verificar cobertura y conteos en restore aislado después de recibir las decisiones de custodia."
+    },
+    {
+      "id": "SES-20260819-08",
+      "startedAt": "2026-08-19T18:55:13-05:00",
+      "taskId": "PH01-T002",
+      "status": "PARTIAL",
+      "title": "Hacer atómica la creación del bundle",
+      "summary": "El backup ya no expone un directorio con nombre definitivo hasta completar cifrado, conteos, metadata y hashes, reduciendo el riesgo de confundir una ejecución fallida con un respaldo válido.",
+      "changes": [
+        "Construcción del bundle dentro de un directorio temporal .part.",
+        "Renombrado atómico al completar todos los artefactos.",
+        "Guardas de colisión para rutas finales y temporales."
+      ],
+      "tests": [
+        "Sintaxis Bash validada.",
+        "Destino dentro del repositorio rechazado antes de crear archivos.",
+        "Ausencia de passphrase rechazada antes de crear el directorio temporal."
+      ],
+      "evidence": [
+        "Ningún dump ni bundle se creó durante las pruebas.",
+        "La ruta final solo se materializa después del cálculo de SHA-256."
+      ],
+      "risks": [
+        "Una falla puede conservar artefactos cifrados completos dentro del directorio .part para diagnóstico seguro.",
+        "La ejecución integral sigue pendiente de un destino y una passphrase aprobados."
+      ],
+      "decisions": [
+        "Reservar el nombre definitivo exclusivamente para bundles completos.",
+        "No borrar automáticamente artefactos cifrados completos de una ejecución fallida."
+      ],
+      "next": "Validar el flujo integral con datos cuando se aprueben destino, custodia, retención y segunda copia."
+    },
+    {
+      "id": "SES-20260819-09",
+      "startedAt": "2026-08-19T19:07:13-05:00",
+      "taskId": "PH01-T001",
+      "status": "DONE",
+      "title": "Completar reinicio controlado de infraestructura",
+      "summary": "Se reprodujo la topología de cuatro servicios en un proyecto Docker aislado, se verificó su health antes y después de reiniciarlo y se retiraron únicamente los recursos desechables.",
+      "changes": [
+        "Compose de smoke sin puertos, secretos ni volúmenes activos.",
+        "Runner automatizado de inicio, reinicio, health y limpieza.",
+        "PH01-T001 marcada como completada."
+      ],
+      "tests": [
+        "Docker Compose config validado.",
+        "PostgreSQL, n8n, SearXNG y Ollama iniciaron saludables.",
+        "Los cuatro servicios recuperaron health después del reinicio."
+      ],
+      "evidence": [
+        "4/4 servicios aislados saludables antes y después del reinicio.",
+        "Cero puertos publicados y cero volúmenes RHIA activos utilizados.",
+        "Contenedores, red y volúmenes desechables retirados al finalizar."
+      ],
+      "risks": [
+        "Las imágenes latest continúan siendo mutables.",
+        "La configuración externa del Compose activo todavía debe hacerse reproducible en fases posteriores."
+      ],
+      "decisions": [
+        "Probar el reinicio en aislamiento para respetar la restricción de no reiniciar servicios activos.",
+        "Dar por cumplidos los criterios y pruebas explícitos de PH01-T001."
+      ],
+      "next": "Continuar PH01-T002 y comenzar PH01-T003 en paralelo, ya desbloqueada por el DAG."
+    },
+    {
+      "id": "SES-20260819-10",
+      "startedAt": "2026-08-19T20:39:46-05:00",
+      "taskId": "PH01-T003",
+      "status": "PARTIAL",
+      "title": "Inventariar workflows n8n",
+      "summary": "Se capturó el catálogo de workflows, nodos, dependencias, ejecuciones y tipos de credencial sin leer parámetros sensibles ni modificar la instancia activa.",
+      "changes": [
+        "Baseline n8n con clasificación de 10 workflows.",
+        "Mapa del orquestador hacia cuatro subworkflows.",
+        "Inventario de 103 nodos y 11 tipos."
+      ],
+      "tests": [
+        "CLI de exportación disponible y documentado.",
+        "Consultas de catálogo ejecutadas en solo lectura.",
+        "Conteos reconciliados sin ejecutar workflows."
+      ],
+      "evidence": [
+        "6 workflows activos y 4 inactivos.",
+        "261 ejecuciones exitosas y 8 con error.",
+        "10 referencias de credencial, todas del tipo PostgreSQL."
+      ],
+      "risks": [
+        "28 nodos Code contienen lógica que deberá extraerse gradualmente.",
+        "Los exports JSON y su importación aislada siguen pendientes."
+      ],
+      "decisions": [
+        "No leer payloads, parámetros o valores de credenciales.",
+        "Sanitizar y escanear exports antes de versionarlos."
+      ],
+      "next": "Crear exports sanitizados por workflow y comprobar su importación en n8n aislado."
+    },
+    {
+      "id": "SES-20260819-11",
+      "startedAt": "2026-08-19T20:57:10-05:00",
+      "taskId": "PH01-T003",
+      "status": "DONE",
+      "title": "Versionar y validar workflows n8n",
+      "summary": "Los 10 workflows fueron exportados, escaneados, sanitizados e importados en una instancia aislada con sus IDs preservados, sin credenciales y sin activar automatizaciones.",
+      "changes": [
+        "Exportador reproducible con un JSON por workflow.",
+        "Sanitizador de credenciales, estado y posibles secretos.",
+        "Import test y smoke test aislados."
+      ],
+      "tests": [
+        "10 workflows y 103 nodos importados correctamente.",
+        "IDs originales preservados y workflows inactivos.",
+        "Workflow manual sin acciones externas terminó success."
+      ],
+      "evidence": [
+        "Cero propiedades credentials, pinData, staticData o shared en exports.",
+        "Cero referencias de credencial después de importar.",
+        "Recursos Docker de prueba retirados al finalizar."
+      ],
+      "risks": [
+        "28 nodos Code mantienen lógica de negocio embebida.",
+        "El runner Python no está disponible en la imagen actual; el flujo JavaScript probado no lo requiere."
+      ],
+      "decisions": [
+        "Versionar únicamente exports sanitizados.",
+        "Importar inactivo y ejecutar solo un workflow explícitamente seguro en smoke tests."
+      ],
+      "next": "Completar el backup/restore de PH01-T002; después ejecutar PH01-T004."
+    },
+    {
+      "id": "SES-20260820-12",
+      "startedAt": "2026-08-20T14:49:00-05:00",
+      "taskId": "PH01-T002",
+      "status": "DONE",
+      "title": "Crear y restaurar el backup cifrado de PostgreSQL",
+      "summary": "Se respaldaron rhia_core y n8n con AES-256 fuera del repositorio y se demostró una restauración completa en PostgreSQL 18 aislado con cobertura y conteos idénticos para todas las tablas.",
+      "changes": [
+        "Passphrase aleatoria custodiada mediante ACL privada de Windows.",
+        "Bundle atómico con dos dumps cifrados, manifest, metadata y hashes.",
+        "Soporte seguro para ACL de Windows desde los scripts WSL.",
+        "Retención inicial definida en 7 bundles válidos."
+      ],
+      "tests": [
+        "Cinco artefactos aprobaron la validación SHA-256.",
+        "Restore aislado reconstruyó 8 tablas de rhia_core y 125 de n8n.",
+        "Los conteos de 133/133 tablas fueron idénticos al origen.",
+        "El contenedor temporal fue retirado y los cuatro servicios activos permanecieron en ejecución."
+      ],
+      "evidence": [
+        "Bundle rhia-postgres-20260820T195344Z de 12,165,485 bytes.",
+        "144 filas de execution_registry incluidas en la captura.",
+        "Cero contenedores rhia-restore-verify restantes."
+      ],
+      "risks": [
+        "Origen y primera copia residen en el mismo equipo físico.",
+        "La passphrase no es recuperable si se pierde.",
+        "Programación, monitor de antigüedad y poda automática quedan para PH10-T004."
+      ],
+      "decisions": [
+        "No imprimir ni versionar la passphrase.",
+        "Conservar inicialmente los siete bundles válidos más recientes sin eliminar ninguno ahora.",
+        "Cerrar PH01-T002 y transferir el riesgo de segunda copia a disaster recovery."
+      ],
+      "next": "Ejecutar PH01-T004: baseline funcional reproducible del Agente Comercial."
+    },
+    {
+      "id": "SES-20260820-13",
+      "startedAt": "2026-08-20T14:56:00-05:00",
+      "taskId": "PH01-T004",
+      "status": "DONE",
+      "title": "Completar baseline comercial y aprobar GATE-01",
+      "summary": "Se ejecutaron dos veces cuatro escenarios comerciales mediante replay local de los nodos actuales y se verificó el gate completo de auditoría, backup, exports y baseline funcional.",
+      "changes": [
+        "Dataset y expected results para entidad clara, ambigua, no encontrada y degradada.",
+        "Runner aislado sin red ni credenciales.",
+        "Verificador reproducible de GATE-01."
+      ],
+      "tests": [
+        "4/4 casos aprobaron dos ejecuciones equivalentes.",
+        "Cuatro tareas PH01 confirmadas en DONE.",
+        "10 exports n8n y backup íntegro de 133 tablas confirmados."
+      ],
+      "evidence": [
+        "Entidad clara resolvió MERCADO_CON_EVIDENCIA_FUERTE.",
+        "Empresa X en tres San Jose no seleccionó mercado automáticamente.",
+        "Búsqueda vacía saludable no afirmó inexistencia.",
+        "GATE-01 quedó aprobado."
+      ],
+      "risks": [
+        "El parser de dominio observado conserva un gap con el runtime n8n.",
+        "La acción de consultas vacías degradadas necesita backoff/fallback.",
+        "Replay local no mide proveedores reales."
+      ],
+      "decisions": [
+        "No mezclar correcciones funcionales con la fotografía de PH01.",
+        "Usar datos sintéticos .invalid y evidencia guardada.",
+        "Desbloquear PH02 conforme al Run Order."
+      ],
+      "next": "Ejecutar PH02-T002 y preparar PH02-T001 en paralelo sin crear commits automáticos."
+    },
+    {
+      "id": "SES-20260820-14",
+      "startedAt": "2026-08-20T15:08:00-05:00",
+      "taskId": "PH02-T002",
+      "status": "DONE",
+      "title": "Congelar stack v1 y seleccionar ORM",
+      "summary": "Se congeló un stack TypeScript de baja fricción y se eligió Drizzle mediante un comparativo reproducible contra Prisma.",
+      "changes": [
+        "Configuración raíz Node.js 24.19, npm workspaces y TypeScript 7 strict.",
+        "Documento de stack y ADR aceptado.",
+        "SQL y schemas de spike conservados; Prisma retirado de las dependencias instaladas."
+      ],
+      "tests": [
+        "Typecheck y build aprobados.",
+        "Dos ejecuciones del migration dry-run aprobaron en PostgreSQL 18 aislado.",
+        "Auditoría de dependencias de producción reportó cero vulnerabilidades."
+      ],
+      "evidence": [
+        "Ambas migraciones generaron 1 tabla, 4 columnas y 3 índices.",
+        "El SQL no contiene operaciones destructivas.",
+        "Los recursos Docker temporales fueron retirados."
+      ],
+      "risks": [
+        "Cuatro alertas moderadas transitivas permanecen en drizzle-kit/esbuild de desarrollo.",
+        "La corrección automática propuesta sería breaking y no se aplicó."
+      ],
+      "decisions": [
+        "Adoptar Drizzle para PH03-PH12 salvo nuevo ADR.",
+        "Revisar SQL antes de toda migración y probarlo primero en PostgreSQL temporal.",
+        "No introducir infraestructura prematura."
+      ],
+      "next": "Completar PH02-T001 sin commits ni push automáticos."
+    },
+    {
+      "id": "SES-20260820-15",
+      "startedAt": "2026-08-20T15:21:00-05:00",
+      "taskId": "PH02-T001",
+      "status": "PARTIAL",
+      "title": "Adoptar y verificar el repositorio fuente",
+      "summary": "Se protegió y probó una copia publicable reproducible; el cierre queda limitado al primer commit y clone limpio que requieren acción humana.",
+      "changes": [
+        "Estructura y política de secretos documentadas.",
+        "Gitignore ampliado para secretos y backups cifrados.",
+        "Verificador preventivo integrado a SUBIRALGIT.BAT.",
+        "Prueba aislada de snapshot publicable."
+      ],
+      "tests": [
+        "22 controles aprobaron sobre 78 archivos publicables.",
+        "npm ci, typecheck y build aprobaron desde una copia temporal.",
+        "Health y status del snapshot aprobaron sin reiniciar el monitor activo."
+      ],
+      "evidence": [
+        "Rama main y remoto esperado confirmados.",
+        "Cero nombres o firmas de secretos detectados.",
+        "La copia y el proceso temporales se limpiaron de forma acotada."
+      ],
+      "risks": [
+        "Aún no existe commit ni SHA baseline.",
+        "El clone limpio final depende de publicación humana."
+      ],
+      "decisions": [
+        "Mantener PH02-T001 parcial sin violar la prohibición de commit/push automáticos.",
+        "Continuar PH02-T003, desbloqueada directamente por PH02-T002."
+      ],
+      "next": "Definir y validar contratos Core, n8n y Worker; cerrar PH02-T001 tras la primera publicación humana."
+    },
+    {
+      "id": "SES-20260820-16",
+      "startedAt": "2026-08-20T15:32:00-05:00",
+      "taskId": "PH02-T003",
+      "status": "DONE",
+      "title": "Definir contratos Core, n8n y Worker",
+      "summary": "Se crearon contratos v1 estrictos con tipos, JSON Schema, ejemplos sintéticos e invariantes runtime para todos los envelopes del Task Packet.",
+      "changes": [
+        "Once schemas TypeScript/Zod y once documentos JSON Schema.",
+        "Once ejemplos sin datos reales ni credenciales.",
+        "Taxonomía de errores, callbacks idempotentes y política de versionado documentadas."
+      ],
+      "tests": [
+        "Typecheck y build aprobados.",
+        "7/7 contract tests positivos y negativos aprobados.",
+        "Auditoría de producción reportó cero vulnerabilidades."
+      ],
+      "evidence": [
+        "Todos los ejemplos validan contra el schema runtime.",
+        "Se rechazan campos desconocidos, secretos, versiones inválidas y correlaciones inconsistentes.",
+        "Cero nombres de campos sensibles en artefactos contractuales."
+      ],
+      "risks": [
+        "Los refinements cruzados necesitan contract tests además de JSON Schema.",
+        "Los adapters de campos legacy se implementarán al migrar workflows."
+      ],
+      "decisions": [
+        "Toda forma nueva requiere versión explícita.",
+        "Retries conservan callbackId y retryable nunca se infiere del mensaje.",
+        "Salud de proveedor y ausencia de resultados se modelan por separado."
+      ],
+      "next": "Ejecutar PH02-T004; PH02-T001 cerrará tras primer commit y clone humano."
+    },
+    {
+      "id": "SES-20260820-17",
+      "startedAt": "2026-08-20T22:55:00-05:00",
+      "taskId": "PH02-T004",
+      "status": "DONE",
+      "title": "Definir configuración no técnica",
+      "summary": "Se creó un protocolo versionado que permite cambiar reglas operativas comunes sin editar código ni workflows y conserva invariantes comerciales y de seguridad.",
+      "changes": [
+        "Settings v1 para mercados, cadencias, scoring, budgets, providers y runtime.",
+        "Defaults sin envío ni gasto externo y preview redactado.",
+        "JSON Schema y documentación de hot reload/restart."
+      ],
+      "tests": [
+        "Typecheck y build dirigidos aprobaron.",
+        "8/8 pruebas de validación y preview aprobaron.",
+        "Inputs inválidos no reflejan sus valores en errores."
+      ],
+      "evidence": [
+        "Límite de tres toques, prioridad EC/PE y orden de tools son invariantes.",
+        "Provider remoto requiere credentialRef redactado y budget positivo.",
+        "Settings normales no requieren modificar n8n."
+      ],
+      "risks": [
+        "Persistencia, auditoría y rollback quedan para Admin UI.",
+        "Core debe ejecutar las invariantes runtime además del JSON Schema."
+      ],
+      "decisions": [
+        "Secretos e infraestructura quedan fuera de settings.",
+        "Precios y condiciones comerciales conservan aprobación humana.",
+        "Cerrar el ciclo sin iniciar PH03 conforme al checkpoint temporal."
+      ],
+      "next": "En el siguiente ciclo iniciar PH03-T001/PH03-T004; cerrar PH02-T001 después de publicación humana."
+    },
+    {
+      "id": "SES-20260821-18",
+      "startedAt": "2026-08-20T23:57:00-05:00",
+      "taskId": "PH03-T001",
+      "status": "PARTIAL",
+      "title": "Preparar migration aditiva del dominio v1",
+      "summary": "Se creó el schema de dominio sin modificar legacy y se dejó un runner de migration/restore; la aplicación real quedó impedida por E_ACCESSDENIED de WSL en esta sesión.",
+      "changes": [
+        "Migration de 43 tablas en schema rhia.",
+        "Seed mínimo inactivo y checksum SHA-256.",
+        "Mapa legacy y test reproducible sobre backup cifrado."
+      ],
+      "tests": [
+        "Validación estática de 27 índices, 68 referencias y 41 constraints.",
+        "Cero operaciones destructivas o escrituras a public.",
+        "Aplicación PostgreSQL no iniciada: WSL devolvió E_ACCESSDENIED."
+      ],
+      "evidence": [
+        "Cinco campos de país tienen cinco constraints ISO2.",
+        "Catálogos de 57.688 ciudades y 249 países quedan intactos.",
+        "Execution registry y staging de contactos quedan intactos."
+      ],
+      "risks": [
+        "Falta migration-up desde backup y restore strategy real.",
+        "Aislamiento tenant/RLS se completa en PH03-T002.",
+        "Falta mapping Drizzle runtime."
+      ],
+      "decisions": [
+        "No declarar PH03-T001 DONE sin prueba PostgreSQL real.",
+        "No repetir el intento WSL bloqueado en este ciclo.",
+        "Usar restore paralelo en vez de migration down destructiva."
+      ],
+      "next": "Reanudar test-domain-migration.sh cuando WSL/Docker esté disponible y completar Drizzle mapping."
+    },
+    {
+      "id": "SES-20260821-19",
+      "startedAt": "2026-08-21T00:04:00-05:00",
+      "taskId": "PH03-T001",
+      "status": "PARTIAL",
+      "title": "Generar mapping Drizzle del dominio v1",
+      "summary": "Se eliminó el pendiente de mapping runtime mediante generación determinista desde la migration; WSL siguió bloqueado para la prueba PostgreSQL real.",
+      "changes": [
+        "Generador SQL a Drizzle sin dependencias nuevas.",
+        "Schema runtime y manifest de 43 tablas.",
+        "Prueba reproducible de paridad de nombres y columnas."
+      ],
+      "tests": [
+        "Carga runtime Drizzle aprobada con Node 24.19.",
+        "Paridad de 43/43 tablas y todas las columnas aprobada.",
+        "Generación determinista confirmada por hashes SHA-256 idénticos.",
+        "WSL volvió a fallar con E_ACCESSDENIED antes de Docker."
+      ],
+      "evidence": [
+        "Manifest generado desde 0001_domain_v1.",
+        "Campos críticos countryCode, marketCountry, maxTouches y valueEncrypted son non-null en runtime.",
+        "No se modificó la base activa ni se usaron secretos fuera del runner autorizado."
+      ],
+      "risks": [
+        "Faltan migration-up, constraints y segundo restore real.",
+        "Typecheck Linux dirigido pendiente mientras WSL esté bloqueado."
+      ],
+      "decisions": [
+        "Mantener SQL como fuente canónica de checks e índices.",
+        "Generar el mapping Drizzle para evitar divergencia manual.",
+        "No repetir el intento WSL en este ciclo."
+      ],
+      "next": "Ejecutar test-domain-migration.sh y typecheck Linux cuando WSL/Docker esté disponible."
+    },
+    {
+      "id": "SES-20260821-20",
+      "startedAt": "2026-08-21T00:10:00-05:00",
+      "taskId": "PH03-T001",
+      "status": "DONE",
+      "title": "Verificar migration del dominio v1 sobre backup",
+      "summary": "La migration, seed, constraints, índices, mapping Drizzle y rollback por restore aprobaron en PostgreSQL 18 temporal sin modificar legacy ni la base activa.",
+      "changes": [
+        "Precondición sintética de idempotencia separada y verificada explícitamente.",
+        "Runner completo ejecutado con backup/passphrase autorizados.",
+        "PH03-T001 cerrada y PH03-T004 desbloqueada."
+      ],
+      "tests": [
+        "Migration-up y seed doble aprobados.",
+        "Constraints ISO2, tres toques, idempotencia y fact/evidence aprobados.",
+        "Diez índices críticos presentes.",
+        "Segundo restore limpio y typecheck @rhia/db aprobados."
+      ],
+      "evidence": [
+        "Conteos legacy idénticos antes y después.",
+        "Drizzle mantiene paridad 43/43 tablas.",
+        "Cero contenedores rhia-domain-migration restantes."
+      ],
+      "risks": [
+        "Aislamiento tenant/RLS queda para PH03-T002.",
+        "Backfills legacy requieren cifrado y evidence normalizada.",
+        "La migration aún no se aplica a la base activa."
+      ],
+      "decisions": [
+        "Rollback mediante restore paralelo, no migration down destructiva.",
+        "Mantener SQL como fuente canónica y Drizzle generado.",
+        "No tocar la base activa durante PH03-T001."
+      ],
+      "next": "Ejecutar PH03-T004 y preparar PH03-T002 conforme al Run Order."
+    },
+    {
+      "id": "SES-20260821-21",
+      "startedAt": "2026-08-21T00:17:00-05:00",
+      "taskId": "PH03-T004",
+      "status": "DONE",
+      "title": "Cerrar taxonomía de estados y errores",
+      "summary": "Se implementaron cinco máquinas de estado, un catálogo cerrado de errores y restricciones PostgreSQL verificadas sobre el backup aislado.",
+      "changes": [
+        "Paquete @rhia/domain con transiciones, terminales y error catalog tipados.",
+        "Contracts limitados al catálogo y clasificación retryable canónica.",
+        "Migration 0002_state_taxonomy y documentación sincronizada."
+      ],
+      "tests": [
+        "5/5 unit tests de dominio aprobados.",
+        "8/8 contract tests y ambos typechecks aprobados.",
+        "Migration/seed/constraints y segundo restore limpio aprobados sobre PostgreSQL temporal."
+      ],
+      "evidence": [
+        "Los estados y códigos libres son rechazados en TypeScript, contracts y PostgreSQL.",
+        "RHIA_SEARCH_PROVIDER_DEGRADED tiene código y clasificación propios.",
+        "Conteos legacy intactos y cero cambios en la base activa."
+      ],
+      "risks": [
+        "La base activa todavía no recibió las migrations.",
+        "La autorización efectiva y aislamiento por tenant corresponden a PH03-T002.",
+        "Nuevos estados o códigos exigirán migración y versionado coordinados."
+      ],
+      "decisions": [
+        "Usar outreach_touch como ledger persistente de entrega de mensajes.",
+        "Separar opportunity.stage comercial de opportunity.status del registro.",
+        "Reintentar únicamente según errorCatalog, nunca según texto humano."
+      ],
+      "next": "Iniciar PH03-T002 con matriz de permisos y negative authorization tests."
+    },
+    {
+      "id": "SES-20260821-22",
+      "startedAt": "2026-08-21T00:28:00-05:00",
+      "taskId": "PH03-T002",
+      "status": "PARTIAL",
+      "title": "Implementar núcleo RBAC y capability policies",
+      "summary": "Se creó el evaluador de autorización para humanos y servicios con mínimo privilegio, approval separado y techos inmutables de capabilities.",
+      "changes": [
+        "Paquete @rhia/policy con roles, permisos, services, capabilities y acciones.",
+        "Guardas para precio, descuentos, términos, compromisos, permisos y secrets.",
+        "Matriz RBAC/capability documentada."
+      ],
+      "tests": [
+        "Typecheck aprobado.",
+        "7/7 negative authorization y permission matrix tests aprobados.",
+        "Autoaprobación, autoelevación y capability falsificada rechazadas."
+      ],
+      "evidence": [
+        "AGENT_SERVICE no puede ejecutar cambios comerciales aprobados.",
+        "Solo WORKER_SERVICE puede ejecutar una acción con approval humano válido.",
+        "OPERATOR no puede modificar price books."
+      ],
+      "risks": [
+        "Falta seed PostgreSQL idempotente y aislamiento por organización.",
+        "Core deberá construir ApprovalProof solo desde registros auditados."
+      ],
+      "decisions": [
+        "Separar aprobación de ejecución de price books.",
+        "Mantener ceilings de servicios fuera de inputs mutables.",
+        "Checkpoint sin iniciar el seed al entrar en la ventana de cierre."
+      ],
+      "next": "Crear migration/seed RBAC idempotente y probarlo sobre el restore aislado."
+    },
+    {
+      "id": "SES-20260821-23",
+      "startedAt": "2026-08-21T00:36:00-05:00",
+      "taskId": "MONITOR-V1",
+      "status": "DONE",
+      "title": "Restaurar acceso al Control Center local",
+      "summary": "Se reemplazó el HttpListener incompatible por un servidor Node sin dependencias y localhost volvió a responder.",
+      "changes": [
+        "Nuevo scripts/start-local.mjs con health, archivos y estado Git.",
+        "STAR.BAT usa el runtime Node local y STOP.BAT reconoce el nuevo proceso."
+      ],
+      "tests": [
+        "GET /health respondió ok.",
+        "GET / devolvió HTTP 200.",
+        "GET /api/status mostró 1.0.21-monitor y PH03-T002."
+      ],
+      "evidence": [
+        "El servidor anterior fallaba con PlatformNotSupportedException en HttpListener.",
+        "El monitor quedó disponible en http://localhost:4173/."
+      ],
+      "risks": [
+        "STAR.BAT depende de Node instalado o del runtime Node incluido con Codex."
+      ],
+      "decisions": [
+        "Usar solo módulos nativos de Node, sin instalar dependencias ni usar internet."
+      ],
+      "next": "Continuar PH03-T002 desde el checkpoint persistente."
+    },
+    {
+      "id": "SES-20260821-24",
+      "startedAt": "2026-08-21T01:05:00-05:00",
+      "taskId": "PH03-T002",
+      "status": "DONE",
+      "title": "Cerrar RBAC y capability policies",
+      "summary": "El modelo de autorización quedó persistido con seeds idempotentes y defensas de tenant/capability verificadas sobre PostgreSQL temporal.",
+      "changes": [
+        "Migration 0003 con tenant guards para roles y approvals.",
+        "Seed de 17 permisos, 4 roles, 8 capabilities y tres identidades de servicio.",
+        "ApprovalProof y principals ahora exigen organizationId."
+      ],
+      "tests": [
+        "8/8 permission matrix y negative authorization tests aprobados.",
+        "Seed doble produjo 17:4:40:8:18 sin duplicación.",
+        "Cross-tenant role/approval y autoelevación de agent rechazados en PostgreSQL."
+      ],
+      "evidence": [
+        "Conteos legacy intactos tras tres migrations.",
+        "Segundo restore limpio aprobó rollback strategy.",
+        "La base activa no fue modificada."
+      ],
+      "risks": [
+        "Core y worker deberán cargar principal/approval desde persistencia auditada.",
+        "Las migrations siguen pendientes de aplicación controlada a la base activa."
+      ],
+      "decisions": [
+        "Agent Service nunca recibe approved-actions.execute.",
+        "Solo Worker Service ejecuta acciones comerciales con approval humano válido.",
+        "Mantener services inactivos en el seed mínimo."
+      ],
+      "next": "Ejecutar PH03-T003: policy de outreach versionada y simulación de 100 secuencias."
+    },
+    {
+      "id": "SES-20260821-25",
+      "startedAt": "2026-08-21T01:10:00-05:00",
+      "taskId": "PH03-T003",
+      "status": "DONE",
+      "title": "Cerrar OutreachPolicy v1",
+      "summary": "Se implementó planificación de toques por timezone, idempotencia, stop/suppression y override aprobado, con persistencia DRAFT y simulación completa.",
+      "changes": [
+        "Paquete @rhia/outreach-policy con policy v1 y ledger idempotente.",
+        "Migration 0004 con outreach_policy y outreach_suppression hash-only.",
+        "Seed DRAFT inactivo y Drizzle regenerado para 45 tablas."
+      ],
+      "tests": [
+        "6/6 pruebas de timezone, retry, opt-out, override y límites aprobadas.",
+        "100/100 secuencias respetaron tres toques y ventana local.",
+        "Cross-tenant policy y suppression sin SHA-256 rechazados en PostgreSQL."
+      ],
+      "evidence": [
+        "Policy seed permanece DRAFT después de dos aplicaciones.",
+        "Drizzle mantiene paridad 45/45 tablas.",
+        "Cuatro migrations y restore limpio aprobaron sin tocar la base activa."
+      ],
+      "risks": [
+        "PH08 deberá integrar el scheduler y delivery ledger real.",
+        "Ningún canal está habilitado ni se contactó a personas."
+      ],
+      "decisions": [
+        "Override no puede desactivar stop, suppression, timezone ni idempotencia.",
+        "Suppression persiste hashes, no datos de contacto en texto claro.",
+        "Policy inicial queda DRAFT hasta aprobación humana futura."
+      ],
+      "next": "Evaluar GATE-02; no iniciar PH04 si PH02 permanece incompleta."
+    },
+    {
+      "id": "SES-20260821-26",
+      "startedAt": "2026-08-21T01:17:00-05:00",
+      "taskId": "GATE-02",
+      "status": "BLOCKED",
+      "title": "Evaluar gate de arquitectura",
+      "summary": "PH03 está completa, pero GATE-02 no puede aprobarse porque PH02-T001 aún carece de primer commit, SHA y clone limpio.",
+      "changes": [
+        "Estado del monitor movido a ARCHITECTURE_GATE_BLOCKED.",
+        "Bloqueo humano documentado sin crear commit ni push."
+      ],
+      "tests": [
+        "git rev-parse --verify HEAD confirmó que no existe commit.",
+        "origin y rama main coinciden con el repositorio esperado.",
+        "JSON y diff-check local permanecen válidos."
+      ],
+      "evidence": [
+        "PH02-T002/T003/T004 y PH03-T001/T002/T003/T004 están DONE.",
+        "PH02-T001 permanece PARTIAL por una acción reservada al usuario."
+      ],
+      "risks": [
+        "Avanzar PH04 sin GATE-02 violaría el Run Order y el Quality Gate."
+      ],
+      "decisions": [
+        "No ejecutar commits ni push automáticos.",
+        "No repetir la comprobación hasta detectar un HEAD nuevo."
+      ],
+      "next": "El usuario ejecuta SUBIRALGIT.BAT; el siguiente ciclo verifica HEAD y clone limpio para cerrar PH02-T001/GATE-02."
+    },
+    {
+      "id": "SES-20260821-27",
+      "startedAt": "2026-08-21T04:49:00-05:00",
+      "taskId": "PH02-T001",
+      "status": "BLOCKED",
+      "title": "Intentar publicación inicial autorizada",
+      "summary": "La autorización puntual fue recibida, pero el entorno impidió tanto escribir el repositorio Git como acceder a GitHub; no se creó commit ni se modificó el remoto.",
+      "changes": [
+        "Se reconfirmaron 161 archivos publicables, rama main y origin esperado.",
+        "El bloqueo pasó de humano a ambiental en el monitor y la bitácora."
+      ],
+      "tests": [
+        "El verificador preventivo había aprobado 22 controles sobre 161 archivos.",
+        "git config falló al bloquear .git/config con Permission denied.",
+        "git add explícito sobre los 161 paths falló al crear .git/index.lock.",
+        "git ls-remote falló al conectar a github.com:443."
+      ],
+      "evidence": [
+        "No existe HEAD local nuevo.",
+        "No se ejecutó push ni force push.",
+        "El remoto configurado permanece https://github.com/jsuasnavas5334/RHIA.git."
+      ],
+      "risks": [
+        "GATE-02 continúa bloqueado y PH04 no puede iniciarse según el DAG."
+      ],
+      "decisions": [
+        "No simular el cierre sin SHA remoto y clone limpio.",
+        "No realizar un tercer intento equivalente dentro del mismo entorno."
+      ],
+      "next": "Reintentar la publicación autorizada desde un contexto con .git escribible y acceso HTTPS; luego verificar HEAD, origin/main y clone limpio."
+    }
+  ]
+}

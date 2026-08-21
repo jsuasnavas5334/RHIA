@@ -1,0 +1,126 @@
+{
+  "updatedAt": "2026-08-12T20:27:23.774Z",
+  "createdAt": "2026-08-12T19:35:32.893Z",
+  "id": "SABQvxTRr1mrpmJI",
+  "name": "RHIA CORE - Heartbeat",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 10
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "5fe7efe5-7d58-44dd-96c9-d83e2bc619d3",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5d6288d5-566d-41b2-a7ee-391eb0bc72a9",
+              "name": "sistema",
+              "value": "RHIA AI",
+              "type": "string"
+            },
+            {
+              "id": "80d7e3cc-738c-412c-9170-161a255467dc",
+              "name": "fecha",
+              "value": "={{$now}}",
+              "type": "string"
+            },
+            {
+              "id": "0f902d34-be44-4ae9-a69f-6b17be7cd5df",
+              "name": "estado",
+              "value": "ACTIVO",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        111.5,
+        0
+      ],
+      "id": "f50cb44c-d319-4598-8a90-6ceb554e446b",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO public.execution_registry (\n  dedup_key,\n  task_type,\n  entity_type,\n  entity_id,\n  status,\n  payload,\n  completed_at\n)\nVALUES (\n  'heartbeat:' || $1,\n  'system_heartbeat',\n  'system',\n  'rhia_ai',\n  'completed',\n  jsonb_build_object(\n    'sistema', $2::text,\n    'estado', $3::text,\n    'fecha', $1::timestamptz\n  ),\n  $1::timestamptz\n)\nON CONFLICT (dedup_key) DO NOTHING\nRETURNING\n  id,\n  dedup_key,\n  task_type,\n  status,\n  created_at;",
+        "options": {
+          "queryReplacement": "={{ $json.fecha }}, {{ $json.sistema }}, {{ $json.estado }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        190.5,
+        0
+      ],
+      "id": "080a0d1e-7688-44cb-a9ff-6e53119ee10a",
+      "name": "Execute a SQL query"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "nodeGroups": [],
+  "versionId": "30b535d8-8be7-4a59-b2b2-fdc91c33d63c",
+  "activeVersionId": "30b535d8-8be7-4a59-b2b2-fdc91c33d63c",
+  "versionCounter": 24,
+  "triggerCount": 1,
+  "sourceWorkflowId": null,
+  "tags": [],
+  "versionMetadata": {
+    "name": "RHIA CORE Heartbeat v1.0",
+    "description": "Primera versión operativa. Ejecuta heartbeat cada 10 minutos y registra la ejecución en PostgreSQL rhia_core mediante la credencial RHIA CORE PostgreSQL."
+  }
+}

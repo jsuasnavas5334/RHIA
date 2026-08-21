@@ -1,0 +1,43 @@
+{
+  "version": "1.0.24-monitor",
+  "updatedAt": "2026-08-21T04:51:00-05:00",
+  "state": "ARCHITECTURE_GATE_BLOCKED",
+  "currentPhase": {
+    "id": "PH03",
+    "name": "Modelo de datos, permisos y políticas"
+  },
+  "currentTask": {
+    "id": "GATE-02",
+    "name": "Gate de arquitectura",
+    "objective": "Aprobar PH02-PH03 antes de construir Core y Agent Runtime.",
+    "status": "BLOCKED_ENVIRONMENT"
+  },
+  "counts": {
+    "totalTasks": 51,
+    "done": 11,
+    "inProgress": 1,
+    "blocked": 1,
+    "totalGates": 8,
+    "gatesDone": 1
+  },
+  "guardrails": [
+    "Sin borrado de datos ni cambios irreversibles",
+    "Sin reinicios antes de baseline y backup",
+    "Secretos nuevos solo con autorización explícita y siempre fuera del repositorio",
+    "Publicación Git únicamente bajo control humano"
+  ],
+  "phases": [
+    { "id": "PH01", "name": "Auditoría y baseline", "status": "DONE" },
+    { "id": "PH02", "name": "Decisiones técnicas y repositorio", "status": "PARTIAL" },
+    { "id": "PH03", "name": "Datos, permisos y políticas", "status": "DONE" },
+    { "id": "PH04", "name": "RHIA Core y App", "status": "LOCKED" },
+    { "id": "PH05", "name": "Runtime de agentes y AI Gateway", "status": "LOCKED" },
+    { "id": "PH06", "name": "Search, evidencia e identidad", "status": "LOCKED" },
+    { "id": "PH07", "name": "CRM, contactos y scoring", "status": "LOCKED" },
+    { "id": "PH08", "name": "Outreach, conversación y reuniones", "status": "LOCKED" },
+    { "id": "PH09", "name": "Tools, Playwright y Computer Use", "status": "LOCKED" },
+    { "id": "PH10", "name": "Seguridad, testing y resiliencia", "status": "LOCKED" },
+    { "id": "PH11", "name": "Observabilidad y deployment", "status": "LOCKED" },
+    { "id": "PH12", "name": "QA, lanzamiento y hardening", "status": "LOCKED" }
+  ]
+}

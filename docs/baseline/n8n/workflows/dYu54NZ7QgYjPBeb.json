@@ -1,0 +1,40 @@
+{
+  "updatedAt": "2026-08-13T15:29:45.982Z",
+  "createdAt": "2026-08-13T15:25:52.374Z",
+  "id": "dYu54NZ7QgYjPBeb",
+  "name": "RHIA AI CORE - Prueba Ollama",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "5e2c87e4-fbe1-4c1e-91aa-07818a1bcd28",
+      "name": "When clicking ‘Execute workflow’"
+    }
+  ],
+  "connections": {},
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "meta": null,
+  "nodeGroups": [],
+  "versionId": "4b66c026-859e-4f66-a66a-26dc1519cbef",
+  "activeVersionId": null,
+  "versionCounter": 1,
+  "triggerCount": 0,
+  "sourceWorkflowId": null,
+  "tags": [],
+  "versionMetadata": {
+    "name": null,
+    "description": null
+  }
+}

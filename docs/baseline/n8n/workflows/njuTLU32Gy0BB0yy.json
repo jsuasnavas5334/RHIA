@@ -1,0 +1,165 @@
+{
+  "updatedAt": "2026-08-17T21:08:03.983Z",
+  "createdAt": "2026-08-17T21:08:03.983Z",
+  "id": "njuTLU32Gy0BB0yy",
+  "name": "RHIA - Contactabilidad",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "type": "n8n-nodes-base.postgres",
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "SELECT\n    empresa_key,\n    persona_key,\n    empresa,\n    persona_contacto,\n    cargo_contacto,\n    fuente_inicial,\n    tipo_fuente_inicial,\n    puntuacion_prioridad,\n    prioridad_verificacion,\n    estado,\n\n    '\"' || persona_contacto || '\" \"' || empresa ||\n    '\" (email OR correo OR teléfono OR telefono OR celular OR whatsapp OR contacto)'\n        AS consulta_contacto_directo,\n\n    '\"' || persona_contacto || '\" \"' || empresa ||\n    '\" \"' || cargo_contacto || '\" (email OR correo OR teléfono OR telefono OR celular OR whatsapp)'\n        AS consulta_contacto_cargo\n\nFROM prospect_contact_candidates\n\nWHERE empresa_key =\n    translate(\n        lower(trim($1)),\n        'áéíóúüñ',\n        'aeiouun'\n    )\n\nAND estado = 'VERIFICADO'\n\nORDER BY\n    puntuacion_prioridad DESC,\n    first_seen ASC;",
+        "options": {
+          "queryReplacement": "={{ $json.empresa }}"
+        }
+      },
+      "typeVersion": 2.7,
+      "position": [
+        1248,
+        464
+      ],
+      "id": "b5e3a22f-218a-400a-a5a7-bdeff00f832f",
+      "name": "Leer candidatos para contacto",
+      "disabled": false,
+      "issues": {},
+      "executeOnce": true
+    },
+    {
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1392,
+        464
+      ],
+      "id": "1a05ad25-b49f-43cd-9c11-06678fad71f7",
+      "name": "HTTP Request6",
+      "disabled": false,
+      "parameters": {
+        "curlImport": "",
+        "method": "GET",
+        "url": "http://searxng:8080/search?format=json",
+        "authentication": "none",
+        "provideSslCertificates": false,
+        "sendQuery": true,
+        "specifyQuery": "keypair",
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{$json.consulta_contacto_directo}}"
+            },
+            {
+              "name": "safesearch",
+              "value": "1"
+            }
+          ]
+        },
+        "sendHeaders": false,
+        "sendBody": false,
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": false,
+              "neverError": false,
+              "responseFormat": "json"
+            }
+          }
+        },
+        "infoMessage": ""
+      },
+      "issues": {}
+    },
+    {
+      "type": "n8n-nodes-base.code",
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const respuestas = $input.all();\nconst candidatos = $(\"Leer candidatos para contacto\").all();\n\n\n// ============================================================\n// FUNCIONES GENERALES\n// ============================================================\n\nfunction limpiar(texto) {\n  return String(texto || \"\")\n    .replace(/\\s+/g, \" \")\n    .trim();\n}\n\nfunction normalizar(texto) {\n  return limpiar(texto)\n    .toLowerCase()\n    .normalize(\"NFD\")\n    .replace(/[\\u0300-\\u036f]/g, \"\");\n}\n\nfunction dominioDe(url) {\n  return String(url || \"\")\n    .toLowerCase()\n    .replace(/^https?:\\/\\//, \"\")\n    .replace(/^www\\./, \"\")\n    .split(\"/\")[0]\n    .split(\"?\")[0]\n    .split(\"#\")[0]\n    .split(\":\")[0];\n}\n\nfunction contiene(texto, valor) {\n  return normalizar(texto)\n    .includes(normalizar(valor));\n}\n\n\n// ============================================================\n// PERSONA\n// ============================================================\n\nfunction mencionaPersona(texto, personaCompleta) {\n\n  const t = normalizar(texto);\n  const persona = normalizar(personaCompleta);\n\n  if (!persona) return false;\n\n  if (t.includes(persona)) {\n    return true;\n  }\n\n  const partes = persona\n    .split(/\\s+/)\n    .filter(Boolean);\n\n  if (partes.length >= 2) {\n\n    const nombreCorto =\n      `${partes[0]} ${partes[1]}`;\n\n    if (\n      nombreCorto.length >= 6 &&\n      t.includes(nombreCorto)\n    ) {\n      return true;\n    }\n  }\n\n  return false;\n}\n\n\nfunction urlContienePersona(url, personaCompleta) {\n\n  let u = \"\";\n\n  try {\n    u = decodeURIComponent(\n      String(url || \"\")\n    );\n  } catch {\n    u = String(url || \"\");\n  }\n\n  u = normalizar(u)\n    .replace(/[^a-z0-9]+/g, \" \");\n\n  const partes =\n    normalizar(personaCompleta)\n      .split(/\\s+/)\n      .filter(Boolean);\n\n  if (partes.length < 2) {\n    return false;\n  }\n\n  return (\n    u.includes(partes[0]) &&\n    u.includes(partes[1])\n  );\n}\n\n\nfunction fuentePrincipalPersona(\n  titulo,\n  url,\n  persona\n) {\n\n  return (\n    mencionaPersona(\n      titulo,\n      persona\n    ) ||\n    urlContienePersona(\n      url,\n      persona\n    )\n  );\n}\n\n\n// ============================================================\n// EMAILS\n// ============================================================\n\nfunction extraerEmails(texto) {\n\n  const matches =\n    String(texto || \"\").match(\n      /\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}\\b/gi\n    ) || [];\n\n  return [\n    ...new Set(\n      matches.map(e =>\n        e.toLowerCase()\n      )\n    )\n  ];\n}\n\n\nfunction tieneEmailEnmascarado(texto) {\n\n  return (\n    /[A-Za-z0-9]*[*xX]{2,}@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/i\n      .test(String(texto || \"\"))\n  );\n}\n\n\n// ============================================================\n// TELÉFONOS\n// ============================================================\n\nfunction normalizarTelefono(valor) {\n\n  const original =\n    String(valor || \"\").trim();\n\n  const prefijo =\n    original.startsWith(\"+\")\n      ? \"+\"\n      : \"\";\n\n  const digitos =\n    original.replace(/\\D/g, \"\");\n\n  if (\n    digitos.length < 7 ||\n    digitos.length > 15\n  ) {\n    return \"\";\n  }\n\n  return prefijo + digitos;\n}\n\n\nfunction tieneTelefonoEnmascarado(texto) {\n\n  return (\n    /(?:\\+?\\d[\\d\\s().-]*)(?:X{2,}|x{2,}|\\*{2,}|\\.{3,})/i\n      .test(String(texto || \"\"))\n  );\n}\n\n\n// ============================================================\n// ELIMINAR RANGOS DE FECHAS\n//\n// Evita convertir:\n// 1989 - 1990\n// 2017 - 2018\n// 1990 - now\n// en teléfonos.\n// ============================================================\n\nfunction eliminarRangosFechas(texto) {\n\n  return String(texto || \"\")\n    .replace(\n      /\\b(?:19|20)\\d{2}\\s*(?:-|–|—|a|to)\\s*(?:(?:19|20)\\d{2}|now|present|presente|actualidad|hoy)\\b/gi,\n      \" \"\n    );\n}\n\n\nfunction pareceDosAnios(numero) {\n\n  const digitos =\n    String(numero || \"\")\n      .replace(/\\D/g, \"\");\n\n  if (digitos.length !== 8) {\n    return false;\n  }\n\n  const a =\n    Number(digitos.slice(0, 4));\n\n  const b =\n    Number(digitos.slice(4, 8));\n\n  return (\n    a >= 1900 &&\n    a <= 2099 &&\n    b >= 1900 &&\n    b <= 2099\n  );\n}\n\n\n// ============================================================\n// EXTRAER TELÉFONOS REALES\n//\n// Aceptamos:\n//\n// +593...\n// 09...\n// 02...\n// números que estén inmediatamente asociados\n// a palabras como teléfono / phone / celular.\n//\n// No aceptamos secuencias arbitrarias de números.\n// ============================================================\n\nfunction extraerTelefonosCompletos(texto) {\n\n  const t =\n    eliminarRangosFechas(\n      String(texto || \"\")\n    );\n\n  const candidatos = [];\n\n\n  // Internacionales con +\n  const internacionales =\n    t.match(\n      /\\+\\s*\\d[\\d\\s().-]{6,}\\d/g\n    ) || [];\n\n  candidatos.push(\n    ...internacionales\n  );\n\n\n  // Números locales que empiezan por 0\n  const locales =\n    t.match(\n      /\\b0\\d[\\d\\s().-]{6,}\\d\\b/g\n    ) || [];\n\n  candidatos.push(\n    ...locales\n  );\n\n\n  // Número expresamente etiquetado como teléfono\n  const regexContexto =\n    /(?:tel[eé]fono|tel\\.?|phone|celular|m[oó]vil|mobile|whatsapp)\\s*(?:[:\\-]|al|es)?\\s*(\\+?\\d[\\d\\s().-]{6,}\\d)/gi;\n\n  let match;\n\n  while (\n    (match =\n      regexContexto.exec(t)) !== null\n  ) {\n\n    candidatos.push(\n      match[1]\n    );\n  }\n\n\n  const salida = [];\n\n  for (const candidato of candidatos) {\n\n    const numero =\n      normalizarTelefono(\n        candidato\n      );\n\n    if (!numero) {\n      continue;\n    }\n\n    if (\n      pareceDosAnios(numero)\n    ) {\n      continue;\n    }\n\n    salida.push(numero);\n  }\n\n  return [\n    ...new Set(salida)\n  ];\n}\n\n\n// ============================================================\n// 1800 ECUADOR\n// ============================================================\n\nfunction extraer1800(texto) {\n\n  const t =\n    String(texto || \"\");\n\n  const resultados = [];\n\n  const regex =\n    /1800(?:\\s+[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+)?\\s*\\(?\\s*(\\d{3})\\s*(\\d{3})\\s*\\)?/gi;\n\n  let match;\n\n  while (\n    (match =\n      regex.exec(t)) !== null\n  ) {\n\n    resultados.push(\n      `1800${match[1]}${match[2]}`\n    );\n  }\n\n  return [\n    ...new Set(resultados)\n  ];\n}\n\n\n// ============================================================\n// WHATSAPP\n//\n// Solo se acepta cuando la fuente dice expresamente WhatsApp.\n// ============================================================\n\nfunction extraerWhatsAppExplicito(texto) {\n\n  const t =\n    String(texto || \"\");\n\n  if (\n    !/\\bwhatsapp\\b/i.test(t)\n  ) {\n    return [];\n  }\n\n  if (\n    tieneTelefonoEnmascarado(t)\n  ) {\n    return [];\n  }\n\n  return extraerTelefonosCompletos(t);\n}\n\n\n// ============================================================\n// FUENTE OFICIAL\n// ============================================================\n\nfunction esWebOficialCorporacionFavorita(url) {\n\n  return dominioDe(url) ===\n    \"corporacionfavorita.com\";\n}\n\n\n// ============================================================\n// DEDUPLICAR\n// ============================================================\n\nfunction deduplicarContactos(lista) {\n\n  const vistos =\n    new Set();\n\n  return lista.filter(c => {\n\n    const clave =\n      `${c.tipo}|${normalizar(c.valor)}|${c.fuente}`;\n\n    if (\n      vistos.has(clave)\n    ) {\n      return false;\n    }\n\n    vistos.add(clave);\n\n    return true;\n  });\n}\n\n\n// ============================================================\n// PROCESAMIENTO\n// ============================================================\n\nconst salida = [];\n\nfor (\n  let i = 0;\n  i < respuestas.length;\n  i++\n) {\n\n  const respuesta =\n    respuestas[i]?.json || {};\n\n  const candidato =\n    candidatos[i]?.json || {};\n\n  const persona =\n    candidato.persona_contacto ||\n    \"NO ENCONTRADO\";\n\n  const empresa =\n    candidato.empresa ||\n    \"NO IDENTIFICADO\";\n\n  const cargo =\n    candidato.cargo_contacto ||\n    \"NO IDENTIFICADO\";\n\n  const resultados =\n    Array.isArray(respuesta.results)\n      ? respuesta.results\n      : [];\n\n\n  const contactosDirectos = [];\n  const contactosEmpresaOficiales = [];\n  const contactosEmpresaSecundarios = [];\n  const contactosEnmascarados = [];\n  const resultadosDescartados = [];\n  const fuentesRevisadas = [];\n\n\n  for (const r of resultados) {\n\n    const titulo =\n      limpiar(r.title);\n\n    const contenido =\n      limpiar(r.content);\n\n    const url =\n      limpiar(r.url);\n\n    const dominio =\n      dominioDe(url);\n\n    const texto =\n      `${titulo} ${contenido}`;\n\n\n    const personaMencionada =\n      mencionaPersona(\n        texto,\n        persona\n      );\n\n\n    // MUY IMPORTANTE:\n    // Para atribuir un contacto a Gitta,\n    // la página debe ser principalmente sobre Gitta.\n    const personaPrincipal =\n      fuentePrincipalPersona(\n        titulo,\n        url,\n        persona\n      );\n\n\n    const empresaPresente =\n      (\n        contiene(\n          texto,\n          \"Corporacion Favorita\"\n        ) ||\n        contiene(\n          texto,\n          \"Corporación Favorita\"\n        )\n      );\n\n\n    // ========================================================\n    // HOMÓNIMOS\n    // ========================================================\n\n    if (\n      dominio ===\n      \"favoritabananas.com\"\n    ) {\n\n      resultadosDescartados.push({\n\n        titulo,\n\n        url,\n\n        motivo:\n          \"EMPRESA_HOMONIMA_NO_CORPORACION_FAVORITA\"\n      });\n\n      continue;\n    }\n\n\n    const emailEnmascarado =\n      tieneEmailEnmascarado(texto);\n\n    const telefonoEnmascarado =\n      tieneTelefonoEnmascarado(texto);\n\n\n    // ========================================================\n    // CONTACTO ENMASCARADO DE LA PERSONA OBJETIVO\n    // ========================================================\n\n    if (\n      personaPrincipal &&\n      empresaPresente &&\n      (\n        emailEnmascarado ||\n        telefonoEnmascarado\n      )\n    ) {\n\n      contactosEnmascarados.push({\n\n        tipo:\n          \"CONTACTO_PERSONA_ENMASCARADO\",\n\n        valor:\n          \"NO UTILIZABLE\",\n\n        persona_contacto:\n          persona,\n\n        fuente:\n          url,\n\n        dominio,\n\n        evidencia:\n          texto,\n\n        utilizable:\n          false,\n\n        motivo:\n          \"CONTACTO_ENMASCARADO\"\n      });\n    }\n\n\n    // ========================================================\n    // CONTACTO DIRECTO DE LA PERSONA\n    // ========================================================\n\n    if (\n      personaPrincipal &&\n      empresaPresente\n    ) {\n\n      // EMAIL\n      if (\n        !emailEnmascarado\n      ) {\n\n        const emails =\n          extraerEmails(texto);\n\n        for (const email of emails) {\n\n          contactosDirectos.push({\n\n            tipo:\n              \"EMAIL\",\n\n            valor:\n              email,\n\n            persona_contacto:\n              persona,\n\n            fuente:\n              url,\n\n            dominio,\n\n            evidencia:\n              texto,\n\n            estado:\n              \"PUBLICO_NO_ENMASCARADO\"\n          });\n        }\n      }\n\n\n      // TELÉFONO\n      if (\n        !telefonoEnmascarado\n      ) {\n\n        const telefonos =\n          extraerTelefonosCompletos(\n            texto\n          );\n\n        for (\n          const telefono of telefonos\n        ) {\n\n          contactosDirectos.push({\n\n            tipo:\n              \"TELEFONO\",\n\n            valor:\n              telefono,\n\n            persona_contacto:\n              persona,\n\n            fuente:\n              url,\n\n            dominio,\n\n            evidencia:\n              texto,\n\n            estado:\n              \"PUBLICO_NO_ENMASCARADO\"\n          });\n        }\n\n\n        const whatsapp =\n          extraerWhatsAppExplicito(\n            texto\n          );\n\n        for (\n          const numero of whatsapp\n        ) {\n\n          contactosDirectos.push({\n\n            tipo:\n              \"WHATSAPP\",\n\n            valor:\n              numero,\n\n            persona_contacto:\n              persona,\n\n            fuente:\n              url,\n\n            dominio,\n\n            evidencia:\n              texto,\n\n            estado:\n              \"WHATSAPP_DECLARADO_EXPLICITAMENTE\"\n          });\n        }\n      }\n    }\n\n\n    // ========================================================\n    // CONTACTO GENERAL OFICIAL\n    // ========================================================\n\n    if (\n      esWebOficialCorporacionFavorita(\n        url\n      )\n    ) {\n\n      const emails =\n        extraerEmails(texto);\n\n      const telefonos =\n        [\n          ...extraerTelefonosCompletos(\n            texto\n          ),\n          ...extraer1800(texto)\n        ];\n\n      const whatsapp =\n        extraerWhatsAppExplicito(\n          texto\n        );\n\n\n      for (const email of emails) {\n\n        contactosEmpresaOficiales.push({\n\n          tipo:\n            \"EMAIL_EMPRESA\",\n\n          valor:\n            email,\n\n          fuente:\n            url,\n\n          evidencia:\n            texto,\n\n          estado:\n            \"VERIFICADO_WEB_OFICIAL\"\n        });\n      }\n\n\n      for (\n        const telefono of telefonos\n      ) {\n\n        contactosEmpresaOficiales.push({\n\n          tipo:\n            \"TELEFONO_EMPRESA\",\n\n          valor:\n            telefono,\n\n          fuente:\n            url,\n\n          evidencia:\n            texto,\n\n          estado:\n            \"VERIFICADO_WEB_OFICIAL\"\n        });\n      }\n\n\n      for (\n        const numero of whatsapp\n      ) {\n\n        contactosEmpresaOficiales.push({\n\n          tipo:\n            \"WHATSAPP_EMPRESA\",\n\n          valor:\n            numero,\n\n          fuente:\n            url,\n\n          evidencia:\n            texto,\n\n          estado:\n            \"WHATSAPP_DECLARADO_WEB_OFICIAL\"\n        });\n      }\n    }\n\n\n    // ========================================================\n    // CONTACTO CORPORATIVO EN FUENTES SECUNDARIAS\n    // ========================================================\n\n    if (\n      !personaPrincipal &&\n      empresaPresente &&\n      !esWebOficialCorporacionFavorita(\n        url\n      )\n    ) {\n\n      const emails =\n        emailEnmascarado\n          ? []\n          : extraerEmails(texto);\n\n      const telefonos =\n        telefonoEnmascarado\n          ? []\n          : extraerTelefonosCompletos(\n              texto\n            );\n\n\n      for (const email of emails) {\n\n        contactosEmpresaSecundarios.push({\n\n          tipo:\n            \"EMAIL_EMPRESA_NO_OFICIAL\",\n\n          valor:\n            email,\n\n          fuente:\n            url,\n\n          evidencia:\n            texto,\n\n          estado:\n            \"FUENTE_SECUNDARIA\"\n        });\n      }\n\n\n      for (\n        const telefono of telefonos\n      ) {\n\n        contactosEmpresaSecundarios.push({\n\n          tipo:\n            \"TELEFONO_EMPRESA_NO_OFICIAL\",\n\n          valor:\n            telefono,\n\n          fuente:\n            url,\n\n          evidencia:\n            texto,\n\n          estado:\n            \"FUENTE_SECUNDARIA\"\n        });\n      }\n    }\n\n\n    fuentesRevisadas.push({\n\n      titulo,\n\n      url,\n\n      dominio,\n\n      persona_mencionada:\n        personaMencionada,\n\n      persona_principal:\n        personaPrincipal,\n\n      empresa_presente:\n        empresaPresente\n    });\n  }\n\n\n  // ==========================================================\n  // DEDUPLICAR\n  // ==========================================================\n\n  const directos =\n    deduplicarContactos(\n      contactosDirectos\n    );\n\n  const oficiales =\n    deduplicarContactos(\n      contactosEmpresaOficiales\n    );\n\n  const secundarios =\n    deduplicarContactos(\n      contactosEmpresaSecundarios\n    );\n\n  const enmascarados =\n    deduplicarContactos(\n      contactosEnmascarados\n    );\n\n\n  // ==========================================================\n  // ESTADO FINAL\n  // ==========================================================\n\n  const estadoContacto =\n    directos.length > 0\n      ? \"CONTACTO_DIRECTO_PUBLICO_ENCONTRADO\"\n      : \"SIN_CONTACTO_DIRECTO_VERIFICADO\";\n\n\n  salida.push({\n\n    json: {\n\n      empresa,\n\n      persona_contacto:\n        persona,\n\n      cargo_contacto:\n        cargo,\n\n      estado_contacto:\n        estadoContacto,\n\n      contactos_directos:\n        directos,\n\n      contactos_empresa_oficiales:\n        oficiales,\n\n      contactos_empresa_secundarios:\n        secundarios,\n\n      contactos_enmascarados_no_utilizables:\n        enmascarados,\n\n      total_contactos_directos:\n        directos.length,\n\n      total_contactos_empresa_oficiales:\n        oficiales.length,\n\n      whatsapp_directo_verificado:\n        directos.some(\n          c =>\n            c.tipo === \"WHATSAPP\"\n        ),\n\n      siguiente_accion:\n        directos.length > 0\n          ? \"VALIDAR_CONTACTO_Y_PREPARAR_PROSPECCION\"\n          : oficiales.length > 0\n            ? \"AMPLIAR_BUSQUEDA_CONTACTO_DIRECTO_MANTENIENDO_CONTACTO_EMPRESA\"\n            : \"AMPLIAR_BUSQUEDA_CONTACTO_DIRECTO\",\n\n      fuentes_revisadas:\n        fuentesRevisadas,\n\n      resultados_descartados:\n        resultadosDescartados\n    }\n  });\n}\n\n\nreturn salida;",
+        "notice": ""
+      },
+      "typeVersion": 2,
+      "position": [
+        1552,
+        464
+      ],
+      "id": "256348ca-0594-497f-993d-9bcbd988b5aa",
+      "name": "Code in JavaScript9",
+      "disabled": false
+    },
+    {
+      "id": "c4269d5d-d68b-4edf-88a5-91956140e939",
+      "typeVersion": 1.1,
+      "name": "Start",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [
+        1040,
+        464
+      ],
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "empresa",
+              "type": "any"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Leer candidatos para contacto": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request6": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Leer candidatos para contacto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "meta": null,
+  "nodeGroups": [],
+  "versionId": "0243d1e5-a522-4a70-b6f9-fc5e282c6b32",
+  "activeVersionId": "0243d1e5-a522-4a70-b6f9-fc5e282c6b32",
+  "versionCounter": 1,
+  "triggerCount": 0,
+  "sourceWorkflowId": null,
+  "tags": [],
+  "versionMetadata": {
+    "name": null,
+    "description": null
+  }
+}

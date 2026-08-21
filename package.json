@@ -1,0 +1,29 @@
+{
+  "name": "rhia",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "npm@11.17.0",
+  "engines": {
+    "node": ">=24.19.0 <25",
+    "npm": ">=11.17.0 <12"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "spikes/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "orm:drizzle": "npm run migration:generate --workspace=@rhia/spike-drizzle"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "drizzle-kit": "0.31.10",
+    "drizzle-orm": "0.45.2",
+    "typescript": "7.0.2",
+    "zod": "4.4.3"
+  }
+}

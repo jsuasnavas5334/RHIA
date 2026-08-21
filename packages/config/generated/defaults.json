@@ -1,0 +1,78 @@
+{
+  "version": "1.0",
+  "markets": {
+    "restOfLatinAmericaEnabled": true,
+    "defaultRegionalPriorityScore": 50,
+    "priorities": [
+      {
+        "countryCode": "EC",
+        "priorityScore": 100
+      },
+      {
+        "countryCode": "PE",
+        "priorityScore": 90
+      }
+    ]
+  },
+  "cadence": {
+    "maxProactiveTouches": 3,
+    "responseFollowupHours": 48,
+    "channels": [
+      {
+        "channel": "EMAIL",
+        "enabled": false,
+        "minimumHoursBetweenTouches": 48
+      },
+      {
+        "channel": "LINKEDIN",
+        "enabled": false,
+        "minimumHoursBetweenTouches": 72
+      },
+      {
+        "channel": "WHATSAPP",
+        "enabled": false,
+        "minimumHoursBetweenTouches": 72
+      }
+    ]
+  },
+  "scoring": {
+    "weights": {
+      "marketFit": 30,
+      "evidenceStrength": 35,
+      "contactability": 20,
+      "commercialTiming": 15
+    },
+    "minimumOpportunityScore": 70
+  },
+  "budgets": {
+    "searchRequestsPerJob": 20,
+    "llmTokensPerJob": 0,
+    "browserActionsPerJob": 0,
+    "externalSpendUsdDailyCap": 0
+  },
+  "providers": {
+    "models": [
+      {
+        "providerId": "OLLAMA",
+        "enabled": true,
+        "mode": "LOCAL",
+        "modelAlias": "local-default",
+        "priority": 1
+      }
+    ],
+    "searchOrder": [
+      "API",
+      "PLAYWRIGHT",
+      "COMPUTER_USE",
+      "HUMAN"
+    ],
+    "searxngEnabled": true,
+    "browserFallbackEnabled": false,
+    "computerUseFallbackEnabled": false
+  },
+  "runtime": {
+    "workerConcurrency": 1,
+    "schedulerTimezone": "America/Guayaquil",
+    "logLevel": "INFO"
+  }
+}

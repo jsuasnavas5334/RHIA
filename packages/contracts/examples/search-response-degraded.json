@@ -1,0 +1,27 @@
+{
+  "version": "1.0",
+  "queryId": "55555555-5555-4555-8555-555555555555",
+  "correlationId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "status": "DEGRADED",
+  "completedAt": "2026-08-20T20:00:02Z",
+  "results": [
+    {
+      "rank": 1,
+      "url": "https://example.invalid/company",
+      "title": "Empresa Ejemplo",
+      "snippet": "Resultado sintético para validar el contrato.",
+      "provider": "google-cse"
+    }
+  ],
+  "providers": [
+    {
+      "provider": "google-cse",
+      "status": "HEALTHY"
+    },
+    {
+      "provider": "motor-secundario",
+      "status": "DEGRADED",
+      "issue": "RATE_LIMIT"
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "version": "1.0",
+  "markets": {
+    "restOfLatinAmericaEnabled": true,
+    "defaultRegionalPriorityScore": 50,
+    "priorities": [
+      { "countryCode": "EC", "priorityScore": 100 },
+      { "countryCode": "PE", "priorityScore": 90 },
+      { "countryCode": "CO", "priorityScore": 70 }
+    ]
+  },
+  "cadence": {
+    "maxProactiveTouches": 2,
+    "responseFollowupHours": 72,
+    "channels": [
+      { "channel": "EMAIL", "enabled": true, "minimumHoursBetweenTouches": 48 },
+      { "channel": "LINKEDIN", "enabled": false, "minimumHoursBetweenTouches": 72 },
+      { "channel": "WHATSAPP", "enabled": false, "minimumHoursBetweenTouches": 72 }
+    ]
+  },
+  "scoring": {
+    "weights": {
+      "marketFit": 35,
+      "evidenceStrength": 35,
+      "contactability": 20,
+      "commercialTiming": 10
+    },
+    "minimumOpportunityScore": 75
+  },
+  "budgets": {
+    "searchRequestsPerJob": 30,
+    "llmTokensPerJob": 50000,
+    "browserActionsPerJob": 0,
+    "externalSpendUsdDailyCap": 25
+  },
+  "providers": {
+    "models": [
+      { "providerId": "OLLAMA", "enabled": true, "mode": "LOCAL", "modelAlias": "local-default", "priority": 1 },
+      { "providerId": "OPENAI", "enabled": true, "mode": "REMOTE", "modelAlias": "remote-default", "credentialRef": "abababab-abab-4bab-8bab-abababababab", "priority": 2 }
+    ],
+    "searchOrder": ["API", "PLAYWRIGHT", "COMPUTER_USE", "HUMAN"],
+    "searxngEnabled": true,
+    "browserFallbackEnabled": false,
+    "computerUseFallbackEnabled": false
+  },
+  "runtime": {
+    "workerConcurrency": 2,
+    "schedulerTimezone": "America/Guayaquil",
+    "logLevel": "INFO"
+  }
+}

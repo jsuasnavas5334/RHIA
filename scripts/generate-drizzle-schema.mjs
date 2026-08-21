@@ -1,0 +1,144 @@
+import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const migrationsDirectory = resolve(projectRoot, 'packages/db/migrations');
+const outputPath = resolve(projectRoot, 'packages/db/src/schema.ts');
+const manifestPath = resolve(projectRoot, 'packages/db/generated/schema-manifest.json');
+const migrationFiles = (await readdir(migrationsDirectory)).filter((file) => /^\d{4}_[a-z0-9_]+\.sql$/.test(file)).sort();
+const migration = (await Promise.all(migrationFiles.map((file) => readFile(resolve(migrationsDirectory, file), 'utf8')))).join('\n');
+
+const camel = (value) => value.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+const quote = (value) => JSON.stringify(value);
+
+const tables = [];
+const tablePattern = /CREATE TABLE rhia\.([a-z_]+) \(\r?\n([\s\S]*?)\r?\n\);/g;
+for (const match of migration.matchAll(tablePattern)) {
+  const [, name, body] = match;
+  const columns = [];
+  const tableConstraints = [];
+  for (const rawLine of body.split(/\r?\n/)) {
+    const line = rawLine.trim().replace(/,$/, '');
+    if (!line || line.startsWith('CONSTRAINT ')) continue;
+    if (/^(PRIMARY KEY|UNIQUE|FOREIGN KEY) /.test(line)) {
+      tableConstraints.push(line);
+      continue;
+    }
+    const columnMatch = line.match(/^([a-z0-9_]+)\s+(.+)$/);
+    if (!columnMatch) throw new Error(`No se pudo interpretar columna en ${name}: ${line}`);
+    columns.push({ name: columnMatch[1], definition: columnMatch[2] });
+  }
+  tables.push({ name, columns, tableConstraints });
+}
+
+if (tables.length !== 45) throw new Error(`Se esperaban 45 tablas y se detectaron ${tables.length}.`);
+const tableNames = new Set(tables.map((table) => table.name));
+
+const columnBuilder = (table, column) => {
+  const { name, definition } = column;
+  let expression;
+  const isNumeric = /^numeric\(/.test(definition);
+  if (/^uuid\[\]/.test(definition)) expression = `uuid(${quote(name)}).array()`;
+  else if (/^uuid\b/.test(definition)) expression = `uuid(${quote(name)})`;
+  else if (/^text\b/.test(definition)) expression = `text(${quote(name)})`;
+  else if (/^timestamptz\b/.test(definition)) expression = `timestamp(${quote(name)}, { withTimezone: true, mode: 'date' })`;
+  else if (/^boolean\b/.test(definition)) expression = `boolean(${quote(name)})`;
+  else if (/^jsonb\b/.test(definition)) expression = `jsonb(${quote(name)})`;
+  else if (/^char\((\d+)\)/.test(definition)) expression = `char(${quote(name)}, { length: ${definition.match(/^char\((\d+)\)/)[1]} })`;
+  else if (/^smallint\b/.test(definition)) expression = `smallint(${quote(name)})`;
+  else if (/^integer\b/.test(definition)) expression = `integer(${quote(name)})`;
+  else if (/^numeric\((\d+),(\d+)\)/.test(definition)) {
+    const [, precision, scale] = definition.match(/^numeric\((\d+),(\d+)\)/);
+    expression = `numeric(${quote(name)}, { precision: ${precision}, scale: ${scale} })`;
+  } else if (/^bytea\b/.test(definition)) expression = `bytea(${quote(name)})`;
+  else throw new Error(`Tipo no soportado en ${table.name}.${name}: ${definition}`);
+
+  if (/PRIMARY KEY/.test(definition)) expression += '.primaryKey()';
+  if (/DEFAULT gen_random_uuid\(\)/.test(definition)) expression += '.defaultRandom()';
+  else if (/DEFAULT now\(\)/.test(definition)) expression += '.defaultNow()';
+  else if (/DEFAULT '\{\}'::jsonb/.test(definition)) expression += '.default({})';
+  else if (/DEFAULT '\[\]'::jsonb/.test(definition)) expression += '.default([])';
+  else {
+    const stringDefault = definition.match(/DEFAULT '([^']*)'(?:\:\:[a-z]+)?/);
+    const numberDefault = definition.match(/DEFAULT (-?\d+(?:\.\d+)?)/);
+    const booleanDefault = definition.match(/DEFAULT (true|false)/);
+    if (stringDefault) expression += `.default(${quote(stringDefault[1])})`;
+    else if (booleanDefault) expression += `.default(${booleanDefault[1]})`;
+    else if (numberDefault) expression += isNumeric ? `.default(${quote(numberDefault[1])})` : `.default(${numberDefault[1]})`;
+  }
+  if (/NOT NULL/.test(definition)) expression += '.notNull()';
+  if (/\bUNIQUE\b/.test(definition)) expression += '.unique()';
+
+  const reference = definition.match(/REFERENCES rhia\.([a-z_]+)\(([a-z_]+)\)/);
+  if (reference) {
+    if (!tableNames.has(reference[1])) throw new Error(`Referencia desconocida: ${reference[1]}`);
+    expression += `.references(() => ${camel(reference[1])}.${camel(reference[2])})`;
+  }
+  return expression;
+};
+
+const imports = [
+  'boolean',
+  'char',
+  'customType',
+  'foreignKey',
+  'integer',
+  'jsonb',
+  'numeric',
+  'pgSchema',
+  'primaryKey',
+  'smallint',
+  'text',
+  'timestamp',
+  'unique',
+  'uuid',
+];
+
+const output = [];
+output.push(`// GENERATED from ${migrationFiles.join(', ')} by scripts/generate-drizzle-schema.mjs.`);
+output.push('// SQL migrations remain canonical for checks and indexes; do not edit this file manually.');
+output.push(`import { ${imports.join(', ')} } from 'drizzle-orm/pg-core';`);
+output.push('');
+output.push("const bytea = customType<{ data: Uint8Array; driverData: Uint8Array }>({ dataType: () => 'bytea' });");
+output.push("export const rhia = pgSchema('rhia');");
+output.push('');
+
+for (const table of tables) {
+  const variable = camel(table.name);
+  output.push(`export const ${variable} = rhia.table(${quote(table.name)}, {`);
+  for (const column of table.columns) {
+    output.push(`  ${camel(column.name)}: ${columnBuilder(table, column)},`);
+  }
+  output.push('}, (table) => [');
+  let constraintIndex = 0;
+  for (const constraint of table.tableConstraints) {
+    const pk = constraint.match(/^PRIMARY KEY \(([^)]+)\)$/);
+    const uq = constraint.match(/^UNIQUE \(([^)]+)\)$/);
+    const fk = constraint.match(/^FOREIGN KEY \(([^)]+)\) REFERENCES rhia\.([a-z_]+)\(([^)]+)\)$/);
+    if (pk) {
+      const columns = pk[1].split(',').map((item) => `table.${camel(item.trim())}`).join(', ');
+      output.push(`  primaryKey({ columns: [${columns}] }),`);
+    } else if (uq) {
+      const columns = uq[1].split(',').map((item) => `table.${camel(item.trim())}`).join(', ');
+      output.push(`  unique(${quote(`${table.name}_generated_uq_${constraintIndex++}`)}).on(${columns}),`);
+    } else if (fk) {
+      const localColumns = fk[1].split(',').map((item) => `table.${camel(item.trim())}`).join(', ');
+      const foreignColumns = fk[3].split(',').map((item) => `${camel(fk[2])}.${camel(item.trim())}`).join(', ');
+      output.push(`  foreignKey({ columns: [${localColumns}], foreignColumns: [${foreignColumns}] }),`);
+    }
+  }
+  output.push(']);');
+  output.push('');
+}
+
+await mkdir(dirname(outputPath), { recursive: true });
+await mkdir(dirname(manifestPath), { recursive: true });
+await writeFile(outputPath, `${output.join('\n')}\n`, 'utf8');
+await writeFile(
+  manifestPath,
+  `${JSON.stringify({ version: migrationFiles.at(-1)?.replace(/\.sql$/, ''), tableCount: tables.length, tables: tables.map((table) => ({ name: table.name, columns: table.columns.map((column) => column.name) })) }, null, 2)}\n`,
+  'utf8',
+);
+
+console.log(`Drizzle schema generado: ${tables.length} tablas.`);

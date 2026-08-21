@@ -1,0 +1,16 @@
+{
+  "name": "@rhia/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate:schema": "node ../../scripts/generate-drizzle-schema.mjs",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test:schema": "node ../../scripts/test-drizzle-schema.mjs",
+    "test:migration": "bash ../../scripts/test-domain-migration.sh"
+  },
+  "dependencies": {
+    "drizzle-orm": "0.45.2"
+  }
+}
