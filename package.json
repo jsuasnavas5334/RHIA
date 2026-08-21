@@ -15,6 +15,7 @@
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
+    "pretypecheck": "npm run build --workspace=@rhia/domain --workspace=@rhia/config",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "orm:drizzle": "npm run migration:generate --workspace=@rhia/spike-drizzle"

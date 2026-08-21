@@ -2,6 +2,23 @@
 
 Este archivo documenta las entregas visibles y verificables del proyecto. La fuente de verdad de ejecución continúa siendo `PLAN_MAESTRO.md`.
 
+## 1.0.25-monitor — 2026-08-21
+
+### Publicado
+
+- Primer commit `b8a7889` (`Baseline inicial RHIA`) publicado en `origin/main`, sin force push.
+- SHA remoto y clone limpio coinciden; identidad Git configurada con noreply.
+
+### Corregido localmente
+
+- El typecheck limpio ahora genera primero los artefactos de `@rhia/domain` y `@rhia/config`.
+- `SUBIRALGIT.BAT` desactiva el visor paginado para que la lista de archivos no parezca congelada.
+
+### Pruebas y bloqueo
+
+- Snapshot corregido: `npm ci`, typecheck, build y endpoints aprobados.
+- El SHA publicado todavía no contiene esta corrección; `GATE-02` espera una segunda publicación y clone limpio final.
+
 ## 1.0.24-monitor — 2026-08-21
 
 ### Intento de publicación autorizado

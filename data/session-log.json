@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-21T04:51:00-05:00",
+  "updatedAt": "2026-08-21T09:16:00-05:00",
   "sessions": [
     {
       "id": "SES-20260819-01",
@@ -882,6 +882,39 @@
         "No realizar un tercer intento equivalente dentro del mismo entorno."
       ],
       "next": "Reintentar la publicación autorizada desde un contexto con .git escribible y acceso HTTPS; luego verificar HEAD, origin/main y clone limpio."
+    },
+    {
+      "id": "SES-20260821-28",
+      "startedAt": "2026-08-21T09:08:00-05:00",
+      "taskId": "PH02-T001",
+      "status": "PARTIAL",
+      "title": "Publicar baseline y validar clone limpio",
+      "summary": "El baseline inicial se publicó correctamente; el clone confirmó el SHA, reveló un fallo de orden de build y la corrección local ya pasó el gate reproducible.",
+      "changes": [
+        "Commit b8a7889 publicado en origin/main sin force push.",
+        "Pretypecheck raíz compila domain y config antes de validar consumidores.",
+        "SUBIRALGIT.BAT dejó de usar el visor paginado para la lista preparada."
+      ],
+      "tests": [
+        "22 controles y 161 archivos aprobaron antes del commit; 23 controles después.",
+        "origin/main y clone limpio coincidieron con b8a7889 y working tree vacío.",
+        "El clone publicado falló al resolver dist internos durante typecheck.",
+        "El snapshot corregido aprobó npm ci, typecheck, build, health y status."
+      ],
+      "evidence": [
+        "Autor noreply: jsuasnavas5334@users.noreply.github.com.",
+        "SHA remoto: b8a7889df34e43430c2a4eab9000648453efbddb.",
+        "No se usó force push."
+      ],
+      "risks": [
+        "La corrección validada aún no forma parte de origin/main.",
+        "Cuatro vulnerabilidades npm moderadas requieren análisis separado; no se aplicó audit fix --force."
+      ],
+      "decisions": [
+        "No cerrar PH02-T001 ni GATE-02 hasta validar un clone del siguiente SHA.",
+        "No reutilizar la autorización puntual para crear un segundo commit."
+      ],
+      "next": "Publicar la corrección con SUBIRALGIT.BAT y repetir clone limpio, typecheck, build y boot."
     }
   ]
 }

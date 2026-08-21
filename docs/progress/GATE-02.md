@@ -2,8 +2,8 @@
 
 ```text
 GATE: GATE-02
-STATUS: BLOCKED_ENVIRONMENT
-COMMIT: No existe HEAD local.
+STATUS: BLOCKED_HUMAN
+COMMIT: b8a7889 publicado; corrección de boot pendiente de publicación.
 ```
 
 ## Aprobado
@@ -15,8 +15,8 @@ COMMIT: No existe HEAD local.
 
 ## Bloqueo exacto
 
-`PH02-T001` exige primer commit/SHA y clone limpio. El usuario ya autorizó puntualmente la publicación, pero el entorno actual denegó la escritura de `.git/index.lock` y no pudo conectar a `github.com:443`. Todavía no existe `HEAD` y no hubo cambios remotos.
+`PH02-T001` exige que un clone limpio también pueda instalar, compilar y arrancar. El primer commit `b8a7889` está publicado y el clone coincide, pero su typecheck limpio falló por el orden de build de workspaces. La corrección local ya aprobó el gate reproducible; falta publicarla y verificarla desde un nuevo clone de `origin/main`.
 
 ## Siguiente paso
 
-Ejecutar el flujo autorizado desde un contexto con `.git` escribible y acceso HTTPS. Únicamente después de verificar `HEAD`, `origin/main` y clone limpio se cierran `PH02-T001` y este gate. Hasta entonces no se inicia PH04.
+Ejecutar `SUBIRALGIT.BAT` para publicar la corrección local. El siguiente ciclo repetirá clone, typecheck, build y boot; únicamente si todo aprueba cerrará `PH02-T001` y este gate. Hasta entonces no se inicia PH04.

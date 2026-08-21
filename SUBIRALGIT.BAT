@@ -133,7 +133,7 @@ if errorlevel 1 goto :error
 
 echo.
 echo Archivos preparados para el commit:
-"%GIT_EXE%" diff --cached --name-status
+"%GIT_EXE%" --no-pager diff --cached --name-status
 
 "%GIT_EXE%" diff --cached --name-only | findstr /I /R /C:"\.env" /C:"\.pem$" /C:"\.key$" /C:"\.p12$" /C:"\.pfx$" /C:"\.passphrase$" /C:"\.dump$" /C:"\.dump\.gpg$" /C:"secrets/" /C:"\.rhia-secrets/" /C:"credentials/" /C:"cookies/" /C:"backups/" /C:"RHIA-Backups/" | findstr /V /I /R /C:"\.env\.example$" >nul
 if not errorlevel 1 (

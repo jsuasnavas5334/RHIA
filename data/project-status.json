@@ -1,6 +1,6 @@
 {
-  "version": "1.0.24-monitor",
-  "updatedAt": "2026-08-21T04:51:00-05:00",
+  "version": "1.0.25-monitor",
+  "updatedAt": "2026-08-21T09:16:00-05:00",
   "state": "ARCHITECTURE_GATE_BLOCKED",
   "currentPhase": {
     "id": "PH03",
@@ -10,7 +10,7 @@
     "id": "GATE-02",
     "name": "Gate de arquitectura",
     "objective": "Aprobar PH02-PH03 antes de construir Core y Agent Runtime.",
-    "status": "BLOCKED_ENVIRONMENT"
+    "status": "BLOCKED_HUMAN"
   },
   "counts": {
     "totalTasks": 51,
