@@ -64,3 +64,12 @@ test('operación ordinaria autorizada no requiere approval', () => {
   assert.equal(authorize(agent, 'READ_OPERATIONS').outcome, 'ALLOW');
   assert.equal(authorize(agent, 'SEND_OUTREACH').outcome, 'ALLOW');
 });
+
+test('approvals separan solicitud, lectura y decisión', () => {
+  assert.equal(authorize(agent, 'REQUEST_APPROVAL').outcome, 'ALLOW');
+  assert.equal(authorize(agent, 'READ_APPROVALS').outcome, 'DENY');
+  assert.equal(authorize(agent, 'DECIDE_APPROVAL').outcome, 'DENY');
+  assert.equal(authorize(operator, 'READ_APPROVALS').outcome, 'ALLOW');
+  assert.equal(authorize(operator, 'DECIDE_APPROVAL').outcome, 'DENY');
+  assert.equal(authorize(manager, 'DECIDE_APPROVAL').outcome, 'ALLOW');
+});

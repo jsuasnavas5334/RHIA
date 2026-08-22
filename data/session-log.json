@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-21T09:16:00-05:00",
+  "updatedAt": "2026-08-21T18:00:00-05:00",
   "sessions": [
     {
       "id": "SES-20260819-01",
@@ -915,6 +915,437 @@
         "No reutilizar la autorización puntual para crear un segundo commit."
       ],
       "next": "Publicar la corrección con SUBIRALGIT.BAT y repetir clone limpio, typecheck, build y boot."
+    },
+    {
+      "id": "SES-20260821-29",
+      "startedAt": "2026-08-21T09:20:00-05:00",
+      "taskId": "GATE-02",
+      "status": "DONE",
+      "title": "Cerrar repositorio baseline y gate de arquitectura",
+      "summary": "El segundo commit se publicó y un clone nuevo de origin/main aprobó estructura, instalación, typecheck, build y boot, desbloqueando PH04.",
+      "changes": [
+        "PH02-T001 y GATE-02 cerrados como DONE.",
+        "PH02 marcada DONE y PH04 movida a IN_PROGRESS.",
+        "PH04-T001 seleccionada como siguiente tarea válida."
+      ],
+      "tests": [
+        "HEAD local y origin/main coincidieron en 60f3def.",
+        "Clone limpio con cero cambios y 23 controles aprobados.",
+        "npm ci, typecheck, build, health y status aprobados desde el clone."
+      ],
+      "evidence": [
+        "SHA final 60f3def1a233cd193d03fbf8a9dd3b5831b1210b.",
+        "161 archivos publicables y working tree limpio en el clone.",
+        "No se usó force push."
+      ],
+      "risks": [
+        "Cuatro vulnerabilidades npm moderadas pendientes de análisis dirigido.",
+        "No aplicar audit fix --force por riesgo de cambios breaking."
+      ],
+      "decisions": [
+        "Aprobar GATE-02 únicamente tras el boot exitoso del SHA remoto.",
+        "Iniciar PH04-T001 antes de autenticación y UI según dependencias."
+      ],
+      "next": "Construir esqueleto versionado de Core API y primer módulo companies."
+    },
+    {
+      "id": "SES-20260821-30",
+      "startedAt": "2026-08-21T09:31:00-05:00",
+      "taskId": "PH04-T001",
+      "status": "IN_PROGRESS",
+      "title": "Construir Core API v1 y módulo companies",
+      "summary": "Se creó la frontera Core API con contratos versionados, RBAC, tenant isolation, auditoría e idempotencia; el primer módulo companies quedó probado.",
+      "changes": [
+        "Workspace @rhia/core-api con service layer y puertos sustituibles.",
+        "GET/POST /api/v1/companies con respuestas v1 y errores RHIA.",
+        "Adaptadores en memoria y documentación de arquitectura.",
+        "Orquestación root prepara dependencias internas antes de build, typecheck y test."
+      ],
+      "tests": [
+        "6/6 integration/auth tests de Core API aprobados.",
+        "8/8 contract tests aprobados.",
+        "Typecheck y build global aprobados en Node 24 sin red."
+      ],
+      "evidence": [
+        "Retry con la misma key devuelve el mismo recurso y mantiene un solo audit.",
+        "Viewer y service sin records.write reciben 403 normalizado.",
+        "El listado de tenant A no expone registros de tenant B."
+      ],
+      "risks": [
+        "Falta implementar contacts, opportunities, jobs y approvals.",
+        "El adaptador PostgreSQL debe hacer company, audit e idempotency atómicos.",
+        "Cuatro vulnerabilidades npm moderadas siguen pendientes de análisis dirigido."
+      ],
+      "decisions": [
+        "Tenant solo desde el principal autenticado.",
+        "No conectar la base activa durante el desarrollo del service layer.",
+        "No habilitar outreach ni acciones comerciales desde Core API."
+      ],
+      "next": "Agregar schemas y service ports para contacts, opportunities, jobs y approvals; luego adaptador PostgreSQL transaccional."
+    },
+    {
+      "id": "SES-20260821-31",
+      "startedAt": "2026-08-21T10:20:00-05:00",
+      "taskId": "PH04-T001",
+      "status": "IN_PROGRESS",
+      "title": "Ampliar Core API con contacts y opportunities",
+      "summary": "El service layer CRM ahora crea y lista contacts y opportunities con estados iniciales seguros, idempotencia, audit, RBAC y tenant isolation.",
+      "changes": [
+        "Schemas v1 de Contact y Opportunity con inputs estrictos.",
+        "Puertos y adaptadores en memoria para ambos recursos.",
+        "GET/POST /api/v1/contacts y /api/v1/opportunities.",
+        "Ledger idempotente tipado para company, contact y opportunity."
+      ],
+      "tests": [
+        "10/10 pruebas dirigidas de Core API aprobadas.",
+        "Typecheck y build global aprobados sin acceso de red.",
+        "Viewer rechazado y listados cross-tenant aislados."
+      ],
+      "evidence": [
+        "Retry de contact mantiene un recurso y un audit event.",
+        "Opportunity inicial queda DISCOVERED, OPEN y score 0.",
+        "No se conectó ni modificó la base activa."
+      ],
+      "risks": [
+        "Faltan módulos jobs y approvals.",
+        "Referencias companyGroupId se validarán transaccionalmente en el adaptador PostgreSQL.",
+        "Cuatro vulnerabilidades npm moderadas siguen pendientes de análisis dirigido."
+      ],
+      "decisions": [
+        "Estados iniciales no son elegibles desde el payload.",
+        "Mantener writes ordinarios bajo records.write y separar jobs/approvals con acciones específicas.",
+        "No iniciar módulos nuevos después del checkpoint del ciclo."
+      ],
+      "next": "Implementar jobs y approvals con START_JOB, approvals.read/decide y pruebas negativas."
+    },
+    {
+      "id": "SES-20260821-32",
+      "startedAt": "2026-08-21T11:21:00-05:00",
+      "taskId": "PH04-T001",
+      "status": "IN_PROGRESS",
+      "title": "Completar service layer de jobs y approvals",
+      "summary": "Core API ahora cubre los cinco módulos requeridos; jobs y approvals aplican contratos específicos, separación de permisos, idempotencia y audit sin ejecutar acciones comerciales.",
+      "changes": [
+        "Schemas y servicios v1 para jobs y approvals.",
+        "Rutas de list/create y decisión de approvals.",
+        "Policy separa REQUEST_APPROVAL, READ_APPROVALS y DECIDE_APPROVAL.",
+        "Repositorios en memoria tenant-aware para integración aislada."
+      ],
+      "tests": [
+        "14/14 pruebas dirigidas de Core API aprobadas.",
+        "9/9 pruebas de policy y 8/8 de contracts aprobadas.",
+        "Typecheck y build global aprobados sin red."
+      ],
+      "evidence": [
+        "Job con input incompatible al jobType recibe error normalizado.",
+        "Agent solicita approval pero no puede listar ni decidir.",
+        "Retry de decisión mantiene un solo audit y no ejecuta la acción comercial."
+      ],
+      "risks": [
+        "Faltan transporte HTTP y adaptador PostgreSQL transaccional.",
+        "Autenticación real corresponde a PH04-T002; Core recibirá un principal ya autenticado.",
+        "Cuatro vulnerabilidades npm moderadas siguen pendientes de análisis dirigido."
+      ],
+      "decisions": [
+        "No cerrar PH04-T001 solo con dispatcher en memoria.",
+        "Aprobación y ejecución comercial permanecen desacopladas.",
+        "No tocar la base activa durante esta implementación."
+      ],
+      "next": "Agregar transporte HTTP y persistencia PostgreSQL atómica; probar sobre base temporal."
+    },
+    {
+      "id": "SES-20260821-33",
+      "startedAt": "2026-08-21T12:21:00-05:00",
+      "taskId": "PH04-T001",
+      "status": "IN_PROGRESS",
+      "title": "Exponer Core API mediante transporte HTTP seguro",
+      "summary": "El dispatcher de Core ya funciona sobre HTTP real con autenticación inyectada, JSON estricto, límites de body, correlación y respuestas no-cache.",
+      "changes": [
+        "Servidor HTTP nativo sin dependencias nuevas.",
+        "Puerto PrincipalAuthenticator para integración con PH04-T002.",
+        "Errores normalizados para 401, método inválido, content-type, JSON y payload grande.",
+        "Headers x-correlation-id y cache-control no-store."
+      ],
+      "tests": [
+        "16/16 pruebas dirigidas de Core API aprobadas.",
+        "Integración HTTP POST y correlación aprobadas.",
+        "Negativas de autenticación, JSON inválido y límite 413 aprobadas.",
+        "Typecheck y build global aprobados sin red."
+      ],
+      "evidence": [
+        "El transporte usa principal retornado por un autenticador inyectado.",
+        "No se registran bodies ni se aceptan identidades desde headers.",
+        "La base activa no fue conectada ni modificada."
+      ],
+      "risks": [
+        "Falta adaptador PostgreSQL transaccional e integración sobre base temporal.",
+        "La implementación de sesión real pertenece a PH04-T002.",
+        "Cuatro vulnerabilidades npm moderadas siguen pendientes de análisis dirigido."
+      ],
+      "decisions": [
+        "Mantener transporte sin lógica de negocio.",
+        "Limitar body a 1 MiB por defecto y responder no-store.",
+        "No cerrar PH04-T001 antes de validar persistencia atómica."
+      ],
+      "next": "Implementar adaptador PostgreSQL atómico para recurso, audit e idempotencia y probarlo en base temporal."
+    },
+    {
+      "id": "SES-20260821-34",
+      "startedAt": "2026-08-21T13:22:00-05:00",
+      "taskId": "PH04-T001",
+      "status": "IN_PROGRESS",
+      "title": "Preparar persistencia PostgreSQL para Core API",
+      "summary": "Se agregó y validó una migration aditiva para idempotencia Core y approvals tenant-aware sobre un restore cifrado temporal, sin tocar la base activa.",
+      "changes": [
+        "Migration 0005 con rhia.core_idempotency.",
+        "Approval ampliado con organization, job, requester humano y metadata contractual.",
+        "Trigger de coherencia organization/job/action/requester.",
+        "Drizzle y manifest actualizados de 45 a 46 tablas."
+      ],
+      "tests": [
+        "Cinco migrations y seeds dobles aprobados sobre backup restaurado.",
+        "Duplicado idempotente, fingerprint no SHA256 y approval cross-tenant rechazados.",
+        "Conteos legacy intactos y segundo restore limpio aprobados.",
+        "Paridad Drizzle 46/46 y typecheck DB aprobados."
+      ],
+      "evidence": [
+        "El contenedor temporal se retiró automáticamente.",
+        "rhia-postgres activo no fue conectado, modificado ni reiniciado.",
+        "El ledger no almacena secretos y exige snapshot JSON objeto."
+      ],
+      "risks": [
+        "Falta implementar el adaptador TypeScript y transacción única de recurso/audit/idempotencia.",
+        "La migration permanece local hasta publicación humana.",
+        "Cuatro vulnerabilidades npm moderadas siguen pendientes de análisis dirigido."
+      ],
+      "decisions": [
+        "Mantener approval ligado a action y derivar/co-validar su job y tenant.",
+        "Agregar metadata de contrato de forma aditiva y backfill legacy seguro.",
+        "No conectar la base activa durante PH04-T001."
+      ],
+      "next": "Implementar UnitOfWork y adaptadores PostgreSQL TypeScript; probar rollback atómico en contenedor temporal."
+    },
+    {
+      "id": "SES-20260821-35",
+      "startedAt": "2026-08-21T15:48:00-05:00",
+      "taskId": "PH04-T001",
+      "status": "IN_PROGRESS",
+      "title": "Conectar Core API a PostgreSQL con rollback atómico",
+      "summary": "Todos los writes del Core usan una unidad transaccional y el adaptador PostgreSQL conserva recurso, audit e idempotencia como una sola operación.",
+      "changes": [
+        "Puerto CoreUnitOfWork obligatorio en el service layer.",
+        "PostgresSession con cliente por contexto asíncrono y soporte de transacciones anidadas.",
+        "Adaptadores tenant-aware para companies, contacts, opportunities, jobs, approvals, audit e idempotencia.",
+        "Dependencias pg y @types/pg fijadas en el workspace Core API."
+      ],
+      "tests": [
+        "19/19 pruebas locales aprobadas; integración PostgreSQL se habilita por variable explícita.",
+        "Commit, rollback y unión de unidad anidada aprobados con cliente controlado.",
+        "Rollback real sobre restore cifrado temporal dejó cero recursos, audits y entradas de ledger.",
+        "Cinco migrations, seeds, constraints tenant y restore limpio volvieron a aprobar."
+      ],
+      "evidence": [
+        "El fallo de auditoría fue inyectado después de insertar el recurso y provocó ROLLBACK.",
+        "El contenedor temporal se retiró automáticamente.",
+        "La base activa no fue conectada, modificada ni reiniciada."
+      ],
+      "risks": [
+        "Falta ampliar integración CRUD real a cada repositorio antes de cerrar PH04-T001.",
+        "El adapter de approvals crea execution/action de control y requiere validación dirigida adicional.",
+        "Cuatro vulnerabilidades npm moderadas siguen pendientes de análisis dirigido."
+      ],
+      "decisions": [
+        "Compartir cliente mediante AsyncLocalStorage y unir transacciones anidadas.",
+        "Bloquear job y approval durante las escrituras sensibles.",
+        "Mantener acciones comerciales desacopladas: approval solo registra control y decisión."
+      ],
+      "next": "Agregar integración CRUD del adaptador PostgreSQL, en especial approvals, y evaluar cierre de PH04-T001."
+    },
+    {
+      "id": "SES-20260821-36",
+      "startedAt": "2026-08-21T16:48:00-05:00",
+      "taskId": "PH04-T001 / PH04-T002",
+      "status": "IN_PROGRESS",
+      "title": "Cerrar Core API e iniciar arquitectura de autenticación",
+      "summary": "La integración PostgreSQL completa cerró PH04-T001 y desbloqueó Auth v1 con una selección técnica y threat checklist verificables.",
+      "changes": [
+        "Correlation ID real agregado al ApprovalRecord y persistido en approval/execution.",
+        "Integración CRUD para companies, contacts, opportunities, jobs y approvals.",
+        "PH04-T001 marcado DONE y PH04-T002 iniciado.",
+        "Better Auth 1.7.1 seleccionado y perfil de seguridad documentado."
+      ],
+      "tests": [
+        "8/8 contract tests y 19/19 pruebas locales Core aprobadas.",
+        "Rollback atómico y ciclo CRUD PostgreSQL completo aprobados sobre restore cifrado temporal.",
+        "Replay, aislamiento tenant y cadena job/execution/action/approval verificados.",
+        "La correlación persistida coincide entre approval y execution."
+      ],
+      "evidence": [
+        "Cinco recursos, seis audits, seis ledgers y un control approval coherente en la base temporal.",
+        "El contenedor temporal se retiró automáticamente y la base activa no fue tocada.",
+        "Decisión Auth sustentada en documentación oficial Better Auth y OWASP."
+      ],
+      "risks": [
+        "Schema mapping Better Auth a rhia.app_user aún debe probarse.",
+        "Cookie, expiración, brute force y escalamiento todavía requieren implementación y pruebas.",
+        "Cuatro vulnerabilidades npm moderadas siguen pendientes de análisis dirigido."
+      ],
+      "decisions": [
+        "Cerrar PH04-T001 al cumplir todos sus criterios y contract suite.",
+        "Usar Better Auth, sesiones opacas en PostgreSQL y scrypt mantenido por la librería.",
+        "Deshabilitar signup público y no almacenar tokens en localStorage."
+      ],
+      "next": "Crear spike aislado del schema mapping Better Auth y diseñar migration auth aditiva."
+    },
+    {
+      "id": "SES-20260821-37",
+      "startedAt": "2026-08-21T17:49:00-05:00",
+      "taskId": "PH04-T002",
+      "status": "IN_PROGRESS",
+      "title": "Validar schema Better Auth sobre PostgreSQL",
+      "summary": "El workspace Auth y su migration aditiva preservan el dominio multi-tenant y son compatibles con el inspector real de Better Auth.",
+      "changes": [
+        "Workspace @rhia/auth con Better Auth 1.7.1.",
+        "Configuración tipada de signup, sesión, cookie, rate limit y field mapping.",
+        "Migration 0006_auth_v1 con cinco tablas UUID.",
+        "Relación 1:1 auth_user.app_user_id a app_user y Drizzle ampliado a 51 tablas."
+      ],
+      "tests": [
+        "3/3 pruebas locales de opciones y mapping aprobadas.",
+        "Inspector/migration planner oficial ejecutado sobre restore temporal.",
+        "Cero tablas o columnas faltantes y cero unsafe changes.",
+        "Seis migrations, constraints previos, integración Core y restore limpio aprobados."
+      ],
+      "evidence": [
+        "Se descartó mapear Better Auth directamente a app_user por incompatibilidad de unicidad global de email.",
+        "El contenedor temporal se retiró automáticamente.",
+        "No se creó secret ni credencial real y la base activa no fue conectada."
+      ],
+      "risks": [
+        "Bootstrap admin y resolución de roles aún no implementados.",
+        "Login/logout, expiry y brute-force requieren integración HTTP real.",
+        "Cuatro vulnerabilidades npm moderadas siguen pendientes de análisis dirigido."
+      ],
+      "decisions": [
+        "Separar auth_user de app_user y enlazarlos por FK 1:1.",
+        "Mantener UUIDs aunque Better Auth exponga IDs como strings.",
+        "Usar migration SQL canónica de RHIA y el inspector de Better Auth como parity gate."
+      ],
+      "next": "Implementar bootstrap admin idempotente y resolvedor de sesión a Principal con roles Core."
+    },
+    {
+      "id": "SES-20260821-38",
+      "startedAt": "2026-08-21T18:51:00-05:00",
+      "taskId": "PH04-T002",
+      "status": "IN_PROGRESS",
+      "title": "Implementar bootstrap ADMIN y Principal tenant-aware",
+      "summary": "Auth ya puede preparar el primer administrador sin credenciales predeterminadas y transformar sesiones válidas en principals autorizables con tenant y roles obtenidos desde Core.",
+      "changes": [
+        "Servicio bootstrap transaccional con advisory lock por organización, normalización e idempotencia.",
+        "Hash scrypt delegado a Better Auth y validación para impedir persistir texto plano.",
+        "Auditoría única AUTH_ADMIN_BOOTSTRAPPED y bloqueo de una segunda identidad ADMIN.",
+        "PostgresPrincipalResolver y runtime Auth compatible estructuralmente con PrincipalAuthenticator Core.",
+        "Handler HTTP nativo Better Auth con Cache-Control no-store e IP directa no falsificable para rate limit."
+      ],
+      "tests": [
+        "7/7 pruebas Auth locales ejecutables aprobaron; 4 integraciones condicionales fueron omitidas.",
+        "Typecheck dirigido de @rhia/auth aprobó.",
+        "Sesión ausente/expirada/sin vínculo y usuario inactivo/sin roles/rol desconocido son rechazados.",
+        "La prueba confirma que tenant y roles inyectados en sesión no sustituyen los valores PostgreSQL."
+      ],
+      "evidence": [
+        "El hash generado cumple el formato scrypt Better Auth y nunca contiene la contraseña temporal.",
+        "Las integraciones PostgreSQL/HTTP validan schema, replay, audit único, hash inmutable, segunda identidad, login/logout, cookie, expiry, enumeración y rate limit cuando exista RHIA_TEST_DATABASE_URL.",
+        "No se creó credencial real, no se conectó la base activa y no se hizo commit ni push."
+      ],
+      "risks": [
+        "Docker/PostgreSQL temporal no estuvo disponible; la integración bootstrap real queda pendiente.",
+        "Faltan rutas HTTP login/logout y pruebas de cookie, revocación/replay, expiry y rate limit.",
+        "Secret y credencial de operación deberán suministrarse fuera del repositorio bajo autorización explícita."
+      ],
+      "decisions": [
+        "El bootstrap acepta exclusivamente hash Better Auth y no incluye password por defecto.",
+        "Una vez existe un ADMIN autenticable, solo la repetición exacta es idempotente; otra identidad falla.",
+        "Estado, organización y roles se consultan en PostgreSQL para cada sesión y no se confían al cliente."
+      ],
+      "next": "Ejecutar las integraciones PostgreSQL/HTTP preparadas y agregar auditoría atómica de login, fallo, rate limit, logout y expiración."
+    },
+    {
+      "id": "SES-20260821-39",
+      "startedAt": "2026-08-21T19:52:00-05:00",
+      "taskId": "PH04-T002",
+      "status": "IN_PROGRESS",
+      "title": "Agregar auditoría atómica al ciclo Auth",
+      "summary": "El ciclo Auth ya define evidencia durable para login, revocación, expiración, fallo y rate limit sin almacenar credenciales ni identificadores de red en claro.",
+      "changes": [
+        "Migration 0007_auth_audit con triggers AFTER INSERT/DELETE sobre auth_session.",
+        "Login exitoso y cierre de sesión se escriben en audit_event dentro de la transacción de sesión.",
+        "Fallos de login y status 429 se escriben en system_health_event sin PII ni secretos.",
+        "Gate temporal ampliado para migration checksum, triggers y conteos HTTP de seguridad.",
+        "Manifest Drizzle actualizado a 0007_auth_audit sin cambiar sus 51 tablas.",
+        "Bootstrap endurecido para ADMIN activo, credential válida y reparación segura de hash ausente."
+      ],
+      "tests": [
+        "8/8 pruebas Auth locales ejecutables aprobaron; 4 integraciones reales fueron omitidas sin PostgreSQL temporal.",
+        "Typecheck @rhia/auth y @rhia/db aprobados.",
+        "Paridad Drizzle 51/51 y sintaxis Bash del gate aprobaron.",
+        "La prueba de auditoría confirma que no se persisten email, password ni token.",
+        "Baseline de repositorio aprobó 23 controles sobre 194 archivos publicables."
+      ],
+      "evidence": [
+        "La integración preparada exige 2 login success, 1 revoke, 1 expiry, 3 fallos y 1 rate limit.",
+        "Los triggers usan session UUID como trace y resuelven actor/tenant mediante auth_user y app_user.",
+        "No se conectó la base activa, no se creó secret y no se hizo commit ni push."
+      ],
+      "risks": [
+        "0007_auth_audit todavía debe ejecutarse en PostgreSQL temporal antes de marcarla aprobada.",
+        "Docker/PostgreSQL no está disponible en este host.",
+        "La red confiable del deployment debe definirse antes de aceptar headers de proxy."
+      ],
+      "decisions": [
+        "Auditar sesión con triggers para mantener atomicidad con Better Auth.",
+        "Tratar toda eliminación vigente como revocación y toda eliminación expirada como expiry.",
+        "Registrar fallos globales sin intentar resolver ni persistir el email presentado."
+      ],
+      "next": "Ejecutar 0007 y las cuatro integraciones sobre restore temporal; después revisar y cerrar el threat checklist de PH04-T002."
+    },
+    {
+      "id": "SES-20260821-40",
+      "startedAt": "2026-08-21T20:53:00-05:00",
+      "taskId": "PH04-T002 / PH04-T003",
+      "status": "IN_PROGRESS",
+      "title": "Cerrar Auth v1 e iniciar navegación RHIA App",
+      "summary": "Auth v1 aprobó su gate real completo y liberó el inicio de la app shell con navegación derivada de permisos Core.",
+      "changes": [
+        "Límites de email, nombre y password agregados al bootstrap para acotar scrypt y payloads.",
+        "Principal resolver rechaza IDs no UUID antes de consultar PostgreSQL.",
+        "Auditoría HTTP tiene deadline de 500 ms para no bloquear indefinidamente una respuesta.",
+        "PH04-T002 marcado DONE y threat checklist cerrado.",
+        "Workspace @rhia/web con navegación, responsive y estados de página iniciado."
+      ],
+      "tests": [
+        "9/9 pruebas Auth locales ejecutables aprobaron.",
+        "7 migrations y 4 integraciones Auth/Core aprobaron sobre restore cifrado temporal.",
+        "Login/logout, cookie, expiry, revocación, brute force, no enumeración, escalamiento y auditoría aprobaron.",
+        "4/4 pruebas de navegación RBAC, ausencia de roles, unicidad, responsive y estados aprobaron.",
+        "Baseline de repositorio aprobó 23 controles sobre 200 archivos publicables."
+      ],
+      "evidence": [
+        "Legacy, seeds, constraints, índices y segundo restore limpio permanecieron intactos.",
+        "Tenant y roles inyectados por headers no alteran el Principal resuelto desde PostgreSQL.",
+        "La base activa no fue conectada ni reiniciada; no hubo secret real, commit ni push."
+      ],
+      "risks": [
+        "Next.js, React y React DOM aún no están instalados y npm no existe en el runtime actual.",
+        "La red confiable del deployment deberá definirse en PH11.",
+        "La navegación visual nunca sustituye autorización server-side."
+      ],
+      "decisions": [
+        "Cerrar PH04-T002 tras aprobar el restore temporal y el threat checklist completo.",
+        "Derivar navegación solo de permisos definidos por @rhia/policy.",
+        "Avanzar el modelo UI sin introducir otro package manager ni modificar dependencias sin lockfile."
+      ],
+      "next": "Montar la shell Next.js sobre el modelo RBAC cuando npm esté disponible; después agregar component y E2E navigation tests."
     }
   ]
 }

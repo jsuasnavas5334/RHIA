@@ -1,24 +1,24 @@
 {
-  "version": "1.0.25-monitor",
-  "updatedAt": "2026-08-21T09:16:00-05:00",
-  "state": "ARCHITECTURE_GATE_BLOCKED",
+  "version": "1.0.38-monitor",
+  "updatedAt": "2026-08-21T20:58:00-05:00",
+  "state": "APP_SHELL_IN_PROGRESS",
   "currentPhase": {
-    "id": "PH03",
-    "name": "Modelo de datos, permisos y políticas"
+    "id": "PH04",
+    "name": "RHIA Core y App"
   },
   "currentTask": {
-    "id": "GATE-02",
-    "name": "Gate de arquitectura",
-    "objective": "Aprobar PH02-PH03 antes de construir Core y Agent Runtime.",
-    "status": "BLOCKED_HUMAN"
+    "id": "PH04-T003",
+    "name": "Construir shell y navegación de RHIA App",
+    "objective": "Crear una interfaz base usable, responsiva y gobernada por permisos.",
+    "status": "IN_PROGRESS"
   },
   "counts": {
     "totalTasks": 51,
-    "done": 11,
+    "done": 14,
     "inProgress": 1,
-    "blocked": 1,
+    "blocked": 0,
     "totalGates": 8,
-    "gatesDone": 1
+    "gatesDone": 2
   },
   "guardrails": [
     "Sin borrado de datos ni cambios irreversibles",
@@ -28,9 +28,9 @@
   ],
   "phases": [
     { "id": "PH01", "name": "Auditoría y baseline", "status": "DONE" },
-    { "id": "PH02", "name": "Decisiones técnicas y repositorio", "status": "PARTIAL" },
+    { "id": "PH02", "name": "Decisiones técnicas y repositorio", "status": "DONE" },
     { "id": "PH03", "name": "Datos, permisos y políticas", "status": "DONE" },
-    { "id": "PH04", "name": "RHIA Core y App", "status": "LOCKED" },
+    { "id": "PH04", "name": "RHIA Core y App", "status": "IN_PROGRESS" },
     { "id": "PH05", "name": "Runtime de agentes y AI Gateway", "status": "LOCKED" },
     { "id": "PH06", "name": "Search, evidencia e identidad", "status": "LOCKED" },
     { "id": "PH07", "name": "CRM, contactos y scoring", "status": "LOCKED" },

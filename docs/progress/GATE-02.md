@@ -2,8 +2,8 @@
 
 ```text
 GATE: GATE-02
-STATUS: BLOCKED_HUMAN
-COMMIT: b8a7889 publicado; corrección de boot pendiente de publicación.
+STATUS: DONE
+COMMIT: 60f3def verificado en origin/main y clone limpio.
 ```
 
 ## Aprobado
@@ -13,10 +13,14 @@ COMMIT: b8a7889 publicado; corrección de boot pendiente de publicación.
 - RBAC, capability policies, tenant guards y outreach policy verificados.
 - PH03 completa: T001/T002/T003/T004 `DONE`.
 
-## Bloqueo exacto
+## Validación final
 
-`PH02-T001` exige que un clone limpio también pueda instalar, compilar y arrancar. El primer commit `b8a7889` está publicado y el clone coincide, pero su typecheck limpio falló por el orden de build de workspaces. La corrección local ya aprobó el gate reproducible; falta publicarla y verificarla desde un nuevo clone de `origin/main`.
+- `HEAD` local y `origin/main` coinciden en `60f3def1a233cd193d03fbf8a9dd3b5831b1210b`.
+- Clone nuevo con working tree vacío.
+- 23 controles de repositorio y 161 archivos publicables aprobados.
+- `npm ci`, typecheck, build, `/health` y `/api/status` aprobados desde el clone.
+- PH02 y PH03 quedan completas; dependencias de `PH04-T001` satisfechas.
 
 ## Siguiente paso
 
-Ejecutar `SUBIRALGIT.BAT` para publicar la corrección local. El siguiente ciclo repetirá clone, typecheck, build y boot; únicamente si todo aprueba cerrará `PH02-T001` y este gate. Hasta entonces no se inicia PH04.
+Iniciar `PH04-T001` y mantener `PH04-T002` bloqueada hasta que Core API entregue su contrato estable.

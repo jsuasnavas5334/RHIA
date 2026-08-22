@@ -4,9 +4,9 @@ import { getTableColumns, getTableName } from 'drizzle-orm';
 import * as schema from '../packages/db/src/schema.ts';
 
 const manifest = JSON.parse(await readFile(new URL('../packages/db/generated/schema-manifest.json', import.meta.url), 'utf8'));
-assert.equal(manifest.version, '0004_outreach_policy');
-assert.equal(manifest.tableCount, 45);
-assert.equal(manifest.tables.length, 45);
+assert.equal(manifest.version, '0007_auth_audit');
+assert.equal(manifest.tableCount, 51);
+assert.equal(manifest.tables.length, 51);
 
 const camel = (value) => value.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
 for (const expected of manifest.tables) {
@@ -25,4 +25,4 @@ assert.equal(schema.contactPoint.valueEncrypted.notNull, true);
 assert.equal(schema.outreachPolicy.configuration.notNull, true);
 assert.equal(schema.outreachSuppression.subjectKeyHash.notNull, true);
 
-console.log('Drizzle parity verificada: 45 tablas y todas sus columnas coinciden con las migrations.');
+console.log('Drizzle parity verificada: 51 tablas y todas sus columnas coinciden con las migrations.');

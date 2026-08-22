@@ -2,6 +2,206 @@
 
 Este archivo documenta las entregas visibles y verificables del proyecto. La fuente de verdad de ejecución continúa siendo `PLAN_MAESTRO.md`.
 
+## 1.0.38-monitor — 2026-08-21
+
+### Auth v1 cerrada
+
+- Siete migrations y cuatro integraciones Auth/Core aprobaron sobre restore cifrado temporal.
+- Login/logout, cookie, expiry, revocación, rate limit, no enumeración, privilege escalation y auditoría aprobaron juntos.
+- Legacy, seeds, constraints y segundo restore limpio permanecieron intactos; PH04-T002 queda `DONE`.
+
+### Inicio de RHIA App shell
+
+- Workspace `@rhia/web` y contrato de navegación RBAC agregados sin dependencias nuevas.
+- Nueve destinos, responsive drawer/sidebar y estados loading/empty/error definidos.
+- 4/4 pruebas de permisos visuales, ausencia de roles, unicidad, responsive y siguiente acción aprobaron.
+- Baseline final del ciclo: 23 controles sobre 200 archivos publicables, sin firmas sensibles.
+- Next.js/React permanecen pendientes porque npm no está disponible en el runtime actual.
+
+## 1.0.37-monitor — 2026-08-21
+
+### Auditoría Auth
+
+- Migration `0007_auth_audit` agrega triggers transaccionales para login exitoso, sesión revocada y sesión expirada.
+- Fallos de login y respuestas 429 se registran sin email, password, token ni IP en claro.
+- Bootstrap endurecido: exige ADMIN activo con credential válida y nunca reemplaza un hash vigente durante replay.
+- El manifest Drizzle avanza a `0007_auth_audit` y conserva paridad de 51 tablas.
+- La integración HTTP ahora verifica eventos exactos junto con cookie, logout, expiry y rate limit.
+
+### Pruebas
+
+- 8/8 pruebas Auth locales ejecutables, typecheck Auth/DB, paridad Drizzle y sintaxis Bash aprobaron.
+- Formato del generador Drizzle corregido y baseline de repositorio aprobado: 23 controles, 194 archivos publicables.
+- Cuatro pruebas reales permanecen condicionadas a PostgreSQL temporal; no se conectó ni modificó la base activa.
+- No se crearon secretos, credenciales, commits ni pushes.
+
+## 1.0.36-monitor — 2026-08-21
+
+### Bootstrap y autorización de sesiones
+
+- Bootstrap ADMIN transaccional, serializado e idempotente agregado sin contraseña ni secret predeterminados.
+- Solo acepta hashes `scrypt` generados por Better Auth; una segunda identidad administrativa se rechaza sin cambios parciales.
+- Cada sesión válida se resuelve a un `Principal` con estado, tenant y roles consultados desde Core/PostgreSQL.
+- Tenant y roles presentes en la sesión o petición no se consideran autoridad.
+- Handler HTTP nativo agregado con respuestas de autenticación marcadas `no-store`.
+- Rate limit deriva la IP del socket y sobrescribe el header interno para impedir spoofing del cliente.
+
+### Pruebas
+
+- 7/7 pruebas Auth locales ejecutables aprobaron: hashing, configuración, mapping, sesión, expiración y rechazo de escalamiento lógico.
+- Cuatro pruebas PostgreSQL/HTTP reales quedan listas y condicionadas a `RHIA_TEST_DATABASE_URL`; incluyen login/logout, cookie, expiry, enumeración y límite 5/15 min. Docker no estuvo disponible en este ciclo.
+- No se creó ninguna credencial real, no se conectó la base activa y no se realizó commit ni push.
+
+## 1.0.35-monitor — 2026-08-21
+
+### Auth schema v1
+
+- Workspace `@rhia/auth` agregado con Better Auth 1.7.1 y configuración tipada sin secretos.
+- Migration `0006_auth_v1` crea auth user/session/account/verification/rate-limit con UUIDs.
+- `auth_user` enlaza 1:1 con `app_user`, preservando tenant y roles sin imponer email global al dominio.
+- Signup deshabilitado, sesión absoluta de 8 horas, cookies estrictas y rate limit 5/15 min configurados.
+
+### Pruebas
+
+- 3/3 pruebas locales de mapping y configuración aprobaron.
+- El inspector oficial de Better Auth aceptó el schema PostgreSQL aplicado sin cambios faltantes o inseguros.
+- Seis migrations y 51 tablas Drizzle aprobaron sobre restore cifrado temporal; la base activa no fue tocada.
+
+## 1.0.34-monitor — 2026-08-21
+
+### Inicio de Auth v1
+
+- Better Auth 1.7.1 seleccionado para email/password y sesiones PostgreSQL.
+- Perfil de seguridad definido: signup cerrado, `scrypt`, sesión opaca de 8 horas, cookie segura y rate limit persistente.
+- Tenant y roles permanecerán en Core; no se confiarán datos de autorización del cliente.
+- Threat checklist inicial documentada con referencias oficiales Better Auth y OWASP.
+
+### Estado
+
+- `PH04-T002` continúa `IN_PROGRESS`; aún no existen migrations ni secretos de autenticación.
+- Siguiente checkpoint: spike de schema mapping sobre base temporal.
+
+## 1.0.33-monitor — 2026-08-21
+
+### Core API v1 completada
+
+- Integración PostgreSQL cubre create/list de companies, contacts, opportunities, jobs y approvals, más decisión humana.
+- Correlation ID de approvals persiste sin sustitución y coincide en execution y approval.
+- Replay idempotente no duplica recursos ni auditoría; consultas permanecen aisladas por tenant.
+- `PH04-T001` cumple endpoints versionados, errores normalizados, RBAC, audit, idempotencia y contract suite.
+
+### Pruebas
+
+- 8/8 contract tests y 19/19 pruebas locales Core aprobadas.
+- Dos integraciones PostgreSQL reales aprobaron sobre restore cifrado: rollback total y ciclo CRUD completo.
+- `PH04-T001` queda `DONE`; `PH04-T002` queda desbloqueada.
+
+## 1.0.32-monitor — 2026-08-21
+
+### Transacciones Core
+
+- Todos los writes del service layer pasan por `CoreUnitOfWork`.
+- Adaptador PostgreSQL agregado para companies, contacts, opportunities, jobs, approvals, audit e idempotencia.
+- Un único cliente confirma o revierte recurso, auditoría y ledger; transacciones anidadas se unen al contexto activo.
+- Driver `pg` y tipos fijados en el workspace Core API.
+
+### Pruebas
+
+- 19/19 pruebas locales aprobadas, incluidas commit, rollback y unidad anidada.
+- Integración real sobre restore cifrado temporal confirmó cero residuos tras un fallo de auditoría inyectado.
+- Migrations, seeds, restricciones tenant y segundo restore limpio permanecen aprobados.
+- La base PostgreSQL activa no fue conectada ni modificada.
+
+## 1.0.31-monitor — 2026-08-21
+
+### Persistencia Core
+
+- Migration `0005_core_api_persistence` agrega ledger idempotente genérico.
+- Approval conserva organización, job, requester humano, metadatos contractuales y correlation ID.
+- Trigger exige coherencia tenant/job/action y requester humano del mismo tenant.
+- Drizzle actualizado a 46 tablas.
+
+### Pruebas
+
+- Cinco migrations aplicadas sobre restore cifrado temporal con legacy intacto.
+- Duplicados, fingerprint inválido y cross-tenant rechazados.
+- Segundo restore limpio y paridad Drizzle 46/46 aprobados.
+- La base PostgreSQL activa no fue modificada ni reiniciada.
+
+## 1.0.30-monitor — 2026-08-21
+
+### Transporte HTTP
+
+- Core API expuesta mediante servidor HTTP nativo y dispatcher sin lógica duplicada.
+- Autenticación inyectada; identidad nunca aceptada directamente desde headers.
+- JSON estricto, límite de payload, correlation ID y `cache-control: no-store`.
+
+### Pruebas
+
+- 16/16 pruebas de Core API aprobadas, incluidas integración HTTP y negativas 401/400/413.
+- Typecheck y build global aprobados.
+- PH04-T001 espera únicamente persistencia PostgreSQL transaccional.
+
+## 1.0.29-monitor — 2026-08-21
+
+### Jobs y approvals
+
+- Endpoints v1 para crear/listar jobs y approvals, y registrar decisiones.
+- Jobs validan input según `jobType` y nacen `PENDING`.
+- Approvals separan solicitud, lectura y decisión; services no pueden decidir.
+- Aprobar registra estado/audit pero no ejecuta acciones comerciales.
+
+### Pruebas
+
+- Core API 14/14, policy 9/9 y contracts 8/8 aprobados.
+- Typecheck y build global aprobados.
+- PH04-T001 continúa hasta implementar transporte HTTP y persistencia transaccional.
+
+## 1.0.28-monitor — 2026-08-21
+
+### Core CRM
+
+- Endpoints v1 de contacts y opportunities agregados al service layer.
+- Contacts nacen `UNVERIFIED`; opportunities nacen `DISCOVERED/OPEN` con score cero.
+- Idempotencia, audit, RBAC y aislamiento tenant aplicados a ambos recursos.
+
+### Pruebas
+
+- 10/10 pruebas dirigidas de Core API aprobadas.
+- Typecheck y build global aprobados sin red.
+- La base activa y los canales de outreach permanecieron intactos.
+
+## 1.0.27-monitor — 2026-08-21
+
+### Core API
+
+- Nuevo workspace `@rhia/core-api` con rutas v1 para listar y crear company groups.
+- Service layer con puertos de persistencia, idempotencia y auditoría.
+- RBAC/capabilities, aislamiento tenant y errores RHIA normalizados.
+
+### Pruebas
+
+- 6/6 pruebas dirigidas de Core API aprobadas.
+- 8/8 pruebas de contratos, typecheck y build global aprobados.
+- No se tocó la base activa ni se habilitaron acciones comerciales.
+
+## 1.0.26-monitor — 2026-08-21
+
+### Gate aprobado
+
+- Segundo commit `60f3def` publicado y sincronizado con `origin/main`.
+- Clone limpio final aprobó 23 controles, `npm ci`, typecheck, build, health y status.
+- `PH02-T001`, PH02 y `GATE-02` pasan a `DONE`.
+
+### Inicio
+
+- PH04 desbloqueada.
+- `PH04-T001` inicia Core API y service layer con validación, RBAC, auditoría e idempotencia.
+
+### Riesgo registrado
+
+- Cuatro vulnerabilidades npm moderadas quedan pendientes de análisis dirigido; no se ejecutó `audit fix --force`.
+
 ## 1.0.25-monitor — 2026-08-21
 
 ### Publicado

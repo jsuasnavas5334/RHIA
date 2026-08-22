@@ -1,0 +1,16 @@
+{
+  "name": "@rhia/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/navigation.js",
+  "types": "./dist/navigation.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run build && node --test dist/*.test.js"
+  },
+  "dependencies": {
+    "@rhia/policy": "0.1.0"
+  }
+}

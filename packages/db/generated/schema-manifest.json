@@ -1,6 +1,6 @@
 {
-  "version": "0004_outreach_policy",
-  "tableCount": 45,
+  "version": "0007_auth_audit",
+  "tableCount": 51,
   "tables": [
     {
       "name": "schema_migration",
@@ -633,6 +633,84 @@
         "expires_at",
         "created_at",
         "updated_at"
+      ]
+    },
+    {
+      "name": "core_idempotency",
+      "columns": [
+        "organization_id",
+        "operation",
+        "idempotency_key",
+        "fingerprint",
+        "resource_type",
+        "resource_id",
+        "resource_snapshot",
+        "created_at"
+      ]
+    },
+    {
+      "name": "auth_user",
+      "columns": [
+        "id",
+        "app_user_id",
+        "name",
+        "email",
+        "email_verified",
+        "image_url",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "auth_session",
+      "columns": [
+        "id",
+        "expires_at",
+        "token",
+        "created_at",
+        "updated_at",
+        "ip_address",
+        "user_agent",
+        "user_id"
+      ]
+    },
+    {
+      "name": "auth_account",
+      "columns": [
+        "id",
+        "issuer",
+        "account_id",
+        "provider_id",
+        "user_id",
+        "access_token",
+        "refresh_token",
+        "id_token",
+        "access_token_expires_at",
+        "refresh_token_expires_at",
+        "scope",
+        "password_hash",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "auth_verification",
+      "columns": [
+        "id",
+        "identifier_hash",
+        "value_hash",
+        "expires_at",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "name": "auth_rate_limit",
+      "columns": [
+        "id",
+        "key_hash",
+        "count",
+        "last_request_at_ms"
       ]
     }
   ]

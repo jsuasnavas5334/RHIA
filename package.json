@@ -14,9 +14,12 @@
     "spikes/*"
   ],
   "scripts": {
+    "prebuild": "npm run build:prerequisites",
     "build": "npm run build --workspaces --if-present",
-    "pretypecheck": "npm run build --workspace=@rhia/domain --workspace=@rhia/config",
+    "build:prerequisites": "npm run build --workspace=@rhia/domain --workspace=@rhia/config --workspace=@rhia/contracts --workspace=@rhia/policy",
+    "pretypecheck": "npm run build:prerequisites",
     "typecheck": "npm run typecheck --workspaces --if-present",
+    "pretest": "npm run build:prerequisites",
     "test": "npm run test --workspaces --if-present",
     "orm:drizzle": "npm run migration:generate --workspace=@rhia/spike-drizzle"
   },

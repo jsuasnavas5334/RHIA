@@ -32,7 +32,7 @@ for (const match of migration.matchAll(tablePattern)) {
   tables.push({ name, columns, tableConstraints });
 }
 
-if (tables.length !== 45) throw new Error(`Se esperaban 45 tablas y se detectaron ${tables.length}.`);
+if (tables.length !== 51) throw new Error(`Se esperaban 51 tablas y se detectaron ${tables.length}.`);
 const tableNames = new Set(tables.map((table) => table.name));
 
 const columnBuilder = (table, column) => {
@@ -48,6 +48,7 @@ const columnBuilder = (table, column) => {
   else if (/^char\((\d+)\)/.test(definition)) expression = `char(${quote(name)}, { length: ${definition.match(/^char\((\d+)\)/)[1]} })`;
   else if (/^smallint\b/.test(definition)) expression = `smallint(${quote(name)})`;
   else if (/^integer\b/.test(definition)) expression = `integer(${quote(name)})`;
+  else if (/^bigint\b/.test(definition)) expression = `bigint(${quote(name)}, { mode: 'number' })`;
   else if (/^numeric\((\d+),(\d+)\)/.test(definition)) {
     const [, precision, scale] = definition.match(/^numeric\((\d+),(\d+)\)/);
     expression = `numeric(${quote(name)}, { precision: ${precision}, scale: ${scale} })`;
@@ -80,6 +81,7 @@ const columnBuilder = (table, column) => {
 
 const imports = [
   'boolean',
+  'bigint',
   'char',
   'customType',
   'foreignKey',
@@ -134,7 +136,7 @@ for (const table of tables) {
 
 await mkdir(dirname(outputPath), { recursive: true });
 await mkdir(dirname(manifestPath), { recursive: true });
-await writeFile(outputPath, `${output.join('\n')}\n`, 'utf8');
+await writeFile(outputPath, `${output.join('\n').trimEnd()}\n`, 'utf8');
 await writeFile(
   manifestPath,
   `${JSON.stringify({ version: migrationFiles.at(-1)?.replace(/\.sql$/, ''), tableCount: tables.length, tables: tables.map((table) => ({ name: table.name, columns: table.columns.map((column) => column.name) })) }, null, 2)}\n`,
