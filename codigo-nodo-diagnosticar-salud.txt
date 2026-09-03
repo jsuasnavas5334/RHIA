@@ -1,0 +1,538 @@
+const items = $input.all();
+
+// ============================================================
+// RHIA - DIAGNÓSTICO DE SALUD DE BÚSQUEDA
+// Objetivo:
+// 1. Verificar que SearXNG respondió correctamente.
+// 2. Medir cobertura de las consultas.
+// 3. NO resolver todavía la identidad de la empresa.
+// 4. Preservar los 18 items para el siguiente nodo.
+// ============================================================
+
+function parseObject(value) {
+  if (!value) return {};
+
+  if (typeof value === 'object') {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+
+  return {};
+}
+
+function getPayload(json) {
+  const body = parseObject(json.body);
+  const data = parseObject(json.data);
+
+  if (Array.isArray(json.results)) {
+    return json;
+  }
+
+  if (Array.isArray(body.results)) {
+    return body;
+  }
+
+  if (Array.isArray(data.results)) {
+    return data;
+  }
+
+  return json;
+}
+
+function getDomain(url) {
+  if (!url || typeof url !== 'string') {
+    return null;
+  }
+
+  // No se usa el global `URL` a propósito: el sandbox del nodo Code de n8n
+  // (y el harness de pruebas aislado en scripts/test-commercial-baseline.mjs)
+  // no expone `URL` como global, por lo que `new URL(...)` lanzaba
+  // ReferenceError, quedaba atrapado por el catch y devolvía null para
+  // TODAS las URLs (bug real: PH06-T001, tests/fixtures/searxng/empresa_x_busqueda_degradada.json,
+  // 20 URLs válidas -> dominios_unicos: 0). Extracción por regex, sin depender
+  // de globals del entorno, igual que el parser ya correcto de
+  // docs/baseline/n8n/workflows/j4maQyGj457W4yFs.json (obtenerDominio).
+  const coincidencia = String(url).match(/^https?:\/\/([^\/?#]+)/i);
+
+  if (!coincidencia) {
+    return null;
+  }
+
+  return coincidencia[1]
+    .toLowerCase()
+    .replace(/^www\./, '');
+}
+
+function clasificarMotivoMotor(motivo) {
+  const texto = String(motivo || '').toLowerCase();
+
+  if (texto.includes('captcha')) {
+    return 'CAPTCHA';
+  }
+
+  if (
+    texto.includes('too many requests') ||
+    texto.includes('429') ||
+    texto.includes('rate limit')
+  ) {
+    return 'RATE_LIMIT';
+  }
+
+  if (texto.includes('timeout') || texto.includes('timed out')) {
+    return 'TIMEOUT';
+  }
+
+  if (
+    texto.includes('suspend')
+  ) {
+    return 'SUSPENDIDO';
+  }
+
+  if (
+    texto.includes('error') ||
+    texto.includes('down') ||
+    texto.includes('unreachable') ||
+    texto.includes('connection')
+  ) {
+    return 'CAIDO';
+  }
+
+  return 'DESCONOCIDO';
+}
+
+// ============================================================
+// PH06-T001 (acción pendiente 4/5): eventos de salud por motor.
+// Convierte el diagnóstico de esta consulta en eventos listos para
+// `rhia.system_health_event` (component='search_engine:<motor>', status,
+// detail jsonb). Misma lógica que packages/search-health/src/index.ts
+// (buildSearchEngineHealthEvents) — se mantiene inline aquí porque el
+// sandbox del nodo Code de n8n no puede importar paquetes npm del repo.
+// Si un motor respondió Y quedó en alerta en la misma consulta, la alerta
+// prevalece (señal más accionable).
+function construirEventosSaludMotor(query, motoresDetectados, motoresNoResponden) {
+  const eventos = new Map();
+
+  for (const motor of motoresDetectados) {
+    if (!motor) continue;
+    eventos.set(motor, {
+      component: `search_engine:${motor}`,
+      status: 'OK',
+      detail: { query: query ?? null },
+    });
+  }
+
+  for (const entrada of motoresNoResponden) {
+    if (!entrada.motor || entrada.motor === 'NO_IDENTIFICADO') continue;
+    eventos.set(entrada.motor, {
+      component: `search_engine:${entrada.motor}`,
+      status: entrada.tipo || 'DESCONOCIDO',
+      detail: { query: query ?? null, motivo: entrada.motivo },
+    });
+  }
+
+  return [...eventos.values()];
+}
+
+function normalizeUnresponsiveEngines(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.map(entry => {
+    let motor = 'NO_IDENTIFICADO';
+    let motivo = 'NO_IDENTIFICADO';
+
+    if (Array.isArray(entry)) {
+      motor = entry[0] ?? 'NO_IDENTIFICADO';
+      motivo = entry[1] ?? 'NO_IDENTIFICADO';
+    } else if (typeof entry === 'string') {
+      motor = entry;
+    } else if (entry && typeof entry === 'object') {
+      motor = entry.motor ?? 'NO_IDENTIFICADO';
+      motivo = entry.motivo ?? 'NO_IDENTIFICADO';
+    }
+
+    return {
+      motor,
+      motivo,
+      tipo: clasificarMotivoMotor(motivo),
+    };
+  });
+}
+
+// ============================================================
+// 1. DIAGNÓSTICO INDIVIDUAL POR CONSULTA
+// ============================================================
+
+const diagnosticos = items.map((item, index) => {
+  const json = item.json ?? {};
+  const payload = getPayload(json);
+
+  const existeArrayResultados = Array.isArray(payload.results);
+  const resultados = existeArrayResultados
+    ? payload.results
+    : [];
+
+  const query =
+    payload.query ??
+    json.query ??
+    json.q ??
+    null;
+
+  const urls = [];
+  const dominios = [];
+  const motores = [];
+
+  for (const resultado of resultados) {
+    const url =
+      typeof resultado?.url === 'string'
+        ? resultado.url.trim()
+        : '';
+
+    if (url) {
+      urls.push(url);
+
+      const domain = getDomain(url);
+
+      if (domain) {
+        dominios.push(domain);
+      }
+    }
+
+    if (typeof resultado?.engine === 'string') {
+      motores.push(resultado.engine);
+    }
+
+    if (Array.isArray(resultado?.engines)) {
+      for (const engine of resultado.engines) {
+        if (typeof engine === 'string') {
+          motores.push(engine);
+        }
+      }
+    }
+  }
+
+  const urlsUnicas = [...new Set(urls)];
+  const dominiosUnicos = [...new Set(dominios)];
+  const motoresUnicos = [...new Set(motores)];
+
+  const unresponsive = normalizeUnresponsiveEngines(
+    payload.unresponsive_engines ??
+    json.unresponsive_engines
+  );
+
+  let estadoTecnico;
+
+  if (!existeArrayResultados) {
+    estadoTecnico = 'RESPUESTA_INVALIDA';
+  } else if (unresponsive.length > 0) {
+    estadoTecnico = 'RESPUESTA_CON_ALERTAS';
+  } else {
+    estadoTecnico = 'RESPUESTA_VALIDA';
+  }
+
+  let estadoResultados;
+
+  if (!existeArrayResultados) {
+    estadoResultados = 'NO_EVALUABLE';
+  } else if (resultados.length === 0) {
+    estadoResultados = 'SIN_RESULTADOS';
+  } else {
+    estadoResultados = 'CON_RESULTADOS';
+  }
+
+  let cobertura;
+
+  if (resultados.length === 0) {
+    cobertura = 'NULA';
+  } else if (
+    resultados.length >= 10 &&
+    dominiosUnicos.length >= 5
+  ) {
+    cobertura = 'ALTA';
+  } else if (
+    resultados.length >= 3 &&
+    dominiosUnicos.length >= 2
+  ) {
+    cobertura = 'MEDIA';
+  } else {
+    cobertura = 'BAJA';
+  }
+
+  // PH06-T001: no reformular ante una degradación técnica del motor de
+  // búsqueda (rate limit / CAPTCHA / caído / timeout / desconocida). Una
+  // consulta sin resultados solo se considera "saludable y sin resultados"
+  // (y por tanto candidata a reformular) cuando NINGÚN motor reportó una
+  // alerta. Si hay alertas, la ausencia de resultados es sospechosa de ser
+  // causada por la degradación, no por la consulta: se reintenta con
+  // backoff en vez de reformular (evita concluir "empresa sin presencia"
+  // por un 429/CAPTCHA disfrazado de "sin resultados").
+  let siguienteAccion;
+
+  if (!existeArrayResultados) {
+    siguienteAccion = 'REVISAR_RESPUESTA_BUSCADOR';
+  } else if (resultados.length === 0 && unresponsive.length > 0) {
+    siguienteAccion = 'RETRY_BACKOFF';
+  } else if (resultados.length === 0) {
+    siguienteAccion = 'REFORMULAR_CONSULTA';
+  } else {
+    siguienteAccion = 'EVALUAR_EVIDENCIA_ENTIDAD';
+  }
+
+  return {
+    index,
+    query,
+
+    diagnostico: {
+      estructura_respuesta_valida: existeArrayResultados,
+
+      estado_tecnico: estadoTecnico,
+      estado_resultados: estadoResultados,
+      cobertura_resultados: cobertura,
+
+      total_resultados: resultados.length,
+
+      resultados_con_url: urls.length,
+      urls_unicas: urlsUnicas.length,
+      dominios_unicos: dominiosUnicos.length,
+
+      dominios_detectados: dominiosUnicos,
+      motores_detectados: motoresUnicos,
+
+      motores_no_responden: unresponsive,
+
+      siguiente_accion_consulta: siguienteAccion,
+
+      search_health_events: construirEventosSaludMotor(query, motoresUnicos, unresponsive),
+    },
+  };
+});
+
+// ============================================================
+// 2. DIAGNÓSTICO GLOBAL DE LAS 18 CONSULTAS
+// ============================================================
+
+const totalConsultas = diagnosticos.length;
+
+const consultasRespuestaValida =
+  diagnosticos.filter(
+    d => d.diagnostico.estructura_respuesta_valida
+  ).length;
+
+const consultasConResultados =
+  diagnosticos.filter(
+    d => d.diagnostico.total_resultados > 0
+  ).length;
+
+const consultasSinResultados =
+  diagnosticos.filter(
+    d =>
+      d.diagnostico.estructura_respuesta_valida &&
+      d.diagnostico.total_resultados === 0
+  ).length;
+
+const consultasInvalidas =
+  totalConsultas - consultasRespuestaValida;
+
+const consultasConAlertasMotor =
+  diagnosticos.filter(
+    d =>
+      d.diagnostico.motores_no_responden.length > 0
+  ).length;
+
+const totalResultados =
+  diagnosticos.reduce(
+    (sum, d) =>
+      sum + d.diagnostico.total_resultados,
+    0
+  );
+
+const todasUrls = new Set();
+const todosDominios = new Set();
+
+for (const item of items) {
+  const payload = getPayload(item.json ?? {});
+
+  if (!Array.isArray(payload.results)) {
+    continue;
+  }
+
+  for (const resultado of payload.results) {
+    const url =
+      typeof resultado?.url === 'string'
+        ? resultado.url.trim()
+        : '';
+
+    if (!url) {
+      continue;
+    }
+
+    todasUrls.add(url);
+
+    const domain = getDomain(url);
+
+    if (domain) {
+      todosDominios.add(domain);
+    }
+  }
+}
+
+const porcentajeRespuestaValida =
+  totalConsultas > 0
+    ? consultasRespuestaValida / totalConsultas
+    : 0;
+
+const porcentajeConResultados =
+  totalConsultas > 0
+    ? consultasConResultados / totalConsultas
+    : 0;
+
+// ============================================================
+// 3. SALUD TÉCNICA GLOBAL
+// ============================================================
+
+let saludTecnicaGlobal;
+
+if (totalConsultas === 0) {
+  saludTecnicaGlobal = 'SIN_ENTRADA';
+} else if (porcentajeRespuestaValida < 0.80) {
+  saludTecnicaGlobal = 'CRITICA';
+} else if (
+  consultasConAlertasMotor / totalConsultas > 0.25
+) {
+  saludTecnicaGlobal = 'DEGRADADA';
+} else {
+  saludTecnicaGlobal = 'SALUDABLE';
+}
+
+// ============================================================
+// 4. COBERTURA GLOBAL
+// ============================================================
+
+let coberturaGlobal;
+
+if (porcentajeConResultados >= 0.80) {
+  coberturaGlobal = 'ALTA';
+} else if (porcentajeConResultados >= 0.50) {
+  coberturaGlobal = 'MEDIA';
+} else if (porcentajeConResultados > 0) {
+  coberturaGlobal = 'BAJA';
+} else {
+  coberturaGlobal = 'NULA';
+}
+
+// ============================================================
+// 5. DIAGNÓSTICO GLOBAL
+// ============================================================
+
+let estadoBusquedaGlobal;
+let siguienteAccionGlobal;
+
+if (
+  saludTecnicaGlobal === 'CRITICA' ||
+  saludTecnicaGlobal === 'SIN_ENTRADA'
+) {
+  estadoBusquedaGlobal = 'FALLA_TECNICA_BUSQUEDA';
+  siguienteAccionGlobal = 'REVISAR_SEARXNG';
+
+} else if (consultasConResultados === 0) {
+
+  estadoBusquedaGlobal =
+    'BUSQUEDA_OPERATIVA_SIN_RESULTADOS';
+
+  siguienteAccionGlobal =
+    'REFORMULAR_CONSULTAS';
+
+} else if (coberturaGlobal === 'BAJA') {
+
+  estadoBusquedaGlobal =
+    'BUSQUEDA_OPERATIVA_COBERTURA_BAJA';
+
+  siguienteAccionGlobal =
+    'EVALUAR_Y_REINTENTAR_CONSULTAS';
+
+} else {
+
+  estadoBusquedaGlobal =
+    'BUSQUEDA_OPERATIVA';
+
+  siguienteAccionGlobal =
+    'EVALUAR_EVIDENCIA_ENTIDAD';
+}
+
+const resumenGlobal = {
+  version: 'RHIA_SEARCH_HEALTH_V2',
+
+  total_consultas: totalConsultas,
+
+  consultas_respuesta_valida:
+    consultasRespuestaValida,
+
+  consultas_invalidas:
+    consultasInvalidas,
+
+  consultas_con_resultados:
+    consultasConResultados,
+
+  consultas_sin_resultados:
+    consultasSinResultados,
+
+  consultas_con_alertas_motor:
+    consultasConAlertasMotor,
+
+  total_resultados:
+    totalResultados,
+
+  urls_unicas_globales:
+    todasUrls.size,
+
+  dominios_unicos_globales:
+    todosDominios.size,
+
+  porcentaje_respuestas_validas:
+    Math.round(porcentajeRespuestaValida * 100),
+
+  porcentaje_consultas_con_resultados:
+    Math.round(porcentajeConResultados * 100),
+
+  salud_tecnica_global:
+    saludTecnicaGlobal,
+
+  cobertura_global:
+    coberturaGlobal,
+
+  estado_busqueda_global:
+    estadoBusquedaGlobal,
+
+  siguiente_accion_global:
+    siguienteAccionGlobal,
+};
+
+// ============================================================
+// 6. SALIDA
+// Conservamos los mismos items y agregamos el diagnóstico.
+// ============================================================
+
+return items.map((item, index) => ({
+  json: {
+    ...item.json,
+
+    diagnostico_busqueda:
+      diagnosticos[index].diagnostico,
+
+    salud_busqueda_global:
+      resumenGlobal,
+  },
+
+  pairedItem: {
+    item: index,
+  },
+}));

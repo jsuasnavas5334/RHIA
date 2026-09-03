@@ -1,6 +1,6 @@
 {
-  "version": "0007_auth_audit",
-  "tableCount": 51,
+  "version": "0008_agent_runtime",
+  "tableCount": 52,
   "tables": [
     {
       "name": "schema_migration",
@@ -133,7 +133,11 @@
         "next_attempt_at",
         "created_at",
         "updated_at",
-        "completed_at"
+        "completed_at",
+        "lease_token",
+        "lease_owner",
+        "lease_expires_at",
+        "current_step"
       ]
     },
     {
@@ -180,7 +184,14 @@
         "requested_at",
         "decided_at",
         "expires_at",
-        "updated_at"
+        "updated_at",
+        "organization_id",
+        "job_id",
+        "requested_by_user_id",
+        "reason_code",
+        "summary",
+        "target_ref",
+        "correlation_id"
       ]
     },
     {
@@ -711,6 +722,26 @@
         "key_hash",
         "count",
         "last_request_at_ms"
+      ]
+    },
+    {
+      "name": "job_step_checkpoint",
+      "columns": [
+        "id",
+        "organization_id",
+        "job_id",
+        "execution_id",
+        "step_key",
+        "status",
+        "attempt",
+        "lease_token",
+        "input_hash",
+        "output_summary",
+        "action_id",
+        "error_code",
+        "started_at",
+        "completed_at",
+        "updated_at"
       ]
     }
   ]

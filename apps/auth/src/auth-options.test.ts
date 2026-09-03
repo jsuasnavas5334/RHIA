@@ -77,8 +77,14 @@ test('Better Auth real compila el schema mapping en PostgreSQL temporal', { skip
     assert.deepEqual(plan.toBeAdded, []);
     assert.deepEqual(plan.unsafeChanges, []);
     const sql = await plan.compileMigrations();
-    assert.equal(sql.trim(), '');
-    await plan.runMigrations();
+    assert.match(sql.trim(), /^create unique index "auth_account_issuer_account_id_uidx"/i);
+    const accountIdentityConstraint = await integrationPool.query(`SELECT 1 FROM pg_constraint
+      WHERE conrelid='rhia.auth_account'::regclass AND contype='u' AND conkey=(
+        SELECT array_agg(attnum ORDER BY position) FROM unnest(ARRAY[
+          (SELECT attnum FROM pg_attribute WHERE attrelid='rhia.auth_account'::regclass AND attname='issuer'),
+          (SELECT attnum FROM pg_attribute WHERE attrelid='rhia.auth_account'::regclass AND attname='account_id')
+        ]) WITH ORDINALITY columns(attnum, position))`);
+    assert.equal(accountIdentityConstraint.rowCount, 1);
     const schema = await integrationPool.query<{ table_name: string; column_name: string }>(`SELECT table_name, column_name
       FROM information_schema.columns WHERE table_schema='rhia' AND table_name LIKE 'auth_%' ORDER BY table_name, ordinal_position`);
     assert.equal(new Set(schema.rows.map((row) => row.table_name)).size, 5);

@@ -1,4 +1,5 @@
 import type { Principal } from '@rhia/policy';
+import type { SearchHealthEventRecord } from '@rhia/search-health';
 import type { ApprovalRecord, CompanyGroup, Contact, JobRecord, Opportunity } from './contracts.js';
 
 export type AuditEvent = Readonly<{
@@ -6,7 +7,7 @@ export type AuditEvent = Readonly<{
   organizationId: string;
   actorId: string;
   actorType: Principal['kind'];
-  action: 'COMPANY_GROUP_CREATED' | 'CONTACT_CREATED' | 'OPPORTUNITY_CREATED' | 'JOB_CREATED' | 'APPROVAL_REQUESTED' | 'APPROVAL_DECIDED';
+  action: 'COMPANY_GROUP_CREATED' | 'CONTACT_CREATED' | 'OPPORTUNITY_CREATED' | 'JOB_CREATED' | 'JOB_RETRY_SCHEDULED' | 'JOB_CANCELLED' | 'APPROVAL_REQUESTED' | 'APPROVAL_DECIDED';
   resourceType: 'COMPANY_GROUP' | 'CONTACT' | 'OPPORTUNITY' | 'JOB' | 'APPROVAL';
   resourceId: string;
   afterHash: string;
@@ -32,6 +33,8 @@ export interface OpportunityRepository {
 export interface JobRepository {
   create(job: JobRecord): Promise<void>;
   listByOrganization(organizationId: string): Promise<readonly JobRecord[]>;
+  findById(organizationId: string, jobId: string): Promise<JobRecord | undefined>;
+  update(job: JobRecord): Promise<void>;
 }
 
 export interface ApprovalRepository {
@@ -66,6 +69,13 @@ export interface CoreUnitOfWork {
   execute<T>(work: () => Promise<T>): Promise<T>;
 }
 
+/** Lectura de eventos de salud de motores de búsqueda desde `rhia.system_health_event`
+ * (PH06-T001, acción pendiente 4: alimentar `computeEngineHealthScores` con historial real). */
+export interface SearchHealthRepository {
+  /** Eventos con `component` prefijo `search_engine:` desde `since` hasta ahora. */
+  listRecentSearchEngineEvents(since: Date): Promise<readonly SearchHealthEventRecord[]>;
+}
+
 export type CoreDependencies = Readonly<{
   companies: CompanyGroupRepository;
   contacts: ContactRepository;
@@ -75,6 +85,7 @@ export type CoreDependencies = Readonly<{
   idempotency: IdempotencyStore;
   audit: AuditSink;
   unitOfWork: CoreUnitOfWork;
+  searchHealth: SearchHealthRepository;
   newId: () => string;
   now: () => Date;
 }>;

@@ -1,8 +1,9 @@
 import { createHash } from 'node:crypto';
 import { authorize, type ActionKey, type Principal } from '@rhia/policy';
 import {
-  CreateApprovalSchema, DecideApprovalSchema, StartJobSchema, validateApprovalDecision, validateApprovalRequest, validateJobRequest,
-  type ApprovalRecord, type CreateApproval, type DecideApproval, type JobRecord, type StartJob,
+  CancelJobSchema, CreateApprovalSchema, DecideApprovalSchema, RetryJobSchema, StartJobSchema,
+  validateApprovalDecision, validateApprovalRequest, validateJobRequest,
+  type ApprovalRecord, type CancelJob, type CreateApproval, type DecideApproval, type JobRecord, type RetryJob, type StartJob,
 } from './contracts.js';
 import { CoreServiceError } from './company-service.js';
 import type { CoreDependencies, IdempotentResource } from './ports.js';
@@ -69,6 +70,93 @@ export class JobService {
       return { job, replayed: false };
     });
   }
+
+  async retry(
+    principal: Principal,
+    jobId: string,
+    raw: unknown,
+    correlationId: string,
+  ): Promise<Readonly<{ job: JobRecord; replayed: boolean }>> {
+    requireAction(principal, 'START_JOB');
+    const parsed = RetryJobSchema.safeParse(raw);
+    if (!parsed.success) throw new CoreServiceError('RHIA_CONTRACT_INVALID_PAYLOAD', 400, 'El retry no cumple el contrato v1.');
+    const input: RetryJob = parsed.data;
+    const fingerprint = hash({ jobId, operation: 'RETRY' });
+    return this.dependencies.unitOfWork.execute(async () => {
+      const stored = await this.dependencies.idempotency.get(principal.organizationId, 'JOB_RETRY', input.idempotencyKey);
+      const prior = replay<JobRecord>(stored, fingerprint, 'JOB');
+      if (prior) return { job: prior, replayed: true };
+
+      const current = await this.dependencies.jobs.findById(principal.organizationId, jobId);
+      if (!current) throw new CoreServiceError('RHIA_CONTRACT_INVALID_PAYLOAD', 400, 'Job no existe en el tenant activo.');
+      if (current.status !== 'FAILED' && current.status !== 'PARTIAL') {
+        throw new CoreServiceError('RHIA_STATE_INVALID_TRANSITION', 409, 'Solo un job fallido o parcial admite retry.');
+      }
+      if (current.retryCount >= 3) {
+        throw new CoreServiceError('RHIA_JOB_RETRY_EXHAUSTED', 409, 'El job agotó sus tres reintentos permitidos.');
+      }
+      const occurredAt = this.dependencies.now().toISOString();
+      const job: JobRecord = {
+        ...current,
+        status: 'RETRY_SCHEDULED',
+        retryCount: current.retryCount + 1,
+        nextAttemptAt: occurredAt,
+        updatedAt: occurredAt,
+        completedAt: null,
+      };
+      await this.dependencies.jobs.update(job);
+      await this.dependencies.audit.append({
+        id: this.dependencies.newId(), organizationId: principal.organizationId, actorId: principal.id, actorType: principal.kind,
+        action: 'JOB_RETRY_SCHEDULED', resourceType: 'JOB', resourceId: job.id, afterHash: hash(job), occurredAt, correlationId,
+      });
+      await this.dependencies.idempotency.put(principal.organizationId, 'JOB_RETRY', input.idempotencyKey, {
+        fingerprint, resource: { resourceType: 'JOB', value: job },
+      });
+      return { job, replayed: false };
+    });
+  }
+
+  async cancel(
+    principal: Principal,
+    jobId: string,
+    raw: unknown,
+    correlationId: string,
+  ): Promise<Readonly<{ job: JobRecord; replayed: boolean }>> {
+    requireAction(principal, 'START_JOB');
+    const parsed = CancelJobSchema.safeParse(raw);
+    if (!parsed.success) throw new CoreServiceError('RHIA_CONTRACT_INVALID_PAYLOAD', 400, 'La cancelación no cumple el contrato v1.');
+    const input: CancelJob = parsed.data;
+    const fingerprint = hash({ jobId, operation: 'CANCEL', reason: input.reason ?? null });
+    return this.dependencies.unitOfWork.execute(async () => {
+      const stored = await this.dependencies.idempotency.get(principal.organizationId, 'JOB_CANCEL', input.idempotencyKey);
+      const prior = replay<JobRecord>(stored, fingerprint, 'JOB');
+      if (prior) return { job: prior, replayed: true };
+
+      const current = await this.dependencies.jobs.findById(principal.organizationId, jobId);
+      if (!current) throw new CoreServiceError('RHIA_CONTRACT_INVALID_PAYLOAD', 400, 'Job no existe en el tenant activo.');
+      if (!['PENDING', 'QUEUED', 'RETRY_SCHEDULED'].includes(current.status)) {
+        throw new CoreServiceError('RHIA_STATE_INVALID_TRANSITION', 409, 'El job ya inició o terminó y no admite cancelación segura.');
+      }
+      const occurredAt = this.dependencies.now().toISOString();
+      const job: JobRecord = {
+        ...current,
+        status: 'CANCELLED',
+        nextAttemptAt: null,
+        updatedAt: occurredAt,
+        completedAt: occurredAt,
+      };
+      await this.dependencies.jobs.update(job);
+      await this.dependencies.audit.append({
+        id: this.dependencies.newId(), organizationId: principal.organizationId, actorId: principal.id, actorType: principal.kind,
+        action: 'JOB_CANCELLED', resourceType: 'JOB', resourceId: job.id,
+        afterHash: hash({ job, reason: input.reason ?? null }), occurredAt, correlationId,
+      });
+      await this.dependencies.idempotency.put(principal.organizationId, 'JOB_CANCEL', input.idempotencyKey, {
+        fingerprint, resource: { resourceType: 'JOB', value: job },
+      });
+      return { job, replayed: false };
+    });
+  }
 }
 
 export class ApprovalService {
@@ -89,6 +177,12 @@ export class ApprovalService {
       const stored = await this.dependencies.idempotency.get(principal.organizationId, 'APPROVAL_CREATE', input.idempotencyKey);
       const prior = replay<ApprovalRecord>(stored, fingerprint, 'APPROVAL');
       if (prior) return { approval: prior, replayed: true };
+
+      const job = await this.dependencies.jobs.findById(principal.organizationId, input.jobId);
+      if (!job) throw new CoreServiceError('RHIA_CONTRACT_INVALID_PAYLOAD', 400, 'El job de la solicitud no existe en el tenant activo.');
+      if (job.status === 'CANCELLED') {
+        throw new CoreServiceError('RHIA_STATE_INVALID_TRANSITION', 409, 'Un job cancelado no admite nuevas acciones ni approvals.');
+      }
 
       const id = this.dependencies.newId();
       const occurredAt = this.dependencies.now().toISOString();

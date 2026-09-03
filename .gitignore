@@ -20,6 +20,7 @@ node_modules/
 dist/
 build/
 coverage/
+*.tsbuildinfo
 
 # Python
 __pycache__/
@@ -51,3 +52,10 @@ RHIA-Backups/
 
 # n8n sensitive/local
 .n8n/
+.rhia-cloud-sync/
+
+# Salidas de verificacion manual (build/test/e2e) generadas por el usuario, no versionadas
+*-output.txt
+
+# Script local con credencial real de Postgres embebida - nunca subir
+EJECUTAR-PRUEBA-REAL.ps1

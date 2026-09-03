@@ -5,11 +5,12 @@ import { z } from 'zod';
 import {
   ApprovalListResponseSchema, ApprovalResponseSchema, CompanyGroupListResponseSchema, CompanyGroupResponseSchema,
   ContactListResponseSchema, ContactResponseSchema, CoreApiErrorResponseSchema, JobListResponseSchema, JobResponseSchema,
-  OpportunityListResponseSchema, OpportunityResponseSchema,
+  OpportunityListResponseSchema, OpportunityResponseSchema, SearchHealthResponseSchema, SessionContextResponseSchema,
 } from './contracts.js';
 import { CompanyGroupService, CoreServiceError } from './company-service.js';
 import { ApprovalService, JobService } from './control-services.js';
 import { ContactService, OpportunityService } from './record-services.js';
+import { SearchHealthService } from './search-health-service.js';
 
 export type CoreApiRequest = Readonly<{
   method: 'GET' | 'POST';
@@ -46,6 +47,7 @@ export class CoreApi {
     private readonly opportunities: OpportunityService,
     private readonly jobs: JobService,
     private readonly approvals: ApprovalService,
+    private readonly searchHealth: SearchHealthService,
   ) {}
 
   async handle(request: CoreApiRequest): Promise<CoreApiResponse> {
@@ -53,6 +55,12 @@ export class CoreApi {
       ? request.correlationId
       : randomUUID();
     try {
+      if (request.path === '/api/v1/session' && request.method === 'GET') {
+        if (request.principal.kind !== 'HUMAN') {
+          return normalizedError('RHIA_POLICY_DENIED', 'Operations Center requiere una sesión humana.', correlationId, 403);
+        }
+        return { status: 200, body: SessionContextResponseSchema.parse({ version: '1.0', data: { roles: request.principal.roles } }) };
+      }
       if (request.path === '/api/v1/companies' && request.method === 'GET') {
         const data = await this.companies.list(request.principal);
         return { status: 200, body: CompanyGroupListResponseSchema.parse({ version: '1.0', data }) };
@@ -103,6 +111,16 @@ export class CoreApi {
           body: JobResponseSchema.parse({ version: '1.0', data: result.job, meta: { idempotentReplay: result.replayed } }),
         };
       }
+      const jobCommandRoute = request.path.match(/^\/api\/v1\/jobs\/([0-9a-f-]{36})\/(retry|cancel)$/i);
+      if (jobCommandRoute?.[1] && jobCommandRoute[2] && request.method === 'POST') {
+        const result = jobCommandRoute[2].toLowerCase() === 'retry'
+          ? await this.jobs.retry(request.principal, jobCommandRoute[1], request.body, correlationId)
+          : await this.jobs.cancel(request.principal, jobCommandRoute[1], request.body, correlationId);
+        return {
+          status: 200,
+          body: JobResponseSchema.parse({ version: '1.0', data: result.job, meta: { idempotentReplay: result.replayed } }),
+        };
+      }
       if (request.path === '/api/v1/approvals' && request.method === 'GET') {
         const data = await this.approvals.list(request.principal);
         return { status: 200, body: ApprovalListResponseSchema.parse({ version: '1.0', data }) };
@@ -112,6 +130,17 @@ export class CoreApi {
         return {
           status: result.replayed ? 200 : 201,
           body: ApprovalResponseSchema.parse({ version: '1.0', data: result.approval, meta: { idempotentReplay: result.replayed } }),
+        };
+      }
+      if (request.path === '/api/v1/search-health' && request.method === 'GET') {
+        const report = await this.searchHealth.getEngineScores(request.principal);
+        return {
+          status: 200,
+          body: SearchHealthResponseSchema.parse({
+            version: '1.0',
+            data: report.scores,
+            meta: { windowDays: report.windowDays, halfLifeHours: report.halfLifeHours, generatedAt: report.generatedAt },
+          }),
         };
       }
       const decisionRoute = request.path.match(/^\/api\/v1\/approvals\/([0-9a-f-]{36})\/decisions$/i);

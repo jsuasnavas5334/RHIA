@@ -32,7 +32,21 @@ for (const match of migration.matchAll(tablePattern)) {
   tables.push({ name, columns, tableConstraints });
 }
 
-if (tables.length !== 51) throw new Error(`Se esperaban 51 tablas y se detectaron ${tables.length}.`);
+const alterTablePattern = /ALTER TABLE rhia\.([a-z_]+)\r?\n([\s\S]*?);/g;
+for (const match of migration.matchAll(alterTablePattern)) {
+  const [, name, body] = match;
+  const table = tables.find((candidate) => candidate.name === name);
+  if (!table) throw new Error(`ALTER TABLE referencia una tabla desconocida: ${name}`);
+  for (const columnMatch of body.matchAll(/ADD COLUMN\s+([a-z0-9_]+)\s+([^,;\r\n]+)/g)) {
+    const [, columnName, definition] = columnMatch;
+    if (table.columns.some((column) => column.name === columnName)) {
+      throw new Error(`Columna duplicada al procesar ALTER TABLE: ${name}.${columnName}`);
+    }
+    table.columns.push({ name: columnName, definition: definition.trim() });
+  }
+}
+
+if (tables.length !== 52) throw new Error(`Se esperaban 52 tablas y se detectaron ${tables.length}.`);
 const tableNames = new Set(tables.map((table) => table.name));
 
 const columnBuilder = (table, column) => {

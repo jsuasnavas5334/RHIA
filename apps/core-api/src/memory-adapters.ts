@@ -1,6 +1,7 @@
+import type { SearchHealthEventRecord } from '@rhia/search-health';
 import type {
   ApprovalRepository, AuditEvent, AuditSink, CompanyGroupRepository, ContactRepository, CoreUnitOfWork, IdempotencyRecord, IdempotencyStore,
-  JobRepository, OpportunityRepository,
+  JobRepository, OpportunityRepository, SearchHealthRepository,
 } from './ports.js';
 import type { ApprovalRecord, CompanyGroup, Contact, JobRecord, Opportunity } from './contracts.js';
 
@@ -58,6 +59,13 @@ export class MemoryJobRepository implements JobRepository {
   async listByOrganization(organizationId: string): Promise<readonly JobRecord[]> {
     return this.records.filter((job) => job.organizationId === organizationId);
   }
+  async findById(organizationId: string, jobId: string): Promise<JobRecord | undefined> {
+    return this.records.find((job) => job.organizationId === organizationId && job.id === jobId);
+  }
+  async update(job: JobRecord): Promise<void> {
+    const index = this.records.findIndex((candidate) => candidate.organizationId === job.organizationId && candidate.id === job.id);
+    if (index >= 0) this.records[index] = job;
+  }
 }
 
 export class MemoryApprovalRepository implements ApprovalRepository {
@@ -86,5 +94,16 @@ export class MemoryAuditSink implements AuditSink {
 export class MemoryUnitOfWork implements CoreUnitOfWork {
   async execute<T>(work: () => Promise<T>): Promise<T> {
     return work();
+  }
+}
+
+export class MemorySearchHealthRepository implements SearchHealthRepository {
+  readonly events: SearchHealthEventRecord[] = [];
+
+  async listRecentSearchEngineEvents(since: Date): Promise<readonly SearchHealthEventRecord[]> {
+    return this.events.filter((event) => {
+      const occurredAt = event.occurredAt instanceof Date ? event.occurredAt : new Date(event.occurredAt);
+      return occurredAt.getTime() >= since.getTime();
+    });
   }
 }

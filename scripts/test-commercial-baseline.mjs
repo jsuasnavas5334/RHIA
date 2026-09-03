@@ -102,6 +102,13 @@ for (const testCase of cases) {
     assert.equal(summary.estado_busqueda_global, testCase.expected.searchState);
     assert.equal(summary.siguiente_accion_global, testCase.expected.searchAction);
 
+    // PH06-T001, criterio de aceptación: "Healthy no-results genera
+    // REFORMULATE". Motores sin alertas (unresponsive_engines: []) y sin
+    // resultados deben producir REFORMULAR_CONSULTA a nivel de consulta,
+    // nunca RETRY_BACKOFF (ese es solo para degradación técnica real).
+    const perQueryActions = health.output.map((item) => item.json.diagnostico_busqueda.siguiente_accion_consulta);
+    assert.ok(perQueryActions.every((accion) => accion === 'REFORMULAR_CONSULTA'), 'Consulta saludable sin resultados debe reformular, no reintentar con backoff');
+
     report.push({ id: testCase.id, result: 'PASS', classification: summary.estado_busqueda_global, repeatMs: resolution.elapsedMs + health.elapsedMs });
     continue;
   }
@@ -123,11 +130,45 @@ for (const testCase of cases) {
 
     const diagnostics = health.output.map((item) => item.json.diagnostico_busqueda);
     assert.deepEqual(diagnostics, recorded.map((item) => item.diagnostico_busqueda), 'El replay difiere de la evidencia guardada');
-    assert.equal(summary.dominios_unicos_globales, 0, 'El gap del parser de dominios dejó de reproducirse; actualizar el baseline');
+    // PH06-T001: el parser de dominios y la clasificación de reintentos ante
+    // alertas de motor (429/CAPTCHA) ya están corregidos (ver
+    // docs/progress/PH06-T001.md). Este baseline ahora fija el
+    // comportamiento correcto en vez del bug histórico documentado en
+    // PLAN_MAESTRO.md/CLAUDE.md.
+    assert.equal(diagnostics[0].dominios_unicos, 15, 'El parser de dominios debe extraer los 15 dominios únicos reales de las 20 URLs de la consulta 1');
+    assert.equal(summary.dominios_unicos_globales, 15, 'El parser de dominios dejó de fallar; si este número cambia, actualizar el baseline junto con la fixture');
     assert.equal(diagnostics[0].resultados_con_url, 20);
-    assert.ok(diagnostics.slice(1).every((item) => item.siguiente_accion_consulta === 'REFORMULAR_CONSULTA'));
+    assert.ok(diagnostics.slice(1).every((item) => item.siguiente_accion_consulta === 'RETRY_BACKOFF'), 'Consultas sin resultados con motores en alerta (429/CAPTCHA) deben reintentar con backoff, no reformular');
 
-    report.push({ id: testCase.id, result: 'PASS', classification: summary.salud_tecnica_global, repeatMs: health.elapsedMs, knownGaps: 2 });
+    report.push({ id: testCase.id, result: 'PASS', classification: summary.salud_tecnica_global, repeatMs: health.elapsedMs, knownGaps: 0 });
+    continue;
+  }
+
+  if (testCase.category === 'RATE_LIMIT_ISOLATED') {
+    // PH06-T001, criterio de aceptación: "429 genera RETRY_BACKOFF".
+    // Reproducción mínima y aislada (sin depender del fixture de 18
+    // consultas) de una única consulta degradada por rate-limit/CAPTCHA.
+    const health = assertRepeatable(() => runSearchHealth(testCase.searchResponses));
+    const diagnostico = health.output[0].json.diagnostico_busqueda;
+
+    assert.equal(diagnostico.estado_resultados, testCase.expected.estadoResultados);
+    assert.equal(diagnostico.siguiente_accion_consulta, testCase.expected.queryAction);
+    assert.deepEqual(diagnostico.motores_no_responden.map((m) => m.tipo), testCase.expected.engineTypes);
+
+    // PH06-T001, acción pendiente 4/5: cada motor en alerta debe producir un
+    // evento de salud (component='search_engine:<motor>', status=tipo), listo
+    // para persistirse en rhia.system_health_event y alimentar el health
+    // score por engine (packages/search-health).
+    assert.deepEqual(
+      diagnostico.search_health_events.map((e) => [e.component, e.status]).sort(),
+      [
+        ['search_engine:duckduckgo', 'CAPTCHA'],
+        ['search_engine:google cse', 'RATE_LIMIT'],
+      ],
+      'Los eventos de salud por motor deben reflejar exactamente las alertas de esta consulta',
+    );
+
+    report.push({ id: testCase.id, result: 'PASS', classification: diagnostico.siguiente_accion_consulta, repeatMs: health.elapsedMs });
     continue;
   }
 

@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-08-21T18:00:00-05:00",
+  "updatedAt": "2026-09-03T00:55:00-05:00",
   "sessions": [
     {
       "id": "SES-20260819-01",
@@ -1346,6 +1346,818 @@
         "Avanzar el modelo UI sin introducir otro package manager ni modificar dependencias sin lockfile."
       ],
       "next": "Montar la shell Next.js sobre el modelo RBAC cuando npm esté disponible; después agregar component y E2E navigation tests."
+    },
+    {
+      "id": "SES-20260821-41",
+      "startedAt": "2026-08-21T21:55:23-05:00",
+      "taskId": "PH04-T003",
+      "status": "DONE",
+      "title": "Completar App shell navegable de RHIA",
+      "summary": "La aplicación web ya dispone de dashboard y navegación responsive gobernada por permisos, compilada y validada visualmente sin depender de n8n.",
+      "changes": [
+        "Next.js 16.3.2, React 19.2.8 y tipos fijados con lockfile reproducible.",
+        "Dashboard, ocho rutas de módulo, sidebar, drawer móvil y favicon RHIA.",
+        "Estados loading, empty y error con acciones claras.",
+        "Componentes server-side que ocultan destinos según permisos Core."
+      ],
+      "tests": [
+        "8/8 component tests y typecheck estricto aprobaron.",
+        "Build de producción generó 12 páginas estáticas.",
+        "E2E local navegó Dashboard, Settings y Approvals con respuestas HTTP 200.",
+        "Responsive 390 × 844, drawer y ausencia de overflow aprobaron; consola sin errores.",
+        "Baseline aprobó 22 controles sobre 212 archivos publicables sin mostrar valores sensibles."
+      ],
+      "evidence": [
+        "ADMIN ve nueve destinos; VIEWER no ve Settings ni Approvals; usuario anónimo no ve destinos protegidos.",
+        "Build incluyó dashboard, ocho secciones, not-found e icon.svg.",
+        "No se conectó ni modificó la base activa y el servidor temporal de prueba fue detenido."
+      ],
+      "risks": [
+        "El layout productivo falla cerrado hasta conectar la sesión Better Auth.",
+        "Las secciones operativas aún son placeholders; jobs y approvals se implementan en PH04-T004.",
+        "La autorización visual no sustituye las políticas del Core API."
+      ],
+      "decisions": [
+        "Usar un rol ADMIN de demostración solo en desarrollo para la revisión local.",
+        "Mantener producción sin roles mientras no exista Principal autenticado.",
+        "Fijar versiones exactas y conservar npm como único package manager."
+      ],
+      "next": "Iniciar PH04-T004 y construir Operations Center sobre jobs y approvals de Core API."
+    },
+    {
+      "id": "SES-20260821-42",
+      "startedAt": "2026-08-21T22:56:29-05:00",
+      "taskId": "PH04-T004",
+      "status": "IN_PROGRESS",
+      "title": "Implementar control seguro de jobs y vista Operations Center",
+      "summary": "Core ya ofrece retry/cancel idempotentes y la App muestra jobs y approvals con filtros, trazas resumidas, contexto y permisos visuales.",
+      "changes": [
+        "Contratos y rutas Core para retry y cancel de jobs.",
+        "Transiciones tenant-aware, límite de retry, locks PostgreSQL, audit e idempotencia.",
+        "Job cancelado bloquea nuevas approvals.",
+        "Vista Operations Center con filtros de estado/agente e inbox contextual de approvals."
+      ],
+      "tests": [
+        "21/21 pruebas Core ejecutables aprobaron.",
+        "Retry duplicado produjo un solo incremento, audit y ledger.",
+        "Gate PostgreSQL real completo aprobó sobre restore cifrado temporal.",
+        "11/11 component tests web, typecheck y build aprobaron.",
+        "Filtro local y dos tarjetas approval validados en navegador; consola limpia.",
+        "Baseline aprobó 22 controles sobre 216 archivos publicables sin mostrar valores sensibles."
+      ],
+      "evidence": [
+        "Cancel limpia el siguiente intento y bloquea retry y approval posteriores.",
+        "Manager ve por qué se solicita una approval antes de decidir.",
+        "No se modificó la base activa; el contenedor y servidor temporales fueron retirados."
+      ],
+      "risks": [
+        "Los controles permanecen deshabilitados hasta conectar sesión Better Auth con Core.",
+        "RUNNING requiere cancelación cooperativa del worker antes de admitir cancel.",
+        "Falta E2E approval completo desde UI hasta PostgreSQL temporal."
+      ],
+      "decisions": [
+        "Rechazar cancel de RUNNING para no prometer una detención inexistente.",
+        "Reautorizar toda mutación en Core; ocultamiento visual nunca sustituye policy.",
+        "No exponer UUIDs técnicos en la interfaz."
+      ],
+      "next": "Conectar App server-only con Better Auth y Core, habilitar mutaciones y ejecutar E2E approval completo."
+    },
+    {
+      "id": "SES-20260822-43",
+      "startedAt": "2026-08-21T23:58:00-05:00",
+      "taskId": "PH04-T004",
+      "status": "IN_PROGRESS",
+      "title": "Conectar Operations Center con sesión y Core",
+      "summary": "La App ya dispone de un puente server-only que obtiene roles y datos desde Core y habilita comandos gobernados únicamente cuando la sesión RHIA fue revalidada.",
+      "changes": [
+        "Endpoint Core de contexto de sesión que expone solo roles humanos.",
+        "Cliente App server-only con origen restringido, no-store, correlación e idempotencia generadas en servidor.",
+        "Formularios reales para retry, cancel y approve/reject con mensajes seguros.",
+        "Reenvío limitado a la cookie RHIA para no filtrar cookies ajenas al Core.",
+        "AppShell y Operations Center comparten contexto Core por solicitud; producción falla cerrada y el preview conserva acciones deshabilitadas."
+      ],
+      "tests": [
+        "22/22 pruebas Core ejecutables aprobaron; dos integraciones PostgreSQL condicionales fueron omitidas.",
+        "17/17 pruebas Web aprobaron, incluidas sesión, redacción, correlación, idempotencia y formularios conectados.",
+        "Typecheck y build Next.js de producción aprobaron; la ruta dinámica Operations Center compiló correctamente.",
+        "Las respuestas inválidas, origen inseguro y cookie ausente fallan antes de habilitar mutaciones.",
+        "Smoke local /jobs respondió 200 y no serializó IDs técnicos en modo preview."
+      ],
+      "evidence": [
+        "Core no devuelve userId ni organizationId en /api/v1/session.",
+        "La App nunca recibe roles ni tenant desde campos del navegador.",
+        "No se conectó ni modificó la base activa y no hubo commit ni push."
+      ],
+      "risks": [
+        "Falta runtime integrado para el E2E navegador a PostgreSQL temporal.",
+        "La composición local Auth + Core todavía no existe como runtime ejecutable.",
+        "Cancel de RUNNING seguirá bloqueado hasta existir cooperación del worker."
+      ],
+      "decisions": [
+        "Core sigue siendo la única frontera de autorización para todas las mutaciones.",
+        "Reenviar exclusivamente la cookie de sesión RHIA, nunca todas las cookies de la App.",
+        "Mantener PH04-T004 en curso hasta completar el E2E requerido por el Plan Maestro."
+      ],
+      "next": "Crear runtime integrado Auth + Core, probar approval desde UI sobre PostgreSQL temporal y conectar AppShell a la sesión validada."
+    },
+    {
+      "id": "SES-20260822-44",
+      "startedAt": "2026-08-22T00:58:31-05:00",
+      "taskId": "PH04-T004 / PH05-T001",
+      "status": "IN_PROGRESS",
+      "title": "Cerrar Operations Center e iniciar Agent Runtime persistente",
+      "summary": "Operations Center cerró su E2E real y PH05 comenzó con arquitectura, migration de leases/checkpoints y paridad ORM verificadas.",
+      "changes": [
+        "E2E Auth-cookie-App-Core-policy-PostgreSQL agregado al gate temporal.",
+        "Fábrica reutilizable createPostgresCoreRuntime.",
+        "Corrección de propagación RHIA_TEST_DATABASE_URL desde WSL a Node Windows.",
+        "PH04-T004 y PH04 marcadas DONE; PH05-T001 iniciada.",
+        "Migration 0008 con lease de job, índice de claim, checkpoints por step y tenant guard.",
+        "Generador Drizzle ampliado para procesar ADD COLUMN en ALTER TABLE."
+      ],
+      "tests": [
+        "Approval E2E pasó de PENDING a APPROVED con ADMIN autenticado y un audit persistido.",
+        "Gate de ocho migrations y restore limpio aprobó sobre backup cifrado temporal.",
+        "Lease parcial y checkpoint cross-tenant fueron rechazados.",
+        "Core local: 22/22 pruebas ejecutables; dos pruebas reales se ejecutan únicamente dentro del gate.",
+        "Drizzle parity: 52 tablas y todas sus columnas; typecheck DB aprobado."
+      ],
+      "evidence": [
+        "La base activa no fue conectada y no quedó contenedor temporal.",
+        "El generador recuperó columnas Core históricas antes ausentes del modelo Drizzle.",
+        "No hubo commit ni push."
+      ],
+      "risks": [
+        "El store PostgreSQL del worker aún no consume los nuevos leases/checkpoints.",
+        "retry_count debe coordinar retry manual y automático sin exceder tres.",
+        "Cancelación cooperativa de RUNNING continúa pendiente."
+      ],
+      "decisions": [
+        "Usar PostgreSQL como única fuente de verdad del runtime.",
+        "Claim concurrente mediante FOR UPDATE SKIP LOCKED y checkpoint único por job/step.",
+        "Cerrar PH04-T004 al cumplir criterios, duplicate retry y E2E approval."
+      ],
+      "next": "Implementar store PostgreSQL de PH05-T001 y probar claim concurrente, retry y crash/reanudación."
+    },
+    {
+      "id": "SES-20260822-45",
+      "startedAt": "2026-08-22T01:58:32-05:00",
+      "taskId": "PH05-T001",
+      "status": "IN_PROGRESS",
+      "title": "Implementar store PostgreSQL del Agent Runtime",
+      "summary": "El runtime ya reclama jobs concurrentemente, persiste checkpoints y actions idempotentes, recupera leases vencidos y limita retries en PostgreSQL.",
+      "changes": [
+        "Workspace @rhia/agent-runtime integrado al lockfile.",
+        "PostgresAgentRuntimeStore con claim tenant-aware y FOR UPDATE SKIP LOCKED.",
+        "Leases, execution attempts, checkpoints y reserva estable de actions transaccionales.",
+        "Recuperación de crash y transición automática a RETRY_SCHEDULED o DEAD_LETTER.",
+        "Prueba real agregada al gate temporal de migrations."
+      ],
+      "tests": [
+        "Dos workers concurrentes obtuvieron exactamente un claim.",
+        "Lease vencido fue recuperado como attempt 2 y consumió un retry.",
+        "Checkpoint SUCCEEDED y action ID se reutilizaron sin duplicación tras crash.",
+        "Tres retries terminaron en DEAD_LETTER con cuatro executions y sin nuevo claim.",
+        "Gate completo sobre restore cifrado temporal aprobó y retiró el contenedor."
+      ],
+      "evidence": [
+        "Estado final PostgreSQL: retry_count 3, executions 4, checkpoints 2 y stable_actions 1.",
+        "La base activa no fue conectada; no hubo commit ni push.",
+        "Lockfile reconoce el nuevo workspace sin reinstalar dependencias."
+      ],
+      "risks": [
+        "Falta orquestador por steps, heartbeat y worker CLI.",
+        "La prueba de crash usa expiración real del lease, todavía no terminación de proceso.",
+        "Persisten cuatro vulnerabilidades npm moderadas ya conocidas."
+      ],
+      "decisions": [
+        "Retry manual y automático comparten el máximo total de tres.",
+        "Checkpoint ID funciona como idempotency key estable de la action.",
+        "No ejecutar audit fix --force sin análisis dirigido."
+      ],
+      "next": "Implementar orquestador de steps con heartbeat y luego worker CLI con kill/reanudación."
+    },
+    {
+      "id": "SES-20260828-46",
+      "startedAt": "2026-08-28T10:08:52-05:00",
+      "taskId": "PH05-T001",
+      "status": "IN_PROGRESS",
+      "title": "Orquestar steps y heartbeat del Agent Runtime",
+      "summary": "El runtime ya ejecuta planes por steps, reutiliza checkpoints, renueva leases y evita escrituras cuando pierde ownership.",
+      "changes": [
+        "AgentRuntime y contratos de plan, step, action y resultado.",
+        "Heartbeat periódico con AbortSignal y detección de lease perdido.",
+        "Renovación atómica del lease en PostgreSQL.",
+        "Retry exponencial acotado y normalización de errores.",
+        "Exportaciones públicas y pruebas unitarias dirigidas."
+      ],
+      "tests": [
+        "Workspace @rhia/agent-runtime compiló con TypeScript.",
+        "5 pruebas pasaron: store local y cuatro escenarios del runner.",
+        "La integración PostgreSQL quedó omitida fuera del gate, sin repetir restore ni migrations."
+      ],
+      "evidence": [
+        "Un checkpoint SUCCEEDED no volvió a ejecutar su handler ni reservar action.",
+        "La pérdida de heartbeat devolvió LEASE_LOST sin finish ni fail.",
+        "No se creó commit ni push y no se tocó la base activa."
+      ],
+      "risks": [
+        "Falta worker CLI y prueba real terminando/reanudando un proceso.",
+        "Un handler debe observar AbortSignal para interrumpirse inmediatamente; el runtime igualmente bloquea la escritura posterior.",
+        "Persisten cuatro vulnerabilidades npm moderadas ya conocidas."
+      ],
+      "decisions": [
+        "Checkpoint ID es la idempotency key entregada al handler.",
+        "Nunca llamar fail tras perder el lease.",
+        "No repetir el gate PostgreSQL porque el esquema no cambió."
+      ],
+      "next": "Crear worker CLI con shutdown cooperativo y prueba real de kill/reanudación."
+    },
+    {
+      "id": "SES-20260828-47",
+      "startedAt": "2026-08-28T10:34:32-05:00",
+      "taskId": "PH05-T001",
+      "status": "IN_PROGRESS",
+      "title": "Agregar worker CLI y prueba de crash de proceso",
+      "summary": "El Agent Runtime ya dispone de worker ejecutable, shutdown cooperativo y una prueba de recuperación tras terminar un proceso real.",
+      "changes": [
+        "Loop de worker con polling abortable y resumen de resultados.",
+        "CLI PostgreSQL configurable mediante variables de entorno y módulo de planes.",
+        "Manejo SIGINT/SIGTERM sin iniciar nuevos claims y cierre garantizado del pool.",
+        "Fixture de proceso terminado durante un step y prueba de checkpoint/action estable.",
+        "Binario rhia-agent-worker registrado en package y lockfile."
+      ],
+      "tests": [
+        "TypeScript compiló y 7 pruebas locales pasaron; 2 integraciones PostgreSQL se omitieron fuera del gate.",
+        "Shutdown en idle interrumpió la espera inmediatamente.",
+        "Shutdown durante job terminó el job actual y no inició otro claim.",
+        "El gate cifrado no pudo iniciar por Input/output error de WSL al leer el workspace en dos intentos."
+      ],
+      "evidence": [
+        "La prueba de kill exige attempt 2, un checkpoint y una action antes de finalizar SUCCEEDED.",
+        "El error WSL ocurrió antes de crear el contenedor; no se conectó la base activa.",
+        "No hubo commit ni push."
+      ],
+      "risks": [
+        "Falta ejecutar exitosamente el gate PostgreSQL de la prueba de proceso real.",
+        "Los módulos de planes productivos todavía deben implementarse en tareas posteriores.",
+        "Persisten cuatro vulnerabilidades npm moderadas ya conocidas."
+      ],
+      "decisions": [
+        "Tras dos fallos equivalentes de WSL se detuvo el intento según la regla de eficiencia.",
+        "El shutdown es cooperativo: deja terminar el claim activo y bloquea el siguiente.",
+        "PH05-T001 permanece IN_PROGRESS hasta obtener evidencia PostgreSQL del kill real."
+      ],
+      "next": "Reintentar el gate cifrado cuando WSL pueda leer el workspace y cerrar PH05-T001 si pasa."
+    },
+    {
+      "id": "SES-20260828-48",
+      "startedAt": "2026-08-28T11:38:50-05:00",
+      "taskId": "PH05-T001",
+      "status": "DONE",
+      "title": "Cerrar Agent Runtime con crash real y gate cifrado",
+      "summary": "PH05-T001 cerró con recuperación de un proceso terminado, idempotencia estable y el gate PostgreSQL completo aprobado.",
+      "changes": [
+        "Montaje alternativo temporal de C: reparó el acceso WSL sin reiniciar servicios.",
+        "Core valida tenant del requester sobre agent_instance.",
+        "Bootstrap Auth usa casts explícitos para parámetros compartidos text/uuid.",
+        "El gate muestra salida TAP y aísla rate limits entre Operations y Auth.",
+        "Fixture Core PostgreSQL crea su propio manager tenant-aware."
+      ],
+      "tests": [
+        "Core PostgreSQL real: 2/2.",
+        "Operations E2E Auth-App-Core-PostgreSQL: PASS.",
+        "Better Auth real: 4/4.",
+        "Agent Runtime PostgreSQL: 3/3, incluido kill de proceso.",
+        "Restore limpio final y conteos legacy: PASS."
+      ],
+      "evidence": [
+        "Crash real produjo attempt 2, un checkpoint y una action sin duplicación.",
+        "El gate terminó con exit code 0 sobre el backup cifrado autorizado.",
+        "El montaje alternativo y el contenedor temporal fueron retirados; servicios activos intactos.",
+        "No hubo commit ni push."
+      ],
+      "risks": [
+        "Warning no bloqueante de Better Auth por bigint de rate-limit.",
+        "Persisten cuatro vulnerabilidades npm moderadas ya conocidas."
+      ],
+      "decisions": [
+        "Cerrar PH05-T001 al cumplir crash, idempotencia y retries con evidencia real.",
+        "No reiniciar WSL porque alojaba servicios activos; usar montaje alternativo temporal.",
+        "PH05-T002 queda READY y es la siguiente tarea del Run Order."
+      ],
+      "next": "Iniciar PH05-T002 definiendo contratos neutrales del AI Gateway."
+    },
+    {
+      "id": "SES-20260828-49",
+      "startedAt": "2026-08-28T12:02:00-05:00",
+      "taskId": "FRONTEND-LOCAL-LAUNCHER",
+      "status": "DONE",
+      "title": "Separar visor de avances y frontend funcional",
+      "summary": "Se creó un lanzador dedicado para observar el frontend real de RHIA en el puerto 3000, separado de la bitácora del puerto 4173.",
+      "changes": [
+        "STARSOFTWARE.BAT valida Node y Next antes de iniciar.",
+        "start-software.mjs ejecuta Next.js con logs visibles, abre el navegador y evita duplicar procesos.",
+        "El lanzador detecta si el puerto 3000 pertenece a otra aplicación y muestra un error accionable."
+      ],
+      "tests": [
+        "Next.js 16.3.2 inició en 127.0.0.1:3000.",
+        "Dashboard respondió HTTP 200 con título RHIA Revenue Intelligence.",
+        "Navegación y Operations Center Jobs renderizaron datos locales de demostración.",
+        "Segunda ejecución reutilizó el proceso existente y terminó con exit code 0."
+      ],
+      "evidence": [
+        "Frontend activo y verificado en http://localhost:3000/.",
+        "La bitácora permanece separada en http://localhost:4173/.",
+        "No hubo commit ni push."
+      ],
+      "risks": [
+        "Dashboard y varios módulos aún no tienen fuente real conectada.",
+        "Jobs y Approvals funcionan como vista previa hasta configurar Core/Auth.",
+        "Las acciones de demostración permanecen deshabilitadas por seguridad."
+      ],
+      "decisions": [
+        "Mantener puertos distintos para producto y bitácora.",
+        "Mostrar logs del frontend en una ventana para facilitar correcciones.",
+        "No instalar dependencias automáticamente desde el BAT."
+      ],
+      "next": "Continuar PH05-T002 y conectar progresivamente el frontend con servicios reales conforme el DAG lo habilite."
+    },
+    {
+      "id": "SES-20260828-50",
+      "startedAt": "2026-08-28T12:15:00-05:00",
+      "taskId": "HANDOFF-CLAUDE",
+      "status": "DONE",
+      "title": "Transferir el control operativo de RHIA a Claude",
+      "summary": "Se dejó un handoff raíz autocontenido y un prompt maestro para que Claude continúe desde PH05-T002 sin repetir trabajo ni entrar en conflicto con Codex.",
+      "changes": [
+        "CLAUDE.md documenta checkpoint, arquitectura, evidencia, comandos, guardrails, cadencia y siguiente tarea.",
+        "PROM_MAESTRO_CLAUDE.md contiene el prompt completo de arranque y continuidad autónoma.",
+        "La automatización horaria continuar-construcci-n-rhia de Codex fue eliminada para evitar ediciones simultáneas.",
+        "project-status avanzó a la versión documental 1.0.49-claude-handoff sin alterar PH05-T002."
+      ],
+      "tests": [
+        "Parseo de project-status.json y session-log.json.",
+        "git diff --check sobre los archivos del handoff.",
+        "Baseline preventivo del repositorio después del handoff."
+      ],
+      "evidence": [
+        "PH05-T002 permanece READY con 17/51 tareas y 2/8 gates completados.",
+        "El prompt prohíbe commit/push automático y preserva todos los cambios locales.",
+        "La cadencia documentada es un ciclo cada 60 minutos, máximo 50 minutos y checkpoint al minuto 45."
+      ],
+      "risks": [
+        "La programación recurrente debe configurarse en el entorno donde se ejecute Claude; un archivo Markdown no crea por sí solo un cron.",
+        "Existen numerosos avances locales aún pendientes de publicación humana mediante SUBIRALGIT.BAT."
+      ],
+      "decisions": [
+        "Detener la automatización de Codex antes del relevo para mantener un único escritor.",
+        "Mantener PLAN_MAESTRO.md como fuente de verdad y CLAUDE.md como procedimiento de handoff.",
+        "No iniciar PH05-T002 durante la preparación del relevo."
+      ],
+      "next": "Claude debe leer CLAUDE.md y ejecutar PROM_MAESTRO_CLAUDE.md, comenzando por PH05-T002."
+    },
+    {
+      "id": "SES-20260829-51",
+      "startedAt": "2026-08-28T17:32:00-05:00",
+      "taskId": "PH05-T002",
+      "status": "DONE",
+      "title": "Relevo Claude: decisiones operativas + AI Gateway provider-agnostic completo",
+      "summary": "Claude asumió el relevo, dejó documentadas 3 decisiones operativas reversibles en CLAUDE.md (workaround de build/typecheck real en cloud sin red, ubicación packages/ai-gateway, programación horaria vía scheduled task con notificación por email en bloqueos), y completó PH05-T002 end-to-end: contratos neutrales, 5 adapters (openai/anthropic/deepseek/qwen/ollama), Gateway con timeout+fallback mecánico, 17/17 pruebas y type-check estricto real en 0 errores.",
+      "changes": [
+        "CLAUDE.md: sección 'Ajustes operativos añadidos por Claude' con 2 correcciones documentadas en vivo (build cloud inviable por egress bloqueado -> luego se encontró typescript@6.0.3 global real en el contenedor cloud, sí sirve para paquetes aislados).",
+        "Nuevo workspace packages/ai-gateway completo: contracts.ts, errors.ts, transport.ts, gateway.ts, index.ts, 5 adapters (openai/anthropic/deepseek/qwen/ollama), shared-openai-compatible.ts, testing/fake-transport.ts, testing/fixtures.ts, y 6 archivos de test.",
+        "docs/progress/PH05-T002.md actualizado a DONE con evidencia completa.",
+        "data/project-status.json: version 1.0.50, currentTask -> PH05-T003 READY, counts.done 17->18.",
+        "Scheduled task horaria creada (trig_01QjozwhTV7Npxv58NzWvNXh) para continuar el Run Order sin supervisión; PENDIENTE de aprobación humana del binding al dispositivo (ver riesgos)."
+      ],
+      "tests": [
+        "tsc -p packages/ai-gateway/tsconfig.json --noEmit (typescript@6.0.3 global copiado sin red al workspace cloud, mismas compilerOptions estrictas de tsconfig.base.json): 0 errores.",
+        "node --test sobre dist/**/*.test.js: 17/17 pruebas verdes (adapters + gateway + validación final multi-provider sin cambiar código de dominio).",
+        "git diff --check sobre CLAUDE.md, docs/progress/PH05-T002.md, data/project-status.json, data/session-log.json: sin conflictos de merge/whitespace.",
+        "Parseo JSON de project-status.json y session-log.json tras escribir: OK."
+      ],
+      "evidence": [
+        "docs/progress/PH05-T002.md contiene el detalle de las 17 pruebas y los criterios de aceptación marcados.",
+        "packages/ai-gateway/ (21 archivos fuente) presente en el árbol de trabajo local, sin commit (pendiente de SUBIRALGIT.BAT humano).",
+        ".rhia-cloud-sync/ (gitignored) contiene los tarballs usados para sincronizar cloud->local; no forman parte del repo."
+      ],
+      "risks": [
+        "La scheduled task horaria creada por Claude NO quedó vinculada al dispositivo del usuario (respuesta inicial: 'not_bound: no_signed_approval — this task will run in the cloud only'). Sin ese binding, los disparos horarios NO pueden leer/escribir la carpeta del proyecto. El usuario debe aprobar el binding desde la app de escritorio para que la continuidad autónoma real funcione; mientras tanto los disparos horarios corrieron sin acceso local (confirmado: last_fired_at 2026-08-29T06:32 no dejó cambios en el repo).",
+        "El type-check real de PH05-T002 se hizo con typescript@6.0.3 genérico, no con el typescript@7.0.2 nativo pinneado en package.json raíz (bloqueado en ambos entornos hoy). Falta confirmar paridad exacta cuando el toolchain real se repare.",
+        "FetchTransport (implementación real, no probada) queda sin ejercitar contra un servidor real; es intencional (no hay secretos reales disponibles) pero es deuda pendiente antes de integrar con Router/Runtime reales.",
+        "Persisten los mismos ~50 cambios locales sin commit heredados de Codex; ninguno fue tocado ni descartado."
+      ],
+      "decisions": [
+        "AI Gateway vive en packages/ai-gateway (nuevo workspace hermano de domain/policy/contracts/db), documentado en CLAUDE.md como decisión local/reversible sin necesidad de aprobación humana (protocolo de cambios, sección 29).",
+        "Workaround de build/typecheck: para paquetes aislados, copiar typescript+@types/node globales del contenedor cloud (sin red) a un node_modules local del paquete; sincronizar cloud<->local vía un único .tar.gz por SendUserFile+device_commit_files en .rhia-cloud-sync/ (gitignored) en vez de archivo por archivo.",
+        "El Gateway implementa fallback puramente mecánico sobre candidatos ya resueltos por el caller (sin lógica de selección de modelo/proveedor) para no invadir el alcance de PH05-T003 Router.",
+        "Se avanza automáticamente por el Run Order sin pedir confirmación humana entre tareas/gates, deteniéndose solo ante bloqueos reales del protocolo de cambios (sección 29) — autorización explícita del usuario en esta sesión."
+      ],
+      "next": "PH05-T003 (Model Router y budgets) READY. Antes de que el ciclo horario avance solo, el usuario debe aprobar el binding de la scheduled task 'RHIA — Ciclo autónomo horario (PLAN_MAESTRO)' a este dispositivo desde la app de escritorio; sin eso, cada disparo corre sin acceso a la carpeta del proyecto."
+    },
+    {
+      "id": "SES-20260829-52",
+      "startedAt": "2026-08-29T16:14:00-05:00",
+      "taskId": "PH05-T003",
+      "status": "DONE",
+      "title": "Model Router y budgets completo; diagnóstico de fallo del ciclo horario local",
+      "summary": "Continuando en vivo (la tarea programada horaria vinculada al equipo del usuario no dejó ningún cambio en ~9h pese a estar 'Activa' -- ver riesgos), Claude completó PH05-T003: packages/model-router, dependiente de @rhia/ai-gateway, con budgets diario/mensual, escalación por baja confianza, y explicación legible de la elección. 8/8 pruebas + type-check estricto real en 0 errores.",
+      "changes": [
+        "Nuevo workspace packages/model-router: contracts.ts, budget.ts (InMemoryBudgetLedger con Clock inyectable), router.ts (ModelRouter.route()), index.ts, testing/fixtures.ts, budget.test.ts, router.test.ts.",
+        "docs/progress/PH05-T003.md creado con evidencia completa.",
+        "data/project-status.json: version 1.0.51, currentTask -> PH05-T004 READY, counts.done 18->19."
+      ],
+      "tests": [
+        "tsc -p packages/model-router/tsconfig.json --noEmit (typescript@6.0.3 global + dist/ ya compilado de @rhia/ai-gateway copiado a node_modules para resolver el import cross-package, sin red): 0 errores.",
+        "node --test sobre dist/*.test.js + dist/**/*.test.js: 8/8 pruebas verdes (budget: acumulación/reset día-mes; router: selección directa, escalación por baja confianza, bloqueo de budget antes de llamar transporte, failover por outage, requiresLocalOnly).",
+        "git diff --check sobre docs/progress/PH05-T003.md y data/project-status.json: sin conflictos."
+      ],
+      "evidence": [
+        "docs/progress/PH05-T003.md detalla los 8 casos de prueba y los 3 criterios de aceptación marcados.",
+        "packages/model-router/ (9 archivos fuente) presente en el árbol de trabajo local, sin commit."
+      ],
+      "risks": [
+        "DIAGNÓSTICO DEL CICLO HORARIO: la tarea programada 'RHIA — Ciclo autónomo horario' quedó marcada 'Activo'/'Solo en esta computadora' desde ~02:32 hora local (2026-08-29), pero a las 16:14 (~9h después, con al menos 8-9 disparos horarios esperados) el repo seguía exactamente en el checkpoint que dejó la sesión anterior -- cero cambios. Durante esta sesión, una llamada de diagnóstico devolvió explícitamente 'El dispositivo no está conectado al puente', y una reconexión llegó segundos después. Hipótesis más probable: el puente dispositivo↔nube se desconecta intermitentemente (el usuario reporta que la laptop se bloquea pero no suspende/hiberna) y cada disparo horario probablemente falla al no poder alcanzar la carpeta, sin que quede evidencia visible para Claude (las tareas locales no exponen historial vía las herramientas de esta sesión). Pendiente que el usuario revise el 'Historial' de la tarea en la app para confirmar si hay ejecuciones fallidas y por qué.",
+        "Mismos riesgos de PH05-T002 heredados (type-check con typescript@6.0.3 genérico, no el 7.0.2 nativo; FetchTransport real sin ejercitar).",
+        "qualityScore/estCostPerTaskUsd de ModelProfile son datos de benchmark que PH05-T004 (próxima tarea) todavía no produce; el Router se probó con perfiles de ejemplo, no con datos reales.",
+        "InMemoryBudgetLedger no persiste entre procesos; falta una implementación respaldada por PostgreSQL para uso real (fuera de alcance de PH05-T003)."
+      ],
+      "decisions": [
+        "packages/model-router es un workspace separado de packages/ai-gateway (dependencia unidireccional Router->Gateway).",
+        "Ante baja confianza, el Router no agota todos los perfiles del mismo tier: prueba uno, y si no alcanza el umbral, escala directo al siguiente tier (evita gasto de budget redundante).",
+        "Si ningún candidato alcanza minConfidence, el Router devuelve la mejor respuesta obtenida en vez de fallar -- decisión de producto documentada para la matriz de trazabilidad.",
+        "Se continuó trabajando manualmente en esta sesión en vez de esperar al ciclo horario automático, dado que este último no mostró evidencia de estar funcionando -- evita perder más tiempo de build mientras se diagnostica el bridge."
+      ],
+      "next": "PH05-T004 (Benchmark RHIA de modelos) READY -- última tarea antes de GATE-03. Prioridad humana pendiente: revisar por qué el ciclo horario local no ha dejado cambios en ~9h (ver Historial de la tarea programada en la app) para que la continuidad autónoma real funcione entre sesiones manuales."
+    },
+    {
+      "id": "SES-20260829-53",
+      "startedAt": "2026-08-29T17:00:00-05:00",
+      "taskId": "PH05-T004",
+      "status": "DONE",
+      "title": "Benchmark RHIA de modelos completo; PH05 completa; resuelto el bloqueo de binding del ciclo horario",
+      "summary": "El usuario conectó la carpeta del proyecto directamente a esta sesión de Cowork (autorización explícita en chat) tras detectar que las herramientas device_bash/device_list_dir/device_commit_files/SendUserFile documentadas en CLAUDE.md no existen en este entorno. Esto resuelve el bloqueo de 'not_bound: no_signed_approval' descrito en CLAUDE.md: con la carpeta conectada hay lectura/escritura real y shell real sobre el mismo árbol, sin el puente FUSE que causaba I/O error. Se completó PH05-T004 (benchmark v1: packages/benchmarks, 14 casos en las 4 categorías exigidas, 4 candidatos guionados, ModelProfile consumido por ModelRouter real). PH05 queda completa (T001-T004 DONE); siguiente paso es GATE-03.",
+      "changes": [
+        "Nuevo workspace packages/benchmarks: dataset/ (entity-resolution.ts, classification.ts, drafting.ts, tool-selection.ts, types.ts, index.ts), candidates.ts, scripted-transport.ts, harness.ts, metrics.ts, report.ts, run-benchmark.ts, index.ts.",
+        "Tests: dataset.test.ts, harness.test.ts, metrics.test.ts, router-integration.test.ts.",
+        "Artefactos generados: packages/benchmarks/output/model-profiles.v1.json, packages/benchmarks/output/benchmark-report.v1.md.",
+        "docs/progress/PH05-T004.md creado con evidencia completa.",
+        "data/project-status.json: version 1.0.52, PH05 -> DONE, currentTask -> GATE-03 READY, counts.done 19->20.",
+        "Como parte de la verificación, se recompilaron y re-testearon packages/ai-gateway (17/17) y packages/model-router (8/8) con typescript@7.0.2 nativo (misma versión exacta del repo), confirmando que PH05-T002/T003 también compilan limpio con el compilador real, no solo con el 6.0.3 genérico usado en esos ciclos."
+      ],
+      "tests": [
+        "tsc -p packages/benchmarks/tsconfig.json --noEmit real: typescript@7.0.2 nativo (idéntico al del repo) + @types/node@26.2.0, copiados sin red desde /usr/local/lib/node_modules_global; dist/ de @rhia/ai-gateway y @rhia/model-router copiados a node_modules/@rhia/* para resolver imports cross-package: 0 errores.",
+        "node --test sobre packages/benchmarks/dist: 15/15 pruebas verdes (6 dataset, 5 harness, 3 metrics, 1 router-integration).",
+        "node --test sobre packages/ai-gateway/dist (re-verificación con tsc real): 17/17 verdes.",
+        "node --test sobre packages/model-router/dist (re-verificación con tsc real): 8/8 verdes.",
+        "node dist/run-benchmark.js: 56 corridas (4 candidatos x 14 casos), artefactos v1 escritos correctamente.",
+        "JSON parse de data/project-status.json y data/session-log.json: sin errores. git diff --check: sin conflictos de espacio en blanco."
+      ],
+      "evidence": [
+        "docs/progress/PH05-T004.md detalla las 4 categorías del dataset, los 4 candidatos, los 15 casos de prueba y los 3 criterios de aceptación marcados.",
+        "packages/benchmarks/output/model-profiles.v1.json y benchmark-report.v1.md muestran resultados diferenciados y coherentes por tier (premium 1.000 > standard 0.929 > economy 0.738 > economy-local 0.643)."
+      ],
+      "risks": [
+        "Las respuestas de los 4 'candidatos' son guionadas vía FakeTransport (restricción explícita: no proveedores de IA pagos, no secretos en este ciclo), no invocaciones reales a OpenAI/Anthropic/Ollama. El harness y las métricas son reales y reutilizables; los qualityScore concretos de model-profiles.v1.json NO deben usarse para enrutar producción hasta re-ejecutar contra proveedores reales con credenciales autorizadas por un humano.",
+        "Los gold labels de los 10 casos nuevos (classification, drafting, tool_selection) fueron escritos por este ciclo sin usuario presente y están marcados PENDIENTE de revisión humana real en goldProvenance; solo los 4 casos de entity_resolution heredan revisión humana real de PH01-T004.",
+        "scripts/verify-repository-baseline.ps1 es un script PowerShell para Windows; no se pudo ejecutar desde este sandbox Linux. Se recomienda que el usuario lo corra localmente antes de publicar con SUBIRALGIT.BAT.",
+        "GATE-03 (cierre formal de la plataforma PH04-PH05) queda pendiente para el siguiente ciclo/tarea; no se fuerza su cierre en esta misma sesión."
+      ],
+      "decisions": [
+        "packages/benchmarks vive como workspace hermano de ai-gateway/model-router, mismo patrón ya establecido.",
+        "Scorers deterministas basados en reglas (no otro modelo como juez): evita no-determinismo y costo extra, y una dependencia circular de calidad midiendo calidad.",
+        "classification/drafting/tool_selection reflejan reglas de negocio reales de RHIA (nunca precios/descuentos automáticos -> escalar_aprobacion), evitando explícitamente un benchmark genérico ajeno al dominio.",
+        "No se fuerza el cierre de GATE-03 en esta sesión: se prioriza entregar PH05-T004 como unidad de trabajo completa y verificable."
+      ],
+      "nextTask": "GATE-03"
+    },
+    {
+      "id": "SES-20260901-54",
+      "startedAt": "2026-09-01T10:00:00-05:00",
+      "taskId": "GATE-03",
+      "status": "PARTIAL",
+      "title": "GATE-03: cerrado el wiring apps/agent-runtime <-> ai-gateway/model-router; gate sigue PARTIAL por infraestructura real pendiente",
+      "summary": "Continuando 'Sigue con GATE-03': se cerro el punto 1 documentado como faltante en docs/progress/GATE-03.md (apps/agent-runtime no importaba @rhia/ai-gateway ni @rhia/model-router). Se agregaron ambas dependencias a apps/agent-runtime/package.json y se creo apps/agent-runtime/src/ai-gateway-integration.test.ts: un RuntimePlan real cuyo step invoca ModelRouter.route()/AiGateway.invoke() a traves de AgentRuntime.runOnce() completo, cubriendo tanto el camino feliz (router elige economy, checkpoint se completa con la decision, job SUCCEEDED) como el fallo controlado (budget insuficiente -> RETRY_SCHEDULED con codigo RHIA_AI_NO_MODEL_AVAILABLE, sin perder el job). GATE-03 se mantiene PARTIAL: el punto 2 (E2E real con PostgreSQL real y toolchain real) sigue fuera del alcance de esta sesion de Cowork.",
+      "changes": [
+        "apps/agent-runtime/package.json: agregadas dependencias @rhia/ai-gateway 0.1.0 y @rhia/model-router 0.1.0 (junto a pg, ya existente).",
+        "apps/agent-runtime/src/ai-gateway-integration.test.ts (nuevo): 2 pruebas de integracion runtime+router+gateway usando FakeStore (patron ya establecido en runner.test.ts) y FakeTransport (patron ya establecido en ai-gateway/model-router).",
+        "docs/progress/GATE-03.md: actualizado con la evidencia del wiring cerrado; STATUS se mantiene PARTIAL.",
+        "data/project-status.json: version 1.0.53, currentTask.status GATE-03 READY -> PARTIAL con nota explicando que falta."
+      ],
+      "tests": [
+        "Harness aislado en el entorno cloud (mismo protocolo que PH05-T002/T003/T004): typescript@6.0.3 global + @types/node copiados sin red; archivos REALES de apps/agent-runtime (runner.ts, store.ts, index.ts, worker.ts, cli.ts y sus tests) traidos via device_stage_files para tipar contra el contrato real; dist/ ya compilados de @rhia/ai-gateway y @rhia/model-router copiados para resolucion cross-package.",
+        "store.ts importa el paquete npm real 'pg' (no instalable sin red): se declaro un stub de tipos ambiental minimo (declare module 'pg' con Pool/PoolClient/QueryResult) cubriendo exactamente el uso verificado por grep (connect/query/release/.rows/.rowCount), usado solo para poder tipar el paquete COMPLETO en este harness; no se agrega al repositorio ni reemplaza @types/pg real (ya existe como devDependency).",
+        "tsc -p tsconfig.json --noEmit sobre TODO apps/agent-runtime/src (codigo preexistente + archivo nuevo): 0 errores.",
+        "node --test dist/*.test.js: 8/9 verdes. El unico test que no corre en este harness aislado es store.test.ts (ERR_MODULE_NOT_FOUND: pg) porque el harness solo tiene el STUB de tipos de pg, no el paquete real instalado (sin red); store.ts no fue tocado y ese test ya pasaba antes en el toolchain real del repo. Las 2 pruebas nuevas + runner.test.ts (7 casos) + worker.test.ts (2 casos) = 8/8 relevantes en verde.",
+        "JSON parse de project-status.json y session-log.json tras escribir: sin errores."
+      ],
+      "evidence": [
+        "docs/progress/GATE-03.md, seccion 'Actualizacion de esta sesion (2026-09-01)': detalle completo del wiring, como se valido, y por que el gate sigue PARTIAL.",
+        "apps/agent-runtime/src/ai-gateway-integration.test.ts en el repositorio: codigo real, no descripcion."
+      ],
+      "risks": [
+        "El wiring se probo con FakeStore (no PostgreSQL real) y FakeTransport (no un proveedor de IA real). Prueba que el CODIGO conecta correctamente runtime+router+gateway, pero no reemplaza la verificacion end-to-end con infraestructura real exigida por el enunciado del gate.",
+        "El 'job type' AI_CLASSIFY_LEAD usado en el test es ilustrativo (clasificacion de un lead de ejemplo), no un job type de negocio ya definido en el catalogo real de RHIA; su unico proposito es probar el mecanismo de wiring, no fijar el nombre/contrato final del job type de produccion.",
+        "GATE-03 sigue sin poder cerrarse por completo desde esta sesion: falta ejecutar scripts/test-operations-e2e.mjs con RHIA_TEST_DATABASE_URL real (PostgreSQL en WSL/Docker del usuario) y el build/test completo del monorepo con el toolchain real (typescript@7.0.2 nativo). Esto requiere intervencion humana o una sesion con acceso real a la maquina del usuario."
+      ],
+      "decisions": [
+        "Se opto por un stub de tipos ambiental local y desechable para 'pg' (solo en el harness cloud aislado) en lugar de intentar instalar el paquete real (bloqueado por falta de red) o de omitir el tipo-chequeo de store.ts (lo que hubiera dejado sin validar la integracion real entre runner.ts y store.ts).",
+        "Se mantiene GATE-03 en PARTIAL en vez de forzar DONE: la regla del proyecto de 'no declares DONE sin evidencia real' aplica aqui explicitamente, porque la pieza que falta (infraestructura real) es estructuralmente inalcanzable desde este entorno de Cowork, no una tarea pendiente de ejecutar.",
+        "No se toco store.ts, runner.ts, worker.ts, cli.ts, index.ts ni ningun archivo preexistente de apps/agent-runtime: el cambio se limito a un archivo de test nuevo y package.json."
+      ],
+      "nextTask": "GATE-03 (punto 2, requiere intervencion humana) o continuar Run Order hacia PH06 si el usuario decide priorizar avance funcional sobre el cierre formal del gate."
+    },
+    {
+      "id": "SES-20260902-55",
+      "startedAt": "2026-09-02T00:00:00-05:00",
+      "taskId": "GATE-03",
+      "status": "PARTIAL",
+      "title": "GATE-03: build/test reales del monorepo en verde (0 errores, todo pasa); solo falta el E2E por el puerto no publicado de rhia-postgres",
+      "summary": "El usuario corrio, en su propia terminal de Windows (no a traves de Cowork), npm install + npm run build + npm test del monorepo completo con el toolchain real (Node 24.19.0, npm 11.17.0, typescript 7.0.2 nativo). Resultado real leido de los archivos de salida: build sin errores en todos los workspaces; test con fail 0 en cada suite, incluyendo apps/agent-runtime 11/11 (las 2 pruebas nuevas de ai-gateway-integration.test.ts pasando contra el codigo real, no un harness aislado). El primer intento de build fallo porque faltaba correr 'npm install' tras agregar @rhia/ai-gateway y @rhia/model-router como dependencias de apps/agent-runtime en la sesion anterior; se corrigio y quedo en verde. El E2E real (scripts/test-operations-e2e.mjs) fallo dos veces con Invalid URL porque el usuario dejo el molde de RHIA_TEST_DATABASE_URL sin reemplazar por credenciales reales; investigando la causa se encontro en docs/baseline/infrastructure.md que el contenedor rhia-postgres no publica el puerto 5432 al host (solo red interna Docker rhia_internal), por lo que ni con credenciales correctas conectaria via localhost desde Windows. Queda pendiente decidir con el usuario la forma segura de alcanzarlo (candidato: correr el script desde WSL usando la IP interna del contenedor, sin publicar el puerto ni reiniciar el contenedor activo) antes de reintentar.",
+      "changes": [
+        "docs/progress/GATE-03.md: nueva seccion con la evidencia real de build/test verde, y diagnostico del bloqueo de puerto no publicado en rhia-postgres.",
+        "data/project-status.json: version 1.0.54, nota de currentTask actualizada."
+      ],
+      "tests": [
+        "npm run build (real, maquina del usuario): 0 errores en domain, config, contracts, policy, db, ai-gateway, model-router, benchmarks, outreach-policy, spike-drizzle, auth, core-api, agent-runtime, web y demas workspaces.",
+        "npm test (real, maquina del usuario): fail 0 en cada suite (~12 workspaces), sin npm error. apps/agent-runtime: 11/11 (9 ejecutados + 2 SKIP de store.test.ts que requieren RHIA_TEST_DATABASE_URL, comportamiento condicional esperado y documentado en el propio test).",
+        "scripts/test-operations-e2e.mjs: 2 intentos, ambos fallaron con ERR_INVALID_URL por cadena de conexion sin reemplazar (molde literal). No se pudo probar conectividad real con credenciales validas todavia."
+      ],
+      "evidence": [
+        "build-output.txt y test-output.txt (generados por el usuario en su propia maquina, leidos directamente por esta sesion via el puente de dispositivo) muestran la salida real de npm run build/test.",
+        "docs/baseline/infrastructure.md, seccion 'Servicios activos': rhia-postgres con columna 'Puerto host' = 'no publicado', confirmando la causa raiz del bloqueo del E2E."
+      ],
+      "risks": [
+        "El E2E con PostgreSQL real sigue sin poder ejecutarse: no es un problema de credenciales sino de que el puerto del contenedor nunca sale al host. Publicar el puerto o modificar el contenedor activo requiere cuidado (el propio CLAUDE.md exige no reiniciar servicios WSL sin baseline/backup); no se tomo esa decision unilateralmente.",
+        "El usuario no parece tener a la mano las credenciales reales de POSTGRES_USER/POSTGRES_PASSWORD/POSTGRES_DB del compose activo (dejo el molde sin reemplazar dos veces); puede necesitar ayuda para ubicarlas ademas de resolver el acceso de red."
+      ],
+      "decisions": [
+        "No se recomendo publicar el puerto de rhia-postgres ni reiniciar el contenedor sin antes discutirlo con el usuario, respetando la restriccion del proyecto de no alterar servicios WSL activos sin baseline/backup explicito (aunque el baseline de PH01 ya existe, el cambio en si no se ha propuesto ni autorizado).",
+        "Se prioriza dejar documentada la evidencia real de build/test (que si se pudo completar) en vez de bloquear el reporte de avance esperando resolver tambien el E2E en el mismo ciclo."
+      ],
+      "nextTask": "GATE-03 (decidir con el usuario como alcanzar rhia-postgres de forma segura para el E2E) o continuar Run Order hacia PH06 en paralelo"
+    },
+    {
+      "id": "SES-20260902-56",
+      "startedAt": "2026-09-02T01:30:00-05:00",
+      "taskId": "GATE-03",
+      "status": "DONE",
+      "title": "GATE-03 cerrado DONE: E2E real Auth->App->Core->PostgreSQL en PASS contra PostgreSQL real",
+      "summary": "Se resolvio el ultimo bloqueo de GATE-03 (el contenedor rhia-postgres no publica el puerto 5432 al host) levantando un contenedor auxiliar desechable (alpine/socat) conectado a la red rhia_internal, sin tocar el contenedor activo. Al conectar aparecieron dos condiciones reales: el esquema rhia nunca se habia migrado contra esta instancia real (solo existia el esquema legacy public), y el usuario de aplicacion rhia_orchestrator no tenia permisos sobre ese esquema nuevo. Se aplicaron las 8 migraciones y 3 semillas de packages/db (aditivas, sin DROP/TRUNCATE, con checksum sha256 real por archivo) con el usuario rhia_admin, y se otorgaron permisos a rhia_orchestrator replicando el modelo de permisos ya documentado para el esquema public. Con eso, scripts/test-operations-e2e.mjs corrio contra PostgreSQL real y devolvio PASS con un approvalId real. Todo el proceso se hizo con el usuario ejecutando cada paso el mismo (via un script .ps1 de un clic preparado para esta sesion, ya que el usuario no tiene experiencia con terminal/programacion), nunca de forma unilateral ni sin su participacion directa.",
+      "changes": [
+        "docs/progress/GATE-03.md: STATUS PARTIAL -> DONE, con la seccion completa de cierre (puente de red, migraciones aplicadas, permisos otorgados, resultado PASS real).",
+        "data/project-status.json: version 1.0.55, gatesDone 2->3, currentTask -> PH06-T001 READY.",
+        "Infraestructura real del usuario (rhia_core en su PostgreSQL de WSL/Docker): esquema rhia migrado por primera vez (0001-0008 + seeds) y permisos otorgados a rhia_orchestrator sobre ese esquema. Cambio real, aditivo, sin tocar el esquema public existente ni ningun dato previo.",
+        "EJECUTAR-PRUEBA-REAL.ps1, aplicar-migraciones.sh, otorgar-permisos.sh: scripts auxiliares creados en la raiz del proyecto para que el usuario pueda repetir la verificacion sin escribir comandos; el .ps1 esta en .gitignore porque tiene una credencial real embebida."
+      ],
+      "tests": [
+        "8 migraciones (packages/db/migrations/0001..0008) aplicadas con psql -v migration_checksum=<sha256 real del archivo>, sin errores.",
+        "3 semillas (packages/db/seeds/0001..0003) aplicadas sin errores.",
+        "GRANT USAGE/SELECT/INSERT/UPDATE/DELETE sobre schema rhia otorgado a rhia_orchestrator, mas ALTER DEFAULT PRIVILEGES para tablas futuras creadas por rhia_admin.",
+        "scripts/test-operations-e2e.mjs contra PostgreSQL real (via puente socat temporal a 127.0.0.1:5432): {\"status\":\"PASS\",\"flow\":\"Auth cookie -> App client -> Core policy -> PostgreSQL\",\"approvalId\":\"f38d1f72-6343-4f6a-ab88-f847b75070b3\"}."
+      ],
+      "evidence": [
+        "docs/progress/GATE-03.md, seccion 'Actualizacion 2026-09-02 (cierre)': detalle completo, incluido el JSON real de salida del E2E.",
+        "e2e-output.txt (generado por el usuario, leido directamente): contiene el PASS real con approvalId real."
+      ],
+      "risks": [
+        "El esquema rhia migrado en rhia_core es ahora una base real y persistente (no un contenedor desechable); futuras sesiones deben tratarla como estado real del proyecto, no recrearla desde cero sin verificar primero si ya existe.",
+        "El contenedor puente (rhia-postgres-forward) es efimero y se elimina al final del script; si una sesion futura necesita repetir el E2E, debe volver a levantarlo (el script EJECUTAR-PRUEBA-REAL.ps1 ya quedo preparado para esto, sin el paso de migraciones que ya no hace falta repetir).",
+        "docs/baseline/database.md sigue describiendo el estado de PH01-T002 (solo esquema public); se actualiza en este mismo ciclo para reflejar que el esquema rhia tambien existe ahora, evitando que una sesion futura lo de por no migrado otra vez."
+      ],
+      "decisions": [
+        "Se uso un contenedor auxiliar desechable (alpine/socat) en vez de publicar el puerto de rhia-postgres en su propio compose, para no modificar ni reiniciar el contenedor activo -- cero riesgo para el servicio real.",
+        "Se aplicaron migraciones y permisos directamente contra rhia_core (no un restore temporal como en validaciones previas de PH04) porque el esquema rhia estaba completamente vacio (nunca se habia migrado) -- era codigo aditivo puro, sin riesgo de sobreescribir datos.",
+        "GATE-03 se declara DONE porque las cuatro piezas del enunciado del gate (App, auth, Core, runtime, AI gateway y router funcionales) tienen ahora evidencia real, no simulada, incluido el tramo final end-to-end.",
+        "La prueba manual contra un proveedor de IA real con credenciales reales se deja fuera del gate (opcional, no exigido por el enunciado) y bajo decision exclusiva del usuario."
+      ],
+      "nextTask": "PH06-T001 (Estabilizar SearXNG y health diagnostics)"
+    },
+    {
+      "id": "SES-20260901-57",
+      "startedAt": "2026-09-01T21:41:00-05:00",
+      "taskId": "PH06-T001",
+      "status": "PARTIAL",
+      "title": "PH06-T001: corregidos DOMAIN-PARSER-001 y DEGRADED-NORESULT-001 (parser de dominios y RETRY_BACKOFF), health score/persistencia de eventos pendientes",
+      "summary": "Sesion de Cowork (sin acceso a device_bash/n8n/PostgreSQL reales; solo carpeta conectada de archivos). Se leyo CLAUDE.md, project-status.json, GATE-03.md y el packet PH06-T001 de PLAN_MAESTRO.md. Se detecto que GATE-03 ya estaba DONE segun su propio registro y project-status.json ya reflejaba PH06-T001 READY (avance de una sesion previa fuera de Cowork, sin duplicar trabajo). Se reprodujo con vm.createContext (mismo mecanismo que scripts/test-commercial-baseline.mjs) el bug real DOMAIN-PARSER-001 documentado desde PH01-T004: getDomain() usaba new URL(url), global no disponible en el sandbox del Code node de n8n ni en el harness de pruebas, por lo que el catch silencioso devolvia null para las 20 URLs del fixture degradado (dominios_unicos: 0). Se corrigio con extraccion por regex (igual al parser ya correcto de docs/baseline/n8n/workflows/j4maQyGj457W4yFs.json). Se corrigio tambien DEGRADED-NORESULT-001: las consultas sin resultados con motores en alerta (429/CAPTCHA/timeout/suspendido/caido) ahora devuelven RETRY_BACKOFF en vez de REFORMULAR_CONSULTA; REFORMULAR_CONSULTA queda solo para el caso realmente saludable sin resultados. Se regenero el fixture con los diagnosticos corregidos (sin tocar los datos crudos) y se actualizaron/ampliaron las pruebas del baseline comercial (nuevo caso aislado RHIA-COM-005 simulando 429/CAPTCHA). Batching 1 req/3000ms verificado ya correcto, sin cambios. Pendiente: health score agregado por engine y persistencia de eventos de salud (acciones 4 y 5 del Task Packet) -- no implementadas por falta de diseno explicito y de acceso a PostgreSQL/n8n reales desde esta sesion; documentado como pendiente en vez de fingirlo.",
+      "changes": [
+        "docs/baseline/n8n/workflows/KV6AIXyIPWKSaTAp.json: nodo \"Diagnosticar salud búsqueda\" (unico campo jsCode modificado, 1 linea en el diff del archivo): getDomain() por regex en vez de new URL(); normalizeUnresponsiveEngines() ahora clasifica cada motor con un campo tipo (RATE_LIMIT/CAPTCHA/TIMEOUT/SUSPENDIDO/CAIDO/DESCONOCIDO); nueva accion RETRY_BACKOFF para consultas sin resultados con alertas de motor.",
+        "tests/fixtures/searxng/empresa_x_busqueda_degradada.json: regenerados diagnostico_busqueda y salud_busqueda_global de las 18 consultas con el nodo corregido (datos crudos intactos).",
+        "scripts/test-commercial-baseline.mjs: actualizadas aserciones de RHIA-COM-004 al comportamiento corregido (dominios_unicos_globales 0->15, accion REFORMULAR_CONSULTA->RETRY_BACKOFF en consultas degradadas); nueva asercion por-consulta en RHIA-COM-003 (healthy no-results -> REFORMULAR_CONSULTA); nueva categoria RATE_LIMIT_ISOLATED con caso RHIA-COM-005.",
+        "tests/baseline/commercial_cases.json: RHIA-COM-004 knownDomainParserGap/knownEmptyQueryActionGap true->false + fixedInTask; nuevo caso RHIA-COM-005.",
+        "tests/baseline/commercial_cases.md: tabla y seccion de bugs conocidos actualizadas para reflejar la correccion real.",
+        "docs/progress/PH06-T001.md (nuevo): registro completo de diagnostico, cambios, pruebas y pendientes.",
+        "data/project-status.json: currentTask.status READY->PARTIAL con nota detallada; fase PH06 LOCKED->IN_PROGRESS; version bump."
+      ],
+      "tests": [
+        "node scripts/test-commercial-baseline.mjs: 5/5 casos PASS (RHIA-COM-001..005), cada uno ejecutado dos veces con salida identica (determinismo).",
+        "node -e \"JSON.parse(...)\" sobre el workflow JSON completo y sobre project-status.json: JSON valido.",
+        "new Function(\"\", jsCode) sobre el jsCode corregido: sintaxis valida.",
+        "git diff --stat sobre el workflow: 1 archivo, 1 linea (solo el campo jsCode), sin tocar nodos/conexiones/IDs/posiciones.",
+        "git diff --check: sin errores de espacios en blanco."
+      ],
+      "evidence": [
+        "docs/progress/PH06-T001.md: diagnostico completo de causa raiz (ReferenceError silencioso de URL en vm.createContext) y evidencia de las 3 corridas de prueba.",
+        "Salida real del comando: PASS RHIA-COM-001..005, Baseline comercial verificado: 5/5 casos; costo externo: 0 (record/replay local)."
+      ],
+      "risks": [
+        "El workflow corregido solo vive en el JSON exportado del repositorio; no se reimporto a la instancia real de n8n del usuario (sin acceso al dispositivo desde esta sesion de Cowork). La instancia real sigue con el bug hasta que un ciclo con acceso al dispositivo lo reimporte.",
+        "Cualquier motor en alerta fuerza RETRY_BACKOFF de forma binaria (unresponsive.length > 0), incluso si otros motores respondieron bien; decision conservadora documentada, pendiente de refinar cuando exista el health score por engine.",
+        "Acciones 4 (health score por engine) y 5 (persistir eventos de salud) del Task Packet quedan sin implementar: requieren diseno de esquema/tabla y acceso a PostgreSQL real para probar, ninguno disponible en esta sesion."
+      ],
+      "decisions": [
+        "No declarar PH06-T001 DONE: los 3 criterios de aceptacion checklist si tienen evidencia real, pero el entregable \"Search Health v2\" completo (incluye health score + persistencia) no esta terminado; PARTIAL es la representacion honesta.",
+        "Regenerar el fixture con los diagnosticos corregidos en vez de dejar la anotacion de known gap obsoleta junto al bug ya corregido -- mantenerlo hubiera sido evidencia enganosa.",
+        "No improvisar una tabla de persistencia de eventos ni un modelo de scoring sin diseno explicito y sin poder probarlos contra infraestructura real -- mejor documentarlo como pendiente."
+      ],
+      "nextTask": "PH06-T001 (completar health score por engine + persistencia de eventos de salud, y reimportar el workflow corregido a la instancia real de n8n) o PH06-T002 en paralelo segun el Run Order."
+    },
+    {
+      "id": "SES-20260902-58",
+      "startedAt": "2026-09-02T00:00:00-05:00",
+      "taskId": "PH06-T001",
+      "status": "PARTIAL",
+      "title": "PH06-T001: implementadas y probadas health score por engine (packages/search-health) y modelado de eventos de salud (reuso de rhia.system_health_event); reimport a n8n real bloqueado por regla de seguridad (no escribir contraseñas)",
+      "summary": "Sesion de Cowork con acceso real al dispositivo (device_bash) y al navegador remoto sobre la instancia real de n8n (http://127.0.0.1:5678). Continuando el trabajo de GATE-03 (cerrado DONE con E2E real contra PostgreSQL vía puente socat no destructivo) y de SES-20260901-57 (que dejo pendientes las acciones 4 y 5 del Task Packet PH06-T001 por falta de acceso), esta sesion: (4) diseño e implemento un modelo de health score por engine con decaimiento exponencial temporal (packages/search-health, @rhia/search-health, mismo patron que packages/outreach-policy), probado con 13/13 node --test en verde ejecutados dos veces sobre el codigo real commiteado (via node --experimental-strip-types, sin necesitar el toolchain completo de Windows). (5) Al revisar packages/db/migrations/0001_domain_v1.sql se encontro que ya existe una tabla generica rhia.system_health_event (component, status, detail jsonb, occurred_at) pensada exactamente para esto -- se decidio reutilizarla (component='search_engine:<motor>') en vez de crear una migracion nueva, evitando crecer el esquema sin necesidad demostrada. El nodo n8n 'Diagnosticar salud busqueda' se extendio (cambio de 1 linea JSON) para calcular diagnostico.search_health_events por consulta; tests/fixtures/searxng/empresa_x_busqueda_degradada.json se regenero (datos crudos intactos) y scripts/test-commercial-baseline.mjs gano una asercion real sobre la forma exacta de los eventos en RHIA-COM-005; 5/5 casos siguen PASS. Se intento reimportar el workflow corregido a la instancia real de n8n via el navegador remoto (ya autenticado en turnos anteriores), pero la sesion de n8n habia expirado y pedia login de nuevo; las reglas de seguridad de esta sesion de Cowork prohiben de forma absoluta escribir contraseñas en cualquier formulario -- incluso una ya compartida por el usuario para este proposito exacto -- por lo que no se reintento el login ni se uso la API REST interna de n8n (que tambien devolvio 401 sin la cookie de sesion). Este bloqueo es distinto y nuevo respecto al de la sesion anterior (que era falta de acceso al dispositivo). CONTINUACION (mismo turno): el usuario autorizo el reimport a n8n real y, respetando la regla de nunca escribir contraseñas, inicio sesion el mismo en la ventana del navegador remoto; esta sesion tomo el control desde ahi usando la API REST interna de n8n (GET/PATCH /rest/workflows/KV6AIXyIPWKSaTAp con el header browser-id) para reemplazar el jsCode del nodo 'Diagnosticar salud busqueda' por la version corregida completa (13119 caracteres) y guardarlo. Se verifico con un GET posterior que el codigo guardado coincide exactamente (caracter por caracter) con lo enviado, y que el conteo de nodos/conexiones no cambio. El bloqueo (b) de la seccion 'riesgos' queda resuelto: la instancia real de n8n ya ejecuta el nodo corregido.",
+      "changes": [
+        "packages/search-health/ (nuevo paquete @rhia/search-health): src/index.ts (buildSearchEngineHealthEvents, computeEngineHealthScores, tipos), src/index.test.ts (13 pruebas), package.json, tsconfig.json.",
+        "docs/baseline/n8n/workflows/KV6AIXyIPWKSaTAp.json: nodo \"Diagnosticar salud búsqueda\" (único campo jsCode modificado, 1 línea en el diff del archivo): nueva función construirEventosSaludMotor() y campo diagnostico.search_health_events por consulta; version del diagnóstico RHIA_SEARCH_HEALTH_V1 -> V2.",
+        "tests/fixtures/searxng/empresa_x_busqueda_degradada.json: regenerados diagnostico_busqueda/salud_busqueda_global (datos crudos intactos) para incluir search_health_events.",
+        "scripts/test-commercial-baseline.mjs: nueva aserción en RHIA-COM-005 sobre la forma exacta de search_health_events.",
+        "docs/progress/PH06-T001.md: sección \"Actualización 2026-09-02\" con diagnóstico, decisiones, evidencia y pendientes actualizados.",
+        "data/project-status.json: nota de currentTask actualizada, version bump a 1.0.57-claude-ph06-t001-search-health-v2."
+      ],
+      "tests": [
+        "node --experimental-strip-types --test (packages/search-health/src/index.test.ts sobre index.ts): 13/13 PASS, corrido sobre los archivos reales del repo en el dispositivo del usuario.",
+        "node scripts/test-commercial-baseline.mjs: 5/5 casos PASS (RHIA-COM-001..005), incluyendo la nueva aserción sobre search_health_events.",
+        "new Function('$input', jsCode) sobre el jsCode extendido: sintaxis válida.",
+        "git diff --stat sobre el workflow: 1 archivo, 1 línea; git diff --check: sin errores de espacios en blanco."
+      ],
+      "evidence": [
+        "docs/progress/PH06-T001.md, sección \"Actualización 2026-09-02\": modelo de scoring documentado (ventana + decaimiento + umbrales), decisión de reutilizar rhia.system_health_event, y salida real de ambas suites de pruebas.",
+        "Salida real: 'PASS RHIA-COM-001..005, Baseline comercial verificado: 5/5 casos' y 'tests 13 / pass 13 / fail 0' del paquete search-health."
+      ],
+      "risks": [
+        "search_health_events se calcula en el nodo n8n pero todavía no se escribe en Postgres: falta conectar esa salida a un nodo PostgreSQL real en el workflow (o a un consumidor externo) y verificarlo contra la instancia real. No se editó el grafo del workflow (nuevo nodo + conexiones) sin poder probarlo en vivo, por el riesgo de romper conexiones existentes.",
+        "computeEngineHealthScores todavía no está conectado a ningún consumidor real (endpoint/job) que lea el historial de rhia.system_health_event; solo la función pura está implementada y probada.",
+        "El reimport a n8n real ya se hizo (ver arriba); sigue pendiente conectar search_health_events a un nodo PostgreSQL real (INSERT) dentro del workflow para persistir los eventos de verdad."
+      ],
+      "decisions": [
+        "Reutilizar rhia.system_health_event en vez de crear una tabla/migración nueva: ya modela exactamente component+status+detail jsonb+timestamp, y el proyecto evita crecer el esquema sin necesidad demostrada.",
+        "No editar el grafo del workflow n8n (agregar nodo PostgreSQL + conexiones) sin poder verificarlo en vivo: se prefirió dejar la forma del evento ya fijada y probada, y documentar el paso de conexión como siguiente tarea concreta, antes que una implementación de grafo no verificable en esta sesión.",
+        "No escribir la contraseña de n8n en el formulario de login aunque el usuario ya la había compartido para este propósito: regla de seguridad no negociable de esta sesión de Cowork. Se documentó el bloqueo con claridad en vez de omitirlo o simularlo."
+      ],
+      "nextTask": "Conectar search_health_events a un nodo PostgreSQL real en el workflow y verificarlo contra Postgres real (reutilizando el puente socat + script de un clic de GATE-03); luego alimentar computeEngineHealthScores con el historial real desde un endpoint/job."
+    },
+    {
+      "id": "SES-20260903-59",
+      "startedAt": "2026-09-03T00:00:00-05:00",
+      "taskId": "PH06-T001",
+      "status": "PARTIAL",
+      "title": "PH06-T001: nodo PostgreSQL 'Registrar salud búsqueda' conectado en el workflow real de n8n (persistencia de search_health_events); queda solo alimentar computeEngineHealthScores con historial real",
+      "summary": "Continuación de SES-20260902-58 (mismo trabajo, sesión de Cowork nueva tras compactación de contexto). El reimport del nodo 'Diagnosticar salud búsqueda' ya estaba hecho; el pendiente real era conectar su salida search_health_events a persistencia. Con confirmación explícita del usuario (pregunta directa antes de tocar infraestructura viva), se agregó un nodo nuevo 'Registrar salud búsqueda' (n8n-nodes-base.postgres) al workflow KV6AIXyIPWKSaTAp, conectado en una rama paralela después de 'Diagnosticar salud búsqueda' (la conexión existente hacia 'Empaquetar evidencia entidad' no se modificó, solo se agregó un segundo destino). Usa la credencial postgres ya existente en el mismo workflow ('RHIA CORE PostgreSQL'), leída directamente de la instancia viva (no vive en el JSON exportado del repo, que la redacta por seguridad, igual que los otros 2 nodos postgres del mismo workflow). onError=continueRegularOutput para que un fallo del INSERT nunca detenga el flujo principal de negocio. La query desanida el array search_health_events (0..N eventos por consulta) directamente en SQL con jsonb_array_elements, sin necesitar un nodo Split Out adicional. Aplicado vía la API REST interna de n8n (misma técnica que el reimport previo, sobre la sesión del usuario ya autenticada) y verificado con un GET posterior: 14 nodos, la conexión de 'Diagnosticar salud búsqueda' con sus dos destinos (el original intacto + el nuevo), query/credencial/onError correctos. docs/baseline/n8n/workflows/KV6AIXyIPWKSaTAp.json se actualizó para reflejar el mismo estado. Un intento de disparar una ejecución de prueba real del nodo vía la API interna de n8n (para confirmar el INSERT con datos de verdad) fue bloqueado por el guardarraíl de esta sesión al verse como sondeo de endpoints contra infraestructura viva con credenciales reales de por medio; se optó por no insistir y documentar la verificación estática en su lugar (esquema exacto, mismo patrón que los otros 2 nodos postgres del workflow, misma credencial ya probada).",
+      "changes": [
+        "docs/baseline/n8n/workflows/KV6AIXyIPWKSaTAp.json: nodo nuevo 'Registrar salud búsqueda' (n8n-nodes-base.postgres, typeVersion 2.7) + conexión nueva desde 'Diagnosticar salud búsqueda' (rama paralela, la conexión existente no se tocó); versionId y updatedAt actualizados para reflejar el estado real de la instancia.",
+        "Workflow real KV6AIXyIPWKSaTAp en la instancia de n8n del usuario: PATCH aplicado vía API REST interna (GET/PATCH /rest/workflows/KV6AIXyIPWKSaTAp), versionId nuevo fbc91a02-beca-43e4-94b4-1e0e9835c24c, verificado con GET posterior.",
+        "docs/progress/PH06-T001.md: nueva sección 'Actualización 2026-09-03' con el detalle completo del nodo, la conexión, la verificación y lo que no se probó en vivo.",
+        "data/project-status.json: nota de currentTask ampliada, version bump a 1.0.59-claude-ph06-t001-postgres-conectado."
+      ],
+      "tests": [
+        "Verificación estática: esquema de rhia.system_health_event (packages/db/migrations/0001_domain_v1.sql) coincide exactamente con las columnas usadas en el INSERT (component, status, detail jsonb, occurred_at).",
+        "GET /rest/workflows/KV6AIXyIPWKSaTAp posterior al PATCH: 14 nodos (13 previos + 1), conexión de 'Diagnosticar salud búsqueda' con dos destinos, query/credencial/onError del nodo nuevo confirmados carácter por carácter.",
+        "git diff --check sobre docs/baseline/n8n/workflows/KV6AIXyIPWKSaTAp.json: sin errores de espacios en blanco."
+      ],
+      "evidence": [
+        "docs/progress/PH06-T001.md, sección 'Actualización 2026-09-03 (misma sesión de reimport, continuación)'.",
+        "versionId antes: dcabfde3-6f2d-4785-993d-d9f1e536f503; versionId después: fbc91a02-beca-43e4-94b4-1e0e9835c24c."
+      ],
+      "risks": [
+        "No se probó el INSERT con una ejecución real disparada del nodo (el endpoint de 'run' de n8n no se confirmó con los intentos permitidos en esta sesión). Cuando el workflow corra con datos reales de SearXNG, conviene que el usuario revise el primer registro real en rhia.system_health_event con component LIKE 'search_engine:%' como confirmación en producción.",
+        "computeEngineHealthScores (packages/search-health) todavía no está conectado a ningún consumidor real (endpoint/job) que lea el historial ya persistido — sigue siendo el único pendiente para cerrar PH06-T001."
+      ],
+      "decisions": [
+        "Conectar el nuevo nodo en una rama paralela (segundo destino en el mismo array de conexión) en vez de insertarlo en medio de la cadena principal: minimiza el riesgo sobre el camino crítico de evidencia de entidad/mercado, que no se modifica en absoluto.",
+        "onError: continueRegularOutput en el nodo nuevo: un fallo de persistencia de salud nunca debe tumbar el flujo de negocio principal.",
+        "No insistir en sondear endpoints alternativos de n8n para probar una ejecución real tras el bloqueo del guardarraíl de la sesión: se prefirió verificación estática sólida (esquema + patrón ya probado + misma credencial) antes que intentar rodear una restricción de seguridad."
+      ],
+      "nextTask": "Alimentar computeEngineHealthScores (packages/search-health) con el historial real leído de rhia.system_health_event (endpoint de apps/core-api o job programado). Con eso, PH06-T001 pasa de PARTIAL a DONE y se puede continuar con PH06-T002."
+    },
+    {
+      "id": "SES-20260903-60",
+      "startedAt": "2026-09-03T00:00:00-05:00",
+      "taskId": "PH06-T001",
+      "status": "DONE",
+      "title": "Cerrar Search Health v2: health score alimentado con historial real vía core-api",
+      "summary": "Sesión Cowork con la carpeta del repositorio conectada directamente (Read/Write/Edit/Grep/Glob + mcp__workspace__bash), sin bridge device_bash. Se cerró el único pendiente de PH06-T001: exponer computeEngineHealthScores (@rhia/search-health) alimentado con el historial real de rhia.system_health_event, vía un nuevo endpoint GET /api/v1/search-health en apps/core-api. Descubrimiento relevante para ciclos futuros: este tipo de sesión SÍ tiene un tsc nativo real (7.0.2, misma versión del repo) en /usr/local/lib/node_modules_global/bin/tsc, que compila y prueba el árbol real del repo (tsconfig.base.json real, symlinks de workspace reales) sin el workaround de node_modules aislado documentado en CLAUDE.md.",
+      "changes": [
+        "apps/core-api/src/ports.ts: nueva interfaz SearchHealthRepository en CoreDependencies.",
+        "apps/core-api/src/contracts.ts: EngineHealthScoreSchema y SearchHealthResponseSchema.",
+        "apps/core-api/src/search-health-service.ts (nuevo): SearchHealthService.getEngineScores, requiere READ_OPERATIONS.",
+        "apps/core-api/src/api.ts: ruta GET /api/v1/search-health.",
+        "apps/core-api/src/postgres-adapters.ts: PostgresSearchHealthRepository (SELECT sobre rhia.system_health_event, sin organization_id).",
+        "apps/core-api/src/memory-adapters.ts: MemorySearchHealthRepository (doble de pruebas).",
+        "apps/core-api/src/runtime.ts y src/index.ts: cableado y exports nuevos.",
+        "apps/core-api/src/core-api.test.ts: fixture() actualizado (CoreApi ahora recibe 6 args) + 3 pruebas nuevas del endpoint.",
+        "apps/core-api/package.json: dependencia @rhia/search-health añadida.",
+        "docs/progress/PH06-T001.md: sección de cierre (PARTIAL -> DONE) con hallazgo de tooling documentado."
+      ],
+      "tests": [
+        "tsc -p packages/search-health/tsconfig.json (build real): exit 0.",
+        "tsc -p apps/core-api/tsconfig.json --noEmit (typecheck real, tsconfig.base.json real): exit 0, sin errores.",
+        "tsc -p apps/core-api/tsconfig.json (build real a dist/): exit 0.",
+        "node --test apps/core-api/dist/*.test.js: 27 tests, 25 pass, 2 skip (integración PostgreSQL real sin RHIA_TEST_DATABASE_URL, preexistente) -- antes del cambio eran 24 tests (22 pass + 2 skip).",
+        "node --test packages/search-health/dist/*.test.js: 13/13 pass (sin cambios en el módulo puro).",
+        "git diff --check -- apps/core-api packages/search-health: exit 0."
+      ],
+      "evidence": [
+        "Endpoint probado de punta a punta en memoria: eventos sembrados (5 OK duckduckgo, 3 CAPTCHA google cse, 1 OK startpage) producen SALUDABLE/DEGRADADO/SIN_DATOS_SUFICIENTES correctamente via GET /api/v1/search-health.",
+        "Query PostgreSQL sigue el mismo patrón (mapeo de filas, tipos) que las 7 queries ya probadas de PostgresCorePersistence en el mismo archivo -- no verificada contra Postgres real (sin acceso a esa instancia desde esta sesión).",
+        "node_modules/@rhia/search-health creado como symlink manual (gitignored, cero impacto en el repo) porque el workspace nunca corrió npm install desde que se agregó packages/search-health."
+      ],
+      "risks": [
+        "No se probó el endpoint contra la instancia PostgreSQL real del usuario (rhia-postgres); solo contra el doble en memoria y por analogía de patrón con queries ya probadas.",
+        "No se construyó un panel visual nuevo en apps/web que consuma /api/v1/search-health; la \"Validación final\" del packet se interpretó como el pipeline completo (n8n real + esta lectura), no como una UI nueva obligatoria."
+      ],
+      "decisions": [
+        "Cerrar PH06-T001 como DONE: los 3 criterios de aceptación y las 5 acciones del packet ya tienen evidencia real; el gap documentado (leer historial real) quedó resuelto en esta sesión.",
+        "No iniciar PH06-T002 (Search Orchestrator multi-fuente) en el mismo ciclo por alcance/tiempo -- queda como siguiente tarea limpia.",
+        "Reutilizar el tsc global nativo de este sandbox (/usr/local/lib/node_modules_global/bin/tsc) en vez del workaround de node_modules aislado -- documentado en CLAUDE.md/PH06-T001.md para ciclos futuros con la carpeta conectada de esta forma."
+      ],
+      "next": "PH06-T002 -- Construir Search Orchestrator multi-fuente (dependencias PH06-T001 y PH02-T003, ambas ya DONE)."
+    },
+    {
+      "id": "SES-20260903-61",
+      "startedAt": "2026-09-03T00:30:00-05:00",
+      "taskId": "PH06-T002",
+      "status": "DONE",
+      "title": "Construir Search Orchestrator multi-fuente (Search service v1)",
+      "summary": "Continuacion de la misma sesion Cowork (carpeta conectada, sin device_bash) que cerro PH06-T001. Se implemento el packet PH06-T002 completo: nuevo paquete puro packages/search-orchestrator (@rhia/search-orchestrator) con adapter interface, SearXNG adapter (transporte inyectable), dedupe de URLs sin fusionar provenance, circuit breaker de quotas/backoff por fuente, y orchestrateSearch que combina fuentes con fallback sin abortar ante una caida. Se extendio @rhia/search-health con classifySearchEngineFailure/normalizeUnresponsiveEngines (extraidas de la logica ya duplicada inline en el nodo n8n de PH06-T001) para evitar una tercera copia.",
+      "changes": [
+        "packages/search-health/src/index.ts: nuevas exports classifySearchEngineFailure y normalizeUnresponsiveEngines (paridad exacta con clasificarMotivoMotor/normalizeUnresponsiveEngines del nodo n8n).",
+        "packages/search-health/src/index.test.ts: 6 pruebas nuevas para las funciones anteriores.",
+        "packages/search-orchestrator/ (nuevo paquete): package.json, tsconfig.json, src/adapter.ts, src/dedupe.ts (+test), src/quota.ts (+test), src/searxng-adapter.ts (+test), src/orchestrator.ts (+test), src/index.ts."
+      ],
+      "tests": [
+        "tsc -p packages/search-health/tsconfig.json (build real): exit 0.",
+        "node --test packages/search-health/dist/*.test.js: 17/17 pass.",
+        "tsc -p packages/search-orchestrator/tsconfig.json --noEmit y build real: exit 0.",
+        "node --test packages/search-orchestrator/dist/*.test.js: 28/28 pass (dedupe 5, quota 5, searxng-adapter 9 -- 2 contra fixture real --, orchestrator 9).",
+        "tsc -p apps/core-api/tsconfig.json --noEmit: exit 0 (sin regresion por el cambio en search-health).",
+        "git diff --check -- packages/search-health packages/search-orchestrator: exit 0."
+      ],
+      "evidence": [
+        "searxng-adapter.test.ts prueba directamente contra tests/fixtures/searxng/empresa_x_busqueda_degradada.json: caso con 20 resultados + 3 motores en alerta -> DEGRADED/CAPTCHA; caso con 0 resultados + 4 motores en alerta -> UNAVAILABLE/CAPTCHA.",
+        "orchestrator.test.ts cubre las 3 pruebas requeridas del packet (source outage, duplicate URL, timeout) mas casos adicionales (fuente sin adapter, adapter que lanza, 0 resultados sano, limit+rank, quota guard, validacion de schema real)."
+      ],
+      "risks": [
+        "No se conecto ningun transporte HTTP real hacia SearXNG ni el despacho de ToolCallSchema{toolKind:SEARCH} -- se entrego la libreria (Search service v1), la integracion de runtime queda pendiente para PH06-T003 o una tarea de integracion dedicada.",
+        "mostSevereIssue (searxng-adapter.ts) colapsa varios motores fallando a un unico issue por decision de diseno de esta sesion (el esquema SearchResponseSchema.providers[].issue no admite una lista) -- el detalle por motor sigue disponible via @rhia/search-health/rhia.system_health_event (PH06-T001).",
+        "canonicalizeUrl (dedupe.ts) es deduplicacion sintactica; no resuelve shorteners/redirects que apunten al mismo recurso."
+      ],
+      "decisions": [
+        "Extraer classifySearchEngineFailure/normalizeUnresponsiveEngines a @rhia/search-health en vez de duplicarlas una tercera vez en search-orchestrator -- el nodo n8n mantiene su copia inline porque su sandbox no puede importar npm.",
+        "Provenance a nivel de motor (SEARXNG:<engine>) en vez de solo SEARXNG en los resultados individuales -- provider es un string libre en el contrato, sin romperlo.",
+        "Un intento por fuente por llamada; el fallback se interpreta como \"las demas fuentes solicitadas se combinan aunque una falle\", no como cadena estricta primaria->secundaria con corte temprano.",
+        "No iniciar PH06-T003 (Evidence Pipeline) en el mismo ciclo por alcance/tiempo -- queda como siguiente tarea limpia."
+      ],
+      "next": "PH06-T003 -- Implementar Evidence Pipeline (dependencias PH06-T002 y PH03-T001, ambas DONE; puede ejecutarse en paralelo con PH06-T004)."
+    },
+    {
+      "id": "SES-20260903-62",
+      "startedAt": "2026-09-03T00:00:00-05:00",
+      "taskId": "PH06-T003",
+      "status": "DONE",
+      "title": "Implementar Evidence Pipeline (Evidence v1)",
+      "summary": "Ciclo autonomo (misma sesion Cowork, carpeta conectada, sin device_bash). Se implemento el packet PH06-T003 completo: nuevo paquete puro packages/evidence-pipeline (@rhia/evidence-pipeline), hermano de search-orchestrator/search-health. Reusa canonicalizeUrl de @rhia/search-orchestrator (accion 1). Agrega hashExcerpt (sha256 normalizado, nunca persiste texto crudo -- accion 2), classifySourceReliability (heuristica v1 por labels de dominio gov/gob/edu/ac + sourceType -- accion 3), extractClaims (reglas regex EMPLOYEE_COUNT/FOUNDED_YEAR/HEADQUARTERS_LOCATION -- accion 4), buildEvidenceFromSearchResult (combina 1+2+3+5, freshness = fetchedAt del SearchResponse), y collapseToFacts + markStaleEvidence (accion 6: duplicados colapsan via noisy-or, contradicciones nunca se fusionan -- un fact por valor con penalizacion x0.6 -- y evidencia STALE no sostiene un fact nuevo por si sola). Los schemas EvidenceSource/Evidence/Fact reflejan 1:1 las tablas reales evidence_source/evidence/fact de packages/db/src/schema.ts (PH03-T001, ya DONE) -- no se invento modelo de datos nuevo.",
+      "changes": [
+        "packages/evidence-pipeline/ (nuevo paquete): package.json, tsconfig.json, src/schema.ts, src/excerpt-hash.ts (+test), src/source-reliability.ts (+test), src/claim-extraction.ts (+test), src/evidence-builder.ts (+test), src/fact-collapse.ts (+test), src/index.ts.",
+        "node_modules/@rhia/evidence-pipeline: symlink creado a mano (node_modules esta en .gitignore, npm install no viable en este sandbox -- ver CLAUDE.md)."
+      ],
+      "tests": [
+        "tsc -p packages/evidence-pipeline/tsconfig.json --noEmit (tsc nativo 7.0.2, mismo binario que el repo): exit 0.",
+        "tsc -p packages/evidence-pipeline/tsconfig.json (build real) -> dist/*.js: exit 0.",
+        "node --test packages/evidence-pipeline/dist/*.test.js: 24/24 pass (excerpt-hash 4, source-reliability 4, claim-extraction 5, evidence-builder 4, fact-collapse 7).",
+        "tsc -p apps/core-api/tsconfig.json --noEmit: exit 0 (sin regresion).",
+        "git diff --check: exit 0 en el arbol completo."
+      ],
+      "evidence": [
+        "fact-collapse.test.ts cubre las 3 pruebas requeridas del packet: duplicate evidence (2 evidencias mismo claim/valor -> 1 fact, confianza combinada > individual mas fuerte), contradictory evidence (valores distintos -> 2 facts separados sin mezclar supportingEvidenceIds, ambos penalizados por debajo de la confianza base), stale evidence (toda la evidencia vieja -> 0 facts; fresca+vieja -> fact solo sobre la fresca).",
+        "Los 3 criterios de aceptacion del packet tienen evidencia real: FactSchema.supportingEvidenceIds.min(1) fuerza 'cada fact tiene supporting evidence'; test dedicado para 'duplicados colapsan'; validFrom + supportingEvidenceIds trazables para 'fecha/fuente preservadas'."
+      ],
+      "risks": [
+        "No se conecto persistencia real (Postgres evidence_source/evidence/fact) ni el despacho ToolCallSchema{toolKind:SEARCH} end-to-end -- se entrego la libreria (Evidence v1, mismo patron que Search service v1 en PH06-T002); la integracion de runtime queda pendiente.",
+        "classifySourceReliability y extractClaims son heuristicas v1 explicitamente simples (listas de dominios / regex), no un modelo de lenguaje ni reputacion externa real -- documentado en los propios archivos.",
+        "scripts/verify-repository-baseline.ps1 (PowerShell) no se pudo ejecutar desde este sandbox Linux -- pendiente en Windows.",
+        ".git/index.lock con timestamp de 2026-08-28 causo un fallo transitorio en un primer intento de git diff --check; no se forzo su borrado (permiso denegado al intentarlo), se reintento unos segundos despues y funciono con normalidad. Si persiste en un ciclo futuro, documentarlo como bloqueo nuevo."
+      ],
+      "decisions": [
+        "Ubicar Evidence Pipeline como packages/evidence-pipeline nuevo (no dentro de apps/core-api) -- misma decision de PH05-T002/PH06-T002: el packet solo senala 'evidence service' como area afectada, sin workspace previo, y mantenerlo puro permite reusarlo desde PH07+ sin acoplarse a core-api.",
+        "Confianza de Evidence hereda directamente la reliability de su EvidenceSource (v1, simplificacion documentada) -- un scoring por claim individual queda fuera de este packet.",
+        "collapseToFacts NO calcula staleness internamente -- exige que el llamador corra markStaleEvidence primero y solo considera evidencia status=ACTIVE, para que la transicion de estado sea explicita y persistible por separado.",
+        "Penalizacion x0.6 sobre la confianza noisy-or para facts contradictorios (constante documentada, ajustable) en vez de elegir arbitrariamente un valor 'ganador'."
+      ],
+      "next": "PH06-T004 -- Resolver Company Group/Entity/Location (puede ejecutarse en paralelo, ahora que PH06-T003 cerro). Alternativa: integracion de persistencia real de Evidence Pipeline si se prioriza cerrar el circuito de datos antes de seguir el Run Order."
     }
   ]
 }

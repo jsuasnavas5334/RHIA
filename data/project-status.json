@@ -1,24 +1,25 @@
 {
-  "version": "1.0.38-monitor",
-  "updatedAt": "2026-08-21T20:58:00-05:00",
-  "state": "APP_SHELL_IN_PROGRESS",
+  "version": "1.0.62-claude-ph06-t003-done",
+  "updatedAt": "2026-09-03T00:55:00-05:00",
+  "state": "PH06_T004_READY",
   "currentPhase": {
-    "id": "PH04",
-    "name": "RHIA Core y App"
+    "id": "PH06",
+    "name": "Search, evidencia e identidad"
   },
   "currentTask": {
-    "id": "PH04-T003",
-    "name": "Construir shell y navegación de RHIA App",
-    "objective": "Crear una interfaz base usable, responsiva y gobernada por permisos.",
-    "status": "IN_PROGRESS"
+    "id": "PH06-T004",
+    "name": "Resolver Company Group/Entity/Location",
+    "objective": "Ver Task Packet PH06-T004 en PLAN_MAESTRO.md (seccion 24). Puede ejecutarse en paralelo con PH06-T003 (ahora DONE); leer sus dependencias propias en el packet antes de empezar, no asumir que son las mismas de PH06-T003.",
+    "status": "READY",
+    "note": "PH06-T003 (Implementar Evidence Pipeline) paso a DONE en esta sesion (misma sesion Cowork con carpeta conectada). Entregable 'Evidence v1': nuevo paquete puro packages/evidence-pipeline (@rhia/evidence-pipeline) con schema.ts (EvidenceSource/Evidence/Fact, reflejando 1:1 las tablas reales de packages/db/src/schema.ts de PH03-T001), excerpt-hash.ts (sha256 normalizado, nunca persiste texto crudo), source-reliability.ts (heuristica v1 por labels de dominio gov/gob/edu/ac + sourceType), claim-extraction.ts (regex EMPLOYEE_COUNT/FOUNDED_YEAR/HEADQUARTERS_LOCATION), evidence-builder.ts (buildEvidenceFromSearchResult, reusa canonicalizeUrl de @rhia/search-orchestrator), fact-collapse.ts (collapseToFacts + markStaleEvidence: duplicados colapsan via noisy-or, contradicciones nunca se fusionan -un fact por valor con penalizacion x0.6-, evidencia STALE no sostiene un fact nuevo por si sola). Evidencia real: tsc --noEmit y build real (tsc nativo /usr/local/lib/node_modules_global/bin/tsc) exit 0; node --test packages/evidence-pipeline/dist/*.test.js: 24/24 pass (excerpt-hash 4, source-reliability 4, claim-extraction 5, evidence-builder 4, fact-collapse 7 -incluyendo las 3 pruebas requeridas del packet: duplicate/contradictory/stale evidence-); tsc --noEmit de apps/core-api sin regresion; git diff --check limpio. Los 3 criterios de aceptacion del packet (cada fact tiene supporting evidence, duplicados colapsan, fecha/fuente preservadas) tienen evidencia real. NO se conecto a persistencia real (Postgres evidence_source/evidence/fact) ni al despacho ToolCallSchema{toolKind:SEARCH} end-to-end (mismo patron que PH06-T002: se entrego la libreria, la integracion de runtime queda pendiente para una tarea de integracion dedicada). Ver docs/progress/PH06-T003.md (seccion completa) y session-log SES-20260903-62. Siguiente tarea PH06-T004 no se inicio en este ciclo por alcance/tiempo; leer solo su Task Packet (PLAN_MAESTRO.md seccion 24) antes de empezar -- sus dependencias propias no se revisaron aun."
   },
   "counts": {
     "totalTasks": 51,
-    "done": 14,
-    "inProgress": 1,
+    "done": 23,
+    "inProgress": 0,
     "blocked": 0,
     "totalGates": 8,
-    "gatesDone": 2
+    "gatesDone": 3
   },
   "guardrails": [
     "Sin borrado de datos ni cambios irreversibles",
@@ -27,17 +28,65 @@
     "Publicación Git únicamente bajo control humano"
   ],
   "phases": [
-    { "id": "PH01", "name": "Auditoría y baseline", "status": "DONE" },
-    { "id": "PH02", "name": "Decisiones técnicas y repositorio", "status": "DONE" },
-    { "id": "PH03", "name": "Datos, permisos y políticas", "status": "DONE" },
-    { "id": "PH04", "name": "RHIA Core y App", "status": "IN_PROGRESS" },
-    { "id": "PH05", "name": "Runtime de agentes y AI Gateway", "status": "LOCKED" },
-    { "id": "PH06", "name": "Search, evidencia e identidad", "status": "LOCKED" },
-    { "id": "PH07", "name": "CRM, contactos y scoring", "status": "LOCKED" },
-    { "id": "PH08", "name": "Outreach, conversación y reuniones", "status": "LOCKED" },
-    { "id": "PH09", "name": "Tools, Playwright y Computer Use", "status": "LOCKED" },
-    { "id": "PH10", "name": "Seguridad, testing y resiliencia", "status": "LOCKED" },
-    { "id": "PH11", "name": "Observabilidad y deployment", "status": "LOCKED" },
-    { "id": "PH12", "name": "QA, lanzamiento y hardening", "status": "LOCKED" }
+    {
+      "id": "PH01",
+      "name": "Auditoría y baseline",
+      "status": "DONE"
+    },
+    {
+      "id": "PH02",
+      "name": "Decisiones técnicas y repositorio",
+      "status": "DONE"
+    },
+    {
+      "id": "PH03",
+      "name": "Datos, permisos y políticas",
+      "status": "DONE"
+    },
+    {
+      "id": "PH04",
+      "name": "RHIA Core y App",
+      "status": "DONE"
+    },
+    {
+      "id": "PH05",
+      "name": "Runtime de agentes y AI Gateway",
+      "status": "DONE"
+    },
+    {
+      "id": "PH06",
+      "name": "Search, evidencia e identidad",
+      "status": "IN_PROGRESS"
+    },
+    {
+      "id": "PH07",
+      "name": "CRM, contactos y scoring",
+      "status": "LOCKED"
+    },
+    {
+      "id": "PH08",
+      "name": "Outreach, conversación y reuniones",
+      "status": "LOCKED"
+    },
+    {
+      "id": "PH09",
+      "name": "Tools, Playwright y Computer Use",
+      "status": "LOCKED"
+    },
+    {
+      "id": "PH10",
+      "name": "Seguridad, testing y resiliencia",
+      "status": "LOCKED"
+    },
+    {
+      "id": "PH11",
+      "name": "Observabilidad y deployment",
+      "status": "LOCKED"
+    },
+    {
+      "id": "PH12",
+      "name": "QA, lanzamiento y hardening",
+      "status": "LOCKED"
+    }
   ]
 }

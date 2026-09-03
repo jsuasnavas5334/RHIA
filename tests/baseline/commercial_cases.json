@@ -161,8 +161,30 @@
         "searchCoverage": "BAJA",
         "searchState": "BUSQUEDA_OPERATIVA_COBERTURA_BAJA",
         "searchAction": "EVALUAR_Y_REINTENTAR_CONSULTAS",
-        "knownDomainParserGap": true,
-        "knownEmptyQueryActionGap": true
+        "knownDomainParserGap": false,
+        "knownEmptyQueryActionGap": false,
+        "fixedInTask": "PH06-T001"
+      }
+    },
+    {
+      "id": "RHIA-COM-005",
+      "name": "Consulta aislada con 429 y CAPTCHA, sin resultados",
+      "category": "RATE_LIMIT_ISOLATED",
+      "searchResponses": [
+        {
+          "query": "Empresa Y Ecuador Quito sitio oficial",
+          "results": [],
+          "unresponsive_engines": [
+            ["google cse", "too many requests"],
+            ["duckduckgo", "CAPTCHA"]
+          ]
+        }
+      ],
+      "expected": {
+        "queryAction": "RETRY_BACKOFF",
+        "engineTypes": ["RATE_LIMIT", "CAPTCHA"],
+        "estadoResultados": "SIN_RESULTADOS",
+        "rule": "Un 429/CAPTCHA sin resultados nunca debe reformular; debe reintentar con backoff."
       }
     }
   ]

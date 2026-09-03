@@ -1,9 +1,12 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { Pool, PoolClient, QueryResultRow } from 'pg';
+import type { SearchHealthEventRecord } from '@rhia/search-health';
 import type {
   ApprovalRecord, CompanyGroup, Contact, JobRecord, Opportunity,
 } from './contracts.js';
-import type { AuditEvent, AuditSink, CoreDependencies, CoreUnitOfWork, IdempotencyRecord, IdempotencyStore } from './ports.js';
+import type {
+  AuditEvent, AuditSink, CoreDependencies, CoreUnitOfWork, IdempotencyRecord, IdempotencyStore, SearchHealthRepository,
+} from './ports.js';
 
 type TimestampValue = Date | string;
 type DatabaseRow = QueryResultRow & Record<string, unknown>;
@@ -155,8 +158,8 @@ export class PostgresCorePersistence implements IdempotencyStore, AuditSink {
          reason_code, summary, target_ref, correlation_id, requested_at, expires_at, updated_at)
       SELECT $1, action.id, $3, $2,
         (SELECT id FROM rhia.app_user WHERE id=$8 AND organization_id=$3),
-        (SELECT instance.id FROM rhia.agent_instance instance JOIN rhia.agent_definition definition ON definition.id=instance.agent_definition_id
-          WHERE instance.id=$8 AND definition.organization_id=$3),
+        (SELECT instance.id FROM rhia.agent_instance instance
+          WHERE instance.id=$8 AND instance.organization_id=$3),
         $4, $5, $6, $9, $7, $13, $10, $11, $12 FROM inserted_action action`,
     [approval.id, approval.jobId, approval.organizationId, approval.action, approval.status, approval.reasonCode, approval.targetRef,
       approval.requestedById, approval.summary, approval.requestedAt, approval.expiresAt, approval.updatedAt,
@@ -179,6 +182,18 @@ export class PostgresCorePersistence implements IdempotencyStore, AuditSink {
   async listJobsByOrganization(organizationId: string): Promise<readonly JobRecord[]> {
     const result = await this.session.query<DatabaseRow>('SELECT * FROM rhia.job WHERE organization_id=$1 ORDER BY created_at, id', [organizationId]);
     return result.rows.map(mapJob);
+  }
+  async findJobById(organizationId: string, jobId: string): Promise<JobRecord | undefined> {
+    const result = await this.session.query<DatabaseRow>(
+      'SELECT * FROM rhia.job WHERE organization_id=$1 AND id=$2 FOR UPDATE', [organizationId, jobId]);
+    const row = result.rows[0];
+    return row ? mapJob(row) : undefined;
+  }
+  async updateJob(job: JobRecord): Promise<void> {
+    await this.session.query(`UPDATE rhia.job
+      SET status=$3, retry_count=$4, next_attempt_at=$5, updated_at=$6, completed_at=$7
+      WHERE organization_id=$1 AND id=$2`, [job.organizationId, job.id, job.status, job.retryCount,
+      job.nextAttemptAt, job.updatedAt, job.completedAt]);
   }
   async listApprovalsByOrganization(organizationId: string): Promise<readonly ApprovalRecord[]> {
     const result = await this.session.query<DatabaseRow>(`${approvalSelection} WHERE approval.organization_id=$1 ORDER BY approval.requested_at, approval.id`, [organizationId]);
@@ -221,22 +236,51 @@ export class PostgresCorePersistence implements IdempotencyStore, AuditSink {
   }
 }
 
+const mapSearchHealthEvent = (row: DatabaseRow): SearchHealthEventRecord => ({
+  component: text(row['component']),
+  status: text(row['status']) as SearchHealthEventRecord['status'],
+  occurredAt: iso(row['occurred_at'] as TimestampValue),
+});
+
+/** Lee `rhia.system_health_event` (tabla genérica, sin `organization_id`: es
+ * observabilidad de infraestructura compartida, no un recurso por tenant) —
+ * ver `packages/db/migrations/0001_domain_v1.sql` y PH06-T001. */
+export class PostgresSearchHealthRepository implements SearchHealthRepository {
+  constructor(private readonly session: PostgresSession) {}
+
+  async listRecentSearchEngineEvents(since: Date): Promise<readonly SearchHealthEventRecord[]> {
+    const result = await this.session.query<DatabaseRow>(
+      `SELECT component, status, occurred_at FROM rhia.system_health_event
+       WHERE component LIKE 'search_engine:%' AND occurred_at >= $1
+       ORDER BY occurred_at DESC`,
+      [since.toISOString()],
+    );
+    return result.rows.map(mapSearchHealthEvent);
+  }
+}
+
 export const createPostgresCoreDependencies = (
   pool: Pool,
   utilities: Readonly<{ newId: () => string; now: () => Date }>,
 ): CoreDependencies => {
   const session = new PostgresSession(pool);
   const persistence = new PostgresCorePersistence(session);
+  const searchHealth = new PostgresSearchHealthRepository(session);
   return {
     companies: { create: (value) => persistence.create(value), listByOrganization: (id) => persistence.listByOrganization(id) },
     contacts: { create: (value) => persistence.create(value), listByOrganization: (id) => persistence.listContactsByOrganization(id) },
     opportunities: { create: (value) => persistence.create(value), listByOrganization: (id) => persistence.listOpportunitiesByOrganization(id) },
-    jobs: { create: (value) => persistence.create(value), listByOrganization: (id) => persistence.listJobsByOrganization(id) },
+    jobs: {
+      create: (value) => persistence.create(value),
+      listByOrganization: (id) => persistence.listJobsByOrganization(id),
+      findById: (organizationId, jobId) => persistence.findJobById(organizationId, jobId),
+      update: (value) => persistence.updateJob(value),
+    },
     approvals: {
       create: (value) => persistence.create(value), listByOrganization: (id) => persistence.listApprovalsByOrganization(id),
       findById: (organizationId, approvalId) => persistence.findById(organizationId, approvalId),
       update: (value) => persistence.update(value),
     },
-    idempotency: persistence, audit: persistence, unitOfWork: session, ...utilities,
+    idempotency: persistence, audit: persistence, unitOfWork: session, searchHealth, ...utilities,
   };
 };

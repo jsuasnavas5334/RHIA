@@ -20,6 +20,7 @@
     "@rhia/contracts": "0.1.0",
     "@rhia/domain": "0.1.0",
     "@rhia/policy": "0.1.0",
+    "@rhia/search-health": "0.1.0",
     "pg": "8.23.0",
     "zod": "4.4.3"
   },

@@ -134,3 +134,11 @@ El restore comprobó tanto la cobertura exacta del catálogo como el conteo de c
 El schema está inventariado y versionado; cada tabla RHIA fue clasificada; el backup completo fue cifrado, restaurado y comparado contra las 133 tablas de aplicación. Los criterios de aceptación y las pruebas requeridas de `PH01-T002` están cumplidos.
 
 `PH01-T002` queda `DONE`. El riesgo residual de una sola ubicación física se entrega a `PH10-T004`, donde corresponderá automatizar la frecuencia, hacer cumplir la retención, definir RPO/RTO y agregar una segunda copia independiente. El DAG desbloquea `PH01-T004`.
+
+## Addendum 2026-09-02 (GATE-03): esquema `rhia` migrado
+
+Esta captura original (PH01-T002, 2026-08-19) describe `rhia_core` con un único schema de aplicación, `public`. El 2026-09-02, como parte del cierre de `GATE-03`, se aplicaron por primera vez contra esta misma instancia real las migraciones `packages/db/migrations/0001..0008.sql` y las semillas `packages/db/seeds/0001..0003.sql`, creando un **segundo schema, `rhia`**, con las tablas del dominio RHIA actual (agent runtime, auth, outreach policy, RBAC, etc.). El schema `public` original no fue tocado ni modificado.
+
+Se otorgó a `rhia_orchestrator` el mismo modelo de permisos que ya tenía sobre `public` (lectura/escritura sobre tablas operativas), extendido al nuevo schema `rhia`: `USAGE` sobre el schema, `SELECT/INSERT/UPDATE/DELETE` sobre sus tablas, y privilegios por defecto para tablas futuras creadas por `rhia_admin`.
+
+Detalle completo de esta migración y su verificación (incluida la evidencia del E2E real que la motivó) en `docs/progress/GATE-03.md`, sección "Actualización 2026-09-02 (cierre)". Este addendum no reemplaza la fotografía original de PH01-T002; documenta el estado real posterior.

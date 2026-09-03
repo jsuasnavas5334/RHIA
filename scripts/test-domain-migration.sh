@@ -18,13 +18,14 @@ outreach_migration="$project_root/packages/db/migrations/0004_outreach_policy.sq
 core_migration="$project_root/packages/db/migrations/0005_core_api_persistence.sql"
 auth_migration="$project_root/packages/db/migrations/0006_auth_v1.sql"
 auth_audit_migration="$project_root/packages/db/migrations/0007_auth_audit.sql"
+agent_runtime_migration="$project_root/packages/db/migrations/0008_agent_runtime.sql"
 seed="$project_root/packages/db/seeds/0001_minimum.sql"
 rbac_seed="$project_root/packages/db/seeds/0002_rbac_policy.sql"
 outreach_seed="$project_root/packages/db/seeds/0003_outreach_policy.sql"
 bundle=${RHIA_BACKUP_BUNDLE:-}
 passphrase_file=${RHIA_BACKUP_PASSPHRASE_FILE:-}
 
-[[ -f "$migration" && -f "$state_migration" && -f "$rbac_migration" && -f "$outreach_migration" && -f "$core_migration" && -f "$auth_migration" && -f "$auth_audit_migration" && -f "$seed" && -f "$rbac_seed" && -f "$outreach_seed" ]] || fail "Faltan migrations o seeds."
+[[ -f "$migration" && -f "$state_migration" && -f "$rbac_migration" && -f "$outreach_migration" && -f "$core_migration" && -f "$auth_migration" && -f "$auth_audit_migration" && -f "$agent_runtime_migration" && -f "$seed" && -f "$rbac_seed" && -f "$outreach_seed" ]] || fail "Faltan migrations o seeds."
 [[ -n "$bundle" ]] || fail "Falta RHIA_BACKUP_BUNDLE."
 bundle=$(realpath -e -- "$bundle")
 [[ -f "$bundle/rhia_core.dump.gpg" && -f "$bundle/counts.tsv" && -f "$bundle/SHA256SUMS" ]] || fail "Bundle incompleto."
@@ -111,6 +112,9 @@ docker exec -i "$container" psql -X -v ON_ERROR_STOP=1 -v migration_checksum="$a
 auth_audit_migration_checksum=$(sha256sum "$auth_audit_migration" | cut -d' ' -f1)
 docker exec -i "$container" psql -X -v ON_ERROR_STOP=1 -v migration_checksum="$auth_audit_migration_checksum" \
   -U postgres -d rhia_core < "$auth_audit_migration" >/dev/null
+agent_runtime_migration_checksum=$(sha256sum "$agent_runtime_migration" | cut -d' ' -f1)
+docker exec -i "$container" psql -X -v ON_ERROR_STOP=1 -v migration_checksum="$agent_runtime_migration_checksum" \
+  -U postgres -d rhia_core < "$agent_runtime_migration" >/dev/null
 docker exec -i "$container" psql -X -v ON_ERROR_STOP=1 -U postgres -d rhia_core < "$seed" >/dev/null
 docker exec -i "$container" psql -X -v ON_ERROR_STOP=1 -U postgres -d rhia_core < "$seed" >/dev/null
 docker exec -i "$container" psql -X -v ON_ERROR_STOP=1 -U postgres -d rhia_core < "$rbac_seed" >/dev/null
@@ -139,6 +143,9 @@ recorded_auth_checksum=$(docker exec "$container" psql -X -U postgres -d rhia_co
 recorded_auth_audit_checksum=$(docker exec "$container" psql -X -U postgres -d rhia_core -Atc \
   "SELECT checksum_sha256 FROM rhia.schema_migration WHERE version='0007_auth_audit';")
 [[ $recorded_auth_audit_checksum == "$auth_audit_migration_checksum" ]] || fail "Checksum de Auth audit migration no coincide."
+recorded_agent_runtime_checksum=$(docker exec "$container" psql -X -U postgres -d rhia_core -Atc \
+  "SELECT checksum_sha256 FROM rhia.schema_migration WHERE version='0008_agent_runtime';")
+[[ $recorded_agent_runtime_checksum == "$agent_runtime_migration_checksum" ]] || fail "Checksum de Agent Runtime migration no coincide."
 
 auth_audit_triggers=$(docker exec "$container" psql -X -U postgres -d rhia_core -Atc \
   "SELECT count(*) FROM pg_trigger WHERE tgrelid='rhia.auth_session'::regclass AND NOT tgisinternal AND tgname IN ('auth_session_created_audit','auth_session_deleted_audit');")
@@ -254,25 +261,46 @@ expect_sql_failure 'outreach policy cross-tenant' \
   "INSERT INTO rhia.outreach_sequence (organization_id, opportunity_id, policy_id, timezone) VALUES ('00000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000003', '20000000-0000-4000-8000-000000000009', 'America/Guayaquil');"
 expect_sql_failure 'suppression sin hash SHA256' \
   "INSERT INTO rhia.outreach_suppression (organization_id, subject_type, subject_key_hash, reason, source) VALUES ('00000000-0000-4000-8000-000000000001', 'CONTACT', 'email-en-claro@example.invalid', 'OPT_OUT', 'TEST');"
+expect_sql_failure 'lease parcial de job' \
+  "UPDATE rhia.job SET lease_owner='worker-incompleto' WHERE idempotency_key='synthetic-job-1';"
+expect_sql_failure 'checkpoint cross-tenant' \
+  "INSERT INTO rhia.job_step_checkpoint (organization_id, job_id, execution_id, step_key, status, attempt, lease_token, input_hash) VALUES ('20000000-0000-4000-8000-000000000001', (SELECT job_id FROM rhia.execution WHERE id='20000000-0000-4000-8000-000000000005'), '20000000-0000-4000-8000-000000000005', 'cross-tenant', 'STARTED', 1, gen_random_uuid(), repeat('a', 64));"
 
 node_bin=${RHIA_NODE_BIN:-$(command -v node || true)}
 [[ -n "$node_bin" ]] || fail "Falta Node.js para la integración atómica del Core API."
 host_port=$(docker port "$container" 5432/tcp | sed -E 's/.*:([0-9]+)$/\1/' | head -n1)
 [[ "$host_port" =~ ^[0-9]+$ ]] || fail "No se pudo resolver el puerto PostgreSQL temporal."
+test_database_url="postgresql://postgres:rhia_domain_test@127.0.0.1:${host_port}/rhia_core"
+run_node_with_database() {
+  if [[ "$node_bin" == *.exe ]]; then
+    RHIA_TEST_DATABASE_URL="$test_database_url" \
+      WSLENV="${WSLENV:+${WSLENV}:}RHIA_TEST_DATABASE_URL" \
+      "$node_bin" "$@"
+  else
+    RHIA_TEST_DATABASE_URL="$test_database_url" "$node_bin" "$@"
+  fi
+}
 core_test="$project_root/apps/core-api/dist/postgres-adapters.test.js"
 if [[ "$node_bin" == *.exe ]]; then
   core_test=$(wslpath -w "$core_test")
 fi
-RHIA_TEST_DATABASE_URL="postgresql://postgres:rhia_domain_test@127.0.0.1:${host_port}/rhia_core" \
-  "$node_bin" --test --test-name-pattern='PostgreSQL real' "$core_test" >/dev/null
+run_node_with_database --test --test-name-pattern='PostgreSQL real' "$core_test"
 auth_test="$project_root/apps/auth/dist/auth-options.test.js"
 auth_runtime_test="$project_root/apps/auth/dist/runtime.test.js"
+operations_e2e="$project_root/scripts/test-operations-e2e.mjs"
+agent_runtime_test="$project_root/apps/agent-runtime/dist/store.test.js"
+[[ -f "$operations_e2e" && -f "$agent_runtime_test" ]] || fail "Faltan E2E de Operations Center o Agent Runtime."
 if [[ "$node_bin" == *.exe ]]; then
   auth_test=$(wslpath -w "$auth_test")
   auth_runtime_test=$(wslpath -w "$auth_runtime_test")
+  operations_e2e=$(wslpath -w "$operations_e2e")
+  agent_runtime_test=$(wslpath -w "$agent_runtime_test")
 fi
-RHIA_TEST_DATABASE_URL="postgresql://postgres:rhia_domain_test@127.0.0.1:${host_port}/rhia_core" \
-  "$node_bin" --test --test-name-pattern='Better Auth real' "$auth_test" "$auth_runtime_test" >/dev/null
+run_node_with_database "$operations_e2e"
+docker exec "$container" psql -X -v ON_ERROR_STOP=1 -U postgres -d rhia_core \
+  -c 'DELETE FROM rhia.auth_rate_limit;' >/dev/null
+run_node_with_database --test --test-name-pattern='Better Auth real' "$auth_test" "$auth_runtime_test"
+run_node_with_database --test --test-name-pattern='PostgreSQL' "$agent_runtime_test"
 
 assert_legacy_counts
 
@@ -284,4 +312,4 @@ schema_after_restore=$(docker exec "$container" psql -X -U postgres -d rhia_core
   "SELECT count(*) FROM pg_namespace WHERE nspname='rhia';")
 [[ $schema_after_restore == 0 ]] || fail "El restore limpio contiene artefactos de la migration."
 
-echo "Domain migrations verificadas sobre backup: legacy intacto, seeds idempotentes, taxonomy/RBAC/outreach/Core API/Auth/tenant guards/índices y restore strategy aprobados."
+echo "Domain migrations verificadas sobre backup: legacy intacto, seeds idempotentes, taxonomy/RBAC/outreach/Core API/Auth/Agent Runtime/tenant guards/índices y restore strategy aprobados."

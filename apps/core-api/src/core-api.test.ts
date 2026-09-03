@@ -9,9 +9,10 @@ import { ApprovalService, JobService } from './control-services.js';
 import { createCoreHttpServer, type PrincipalAuthenticator } from './http-server.js';
 import {
   MemoryApprovalRepository, MemoryAuditSink, MemoryCompanyGroupRepository, MemoryContactRepository, MemoryIdempotencyStore,
-  MemoryJobRepository, MemoryOpportunityRepository, MemoryUnitOfWork,
+  MemoryJobRepository, MemoryOpportunityRepository, MemorySearchHealthRepository, MemoryUnitOfWork,
 } from './memory-adapters.js';
 import { ContactService, OpportunityService } from './record-services.js';
+import { SearchHealthService } from './search-health-service.js';
 
 const organizationA = '11111111-1111-4111-8111-111111111111';
 const organizationB = '22222222-2222-4222-8222-222222222222';
@@ -42,6 +43,7 @@ const fixture = () => {
   const approvals = new MemoryApprovalRepository();
   const idempotency = new MemoryIdempotencyStore();
   const audit = new MemoryAuditSink();
+  const searchHealth = new MemorySearchHealthRepository();
   const ids = [
     'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',
     'ffffffff-ffff-4fff-8fff-ffffffffffff',
@@ -57,13 +59,14 @@ const fixture = () => {
     idempotency,
     audit,
     unitOfWork: new MemoryUnitOfWork(),
+    searchHealth,
     newId: () => ids.shift() ?? '99999999-9999-4999-8999-999999999999',
     now: () => new Date('2026-08-21T14:00:00.000Z'),
   };
   return {
     api: new CoreApi(
       new CompanyGroupService(dependencies), new ContactService(dependencies), new OpportunityService(dependencies),
-      new JobService(dependencies), new ApprovalService(dependencies),
+      new JobService(dependencies), new ApprovalService(dependencies), new SearchHealthService(dependencies),
     ),
     companies,
     contacts,
@@ -71,6 +74,7 @@ const fixture = () => {
     jobs,
     approvals,
     audit,
+    searchHealth,
   };
 };
 
@@ -184,6 +188,15 @@ test('payload inválido y ruta desconocida usan error RHIA normalizado', async (
   assert.equal((unknown.body as { error: { code: string } }).error.code, 'RHIA_CONTRACT_INVALID_PAYLOAD');
 });
 
+test('session context expone solo roles humanos autenticados', async () => {
+  const { api } = fixture();
+  const human = await api.handle({ method: 'GET', path: '/api/v1/session', principal: manager, correlationId });
+  const service = await api.handle({ method: 'GET', path: '/api/v1/session', principal: agent, correlationId });
+  assert.deepEqual((human.body as { data: { roles: string[] } }).data.roles, ['MANAGER']);
+  assert.equal(JSON.stringify(human.body).includes(organizationA), false);
+  assert.equal(service.status, 403);
+});
+
 test('contacts nacen UNVERIFIED, se auditan y son idempotentes', async () => {
   const { api, contacts, audit } = fixture();
   const request = {
@@ -200,6 +213,50 @@ test('contacts nacen UNVERIFIED, se auditan y son idempotentes', async () => {
   assert.equal(contacts.records[0]?.status, 'UNVERIFIED');
   assert.equal(contacts.records.length, 1);
   assert.equal(audit.events.filter((event) => event.action === 'CONTACT_CREATED').length, 1);
+});
+
+test('GET /api/v1/search-health alimenta computeEngineHealthScores con el historial real (PH06-T001)', async () => {
+  const { api, searchHealth } = fixture();
+  const recent = (hoursAgo: number) => new Date(new Date('2026-08-21T14:00:00.000Z').getTime() - hoursAgo * 60 * 60 * 1000).toISOString();
+  for (let index = 0; index < 5; index += 1) {
+    searchHealth.events.push({ component: 'search_engine:duckduckgo', status: 'OK', occurredAt: recent(index) });
+  }
+  for (let index = 0; index < 3; index += 1) {
+    searchHealth.events.push({ component: 'search_engine:google cse', status: 'CAPTCHA', occurredAt: recent(index) });
+  }
+  searchHealth.events.push({ component: 'search_engine:startpage', status: 'OK', occurredAt: recent(0) });
+
+  const response = await api.handle({ method: 'GET', path: '/api/v1/search-health', principal: manager, correlationId });
+  assert.equal(response.status, 200);
+  const body = response.body as {
+    data: readonly { engine: string; score: number | null; classification: string; sampleWeight: number; eventCount: number }[];
+    meta: { windowDays: number; halfLifeHours: number; generatedAt: string };
+  };
+  const byEngine = new Map(body.data.map((entry) => [entry.engine, entry]));
+  assert.equal(byEngine.get('duckduckgo')?.classification, 'SALUDABLE');
+  assert.equal(byEngine.get('duckduckgo')?.score, 1);
+  assert.equal(byEngine.get('google cse')?.classification, 'DEGRADADO');
+  assert.equal(byEngine.get('google cse')?.score, 0);
+  assert.equal(byEngine.get('startpage')?.classification, 'SIN_DATOS_SUFICIENTES');
+  assert.equal(body.meta.windowDays, 14);
+  assert.equal(body.meta.generatedAt, '2026-08-21T14:00:00.000Z');
+});
+
+test('GET /api/v1/search-health sin eventos devuelve lista vacía, no error', async () => {
+  const { api } = fixture();
+  const response = await api.handle({ method: 'GET', path: '/api/v1/search-health', principal: manager, correlationId });
+  assert.equal(response.status, 200);
+  assert.deepEqual((response.body as { data: unknown[] }).data, []);
+});
+
+test('GET /api/v1/search-health requiere records.read', async () => {
+  const { api } = fixture();
+  const response = await api.handle({
+    method: 'GET', path: '/api/v1/search-health', correlationId,
+    principal: { kind: 'SERVICE', id: 'agent-2', organizationId: organizationA, service: 'AGENT_SERVICE', capabilities: ['jobs.execute'] },
+  });
+  assert.equal(response.status, 403);
+  assert.equal((response.body as { error: { code: string } }).error.code, 'RHIA_TOOL_FORBIDDEN');
 });
 
 test('opportunities nacen DISCOVERED/OPEN con score cero', async () => {
@@ -271,6 +328,74 @@ test('job válido nace PENDING, se audita y respeta START_JOB', async () => {
   assert.equal(audit.events.filter((event) => event.action === 'JOB_CREATED').length, 1);
 });
 
+test('retry de job fallido es idempotente y agenda un solo intento', async () => {
+  const { api, jobs, audit } = fixture();
+  const created = await api.handle({
+    method: 'POST', path: '/api/v1/jobs', principal: agent, correlationId,
+    body: {
+      jobType: 'RESOLVE_ENTITY',
+      input: { companyMentioned: 'Empresa Retry', resolutionQueries: ['Empresa Retry Ecuador'] },
+      idempotencyKey: 'job:retry:create:001',
+    },
+  });
+  const jobId = (created.body as { data: { id: string } }).data.id;
+  const current = jobs.records[0];
+  assert.ok(current);
+  jobs.records[0] = { ...current, status: 'FAILED', completedAt: '2026-08-21T20:00:00.000Z' };
+  const request = {
+    method: 'POST' as const, path: `/api/v1/jobs/${jobId}/retry`, principal: manager, correlationId,
+    body: { idempotencyKey: 'job:retry:command:001' },
+  };
+
+  const first = await api.handle(request);
+  const replay = await api.handle(request);
+
+  assert.equal(first.status, 200);
+  assert.equal(replay.status, 200);
+  assert.equal((first.body as { meta: { idempotentReplay: boolean } }).meta.idempotentReplay, false);
+  assert.equal((replay.body as { meta: { idempotentReplay: boolean } }).meta.idempotentReplay, true);
+  assert.equal(jobs.records[0]?.status, 'RETRY_SCHEDULED');
+  assert.equal(jobs.records[0]?.retryCount, 1);
+  assert.equal(audit.events.filter((event) => event.action === 'JOB_RETRY_SCHEDULED').length, 1);
+});
+
+test('cancel detiene un job no iniciado y bloquea nuevos pasos o usuarios sin permiso', async () => {
+  const { api, jobs, audit } = fixture();
+  const created = await api.handle({
+    method: 'POST', path: '/api/v1/jobs', principal: agent, correlationId,
+    body: {
+      jobType: 'RESEARCH_COMPANY', input: { companyName: 'Empresa Cancel', countryCode: 'EC', urlsToVerify: [] },
+      idempotencyKey: 'job:cancel:create:001',
+    },
+  });
+  const jobId = (created.body as { data: { id: string } }).data.id;
+  const body = { reason: 'Ya no es necesario', idempotencyKey: 'job:cancel:command:001' };
+  const denied = await api.handle({ method: 'POST', path: `/api/v1/jobs/${jobId}/cancel`, principal: viewer, correlationId, body });
+  const cancelled = await api.handle({ method: 'POST', path: `/api/v1/jobs/${jobId}/cancel`, principal: manager, correlationId, body });
+  const replayed = await api.handle({ method: 'POST', path: `/api/v1/jobs/${jobId}/cancel`, principal: manager, correlationId, body });
+  const retryBlocked = await api.handle({
+    method: 'POST', path: `/api/v1/jobs/${jobId}/retry`, principal: manager, correlationId,
+    body: { idempotencyKey: 'job:retry:cancelled:001' },
+  });
+  const approvalBlocked = await api.handle({
+    method: 'POST', path: '/api/v1/approvals', principal: agent, correlationId,
+    body: {
+      jobId, action: 'BINDING_COMMITMENT', reasonCode: 'RHIA_APPROVAL_CANCELLED_JOB',
+      summary: 'No debe continuar tras cancelar', targetRef: organizationA,
+      idempotencyKey: 'approval:cancelled:001',
+    },
+  });
+
+  assert.equal(denied.status, 403);
+  assert.equal(cancelled.status, 200);
+  assert.equal((replayed.body as { meta: { idempotentReplay: boolean } }).meta.idempotentReplay, true);
+  assert.equal(retryBlocked.status, 409);
+  assert.equal(approvalBlocked.status, 409);
+  assert.equal(jobs.records[0]?.status, 'CANCELLED');
+  assert.equal(jobs.records[0]?.nextAttemptAt, null);
+  assert.equal(audit.events.filter((event) => event.action === 'JOB_CANCELLED').length, 1);
+});
+
 test('jobType rechaza input de otro contrato', async () => {
   const { api } = fixture();
   const response = await api.handle({
@@ -283,10 +408,17 @@ test('jobType rechaza input de otro contrato', async () => {
 
 test('agent solicita approval pero no puede listar ni decidir', async () => {
   const { api, approvals, audit } = fixture();
+  const job = await api.handle({
+    method: 'POST', path: '/api/v1/jobs', principal: agent, correlationId,
+    body: {
+      jobType: 'RESOLVE_ENTITY', input: { companyMentioned: 'Approval Agent', resolutionQueries: ['Approval Agent Ecuador'] },
+      idempotencyKey: 'job:approval:agent:001',
+    },
+  });
   const created = await api.handle({
     method: 'POST', path: '/api/v1/approvals', principal: agent, correlationId,
     body: {
-      jobId: '12121212-1212-4212-8212-121212121212', action: 'CHANGE_PRICE',
+      jobId: (job.body as { data: { id: string } }).data.id, action: 'CHANGE_PRICE',
       reasonCode: 'RHIA_APPROVAL_PRICE_CHANGE', summary: 'Revisar ajuste propuesto',
       targetRef: '34343434-3434-4434-8434-343434343434', idempotencyKey: 'approval:price:001',
     },
@@ -306,10 +438,17 @@ test('agent solicita approval pero no puede listar ni decidir', async () => {
 
 test('manager decide approval una sola vez sin ejecutar la acción comercial', async () => {
   const { api, approvals, audit } = fixture();
+  const job = await api.handle({
+    method: 'POST', path: '/api/v1/jobs', principal: agent, correlationId,
+    body: {
+      jobType: 'RESOLVE_ENTITY', input: { companyMentioned: 'Approval Manager', resolutionQueries: ['Approval Manager Ecuador'] },
+      idempotencyKey: 'job:approval:manager:001',
+    },
+  });
   const created = await api.handle({
     method: 'POST', path: '/api/v1/approvals', principal: agent, correlationId,
     body: {
-      jobId: '56565656-5656-4656-8656-565656565656', action: 'BINDING_COMMITMENT',
+      jobId: (job.body as { data: { id: string } }).data.id, action: 'BINDING_COMMITMENT',
       reasonCode: 'RHIA_APPROVAL_COMMITMENT', summary: 'Compromiso sujeto a revisión humana',
       targetRef: '78787878-7878-4878-8878-787878787878', idempotencyKey: 'approval:commitment:001',
     },

@@ -1,0 +1,43 @@
+{
+  "version": "v1",
+  "generatedBy": "@rhia/benchmarks",
+  "note": "Perfiles derivados de respuestas guionadas (FakeTransport), no de proveedores reales -- ver docs/progress/PH05-T004.md, seccion Riesgos, antes de usar en produccion.",
+  "profiles": [
+    {
+      "provider": "openai",
+      "model": "gpt-5",
+      "tier": "premium",
+      "qualityScore": 1,
+      "estCostPerTaskUsd": 0.000436,
+      "maxLatencyMsP95": 41,
+      "dataResidency": "any"
+    },
+    {
+      "provider": "anthropic",
+      "model": "claude-mini-2026",
+      "tier": "standard",
+      "qualityScore": 0.929,
+      "estCostPerTaskUsd": 0.000587,
+      "maxLatencyMsP95": 26,
+      "dataResidency": "any"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-5-mini",
+      "tier": "economy",
+      "qualityScore": 0.738,
+      "estCostPerTaskUsd": 0.000386,
+      "maxLatencyMsP95": 13,
+      "dataResidency": "any"
+    },
+    {
+      "provider": "ollama",
+      "model": "llama3.1:8b",
+      "tier": "economy",
+      "qualityScore": 0.643,
+      "estCostPerTaskUsd": 0,
+      "maxLatencyMsP95": 4,
+      "dataResidency": "local_only"
+    }
+  ]
+}

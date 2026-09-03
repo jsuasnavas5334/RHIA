@@ -132,14 +132,14 @@ export const bootstrapFirstAdmin = async (pool: Pool, request: AdminBootstrapReq
     }
     await client.query(`
       INSERT INTO rhia.auth_account (issuer, account_id, provider_id, user_id, password_hash)
-      VALUES ($1, $2, 'credential', $2, $3)
+      VALUES ($1, $2::text, 'credential', $2::uuid, $3)
       ON CONFLICT (issuer, account_id) DO UPDATE
         SET password_hash=EXCLUDED.password_hash, updated_at=now()
         WHERE auth_account.user_id=EXCLUDED.user_id AND auth_account.password_hash IS NULL`,
     [CREDENTIAL_ISSUER, authUserId, request.passwordHash]);
     const credential = await client.query(
       `SELECT 1 FROM rhia.auth_account
-       WHERE issuer=$1 AND account_id=$2 AND provider_id='credential' AND user_id=$2 AND password_hash IS NOT NULL`,
+       WHERE issuer=$1 AND account_id=$2::text AND provider_id='credential' AND user_id=$2::uuid AND password_hash IS NOT NULL`,
     [CREDENTIAL_ISSUER, authUserId]);
     if (credential.rowCount !== 1) {
       throw new AdminBootstrapError('IDENTITY_CONFLICT', 'La cuenta credential existente no puede vincularse de forma segura.');

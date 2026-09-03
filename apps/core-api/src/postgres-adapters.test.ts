@@ -122,7 +122,7 @@ test('PostgreSQL real persiste y aísla el ciclo Core completo', { skip: !integr
     service: 'AGENT_SERVICE', capabilities: ['records.read', 'records.write', 'jobs.execute', 'approvals.request'],
   };
   const manager: Principal = {
-    kind: 'HUMAN', id: '20000000-0000-4000-8000-000000000002', organizationId, roles: ['MANAGER'],
+    kind: 'HUMAN', id: '32000000-0000-4000-8000-000000000020', organizationId, roles: ['MANAGER'],
   };
   const otherManager: Principal = {
     kind: 'HUMAN', id: '20000000-0000-4000-8000-000000000003',
@@ -135,6 +135,8 @@ test('PostgreSQL real persiste y aísla el ciclo Core completo', { skip: !integr
     jobId, '32000000-0000-4000-8000-000000000008',
     approvalId, '32000000-0000-4000-8000-000000000010',
     '32000000-0000-4000-8000-000000000011',
+    '32000000-0000-4000-8000-000000000012',
+    '32000000-0000-4000-8000-000000000013',
   ];
   const dependencies = createPostgresCoreDependencies(pool, {
     newId: () => ids.shift() ?? '32000000-0000-4000-8000-000000000099',
@@ -146,6 +148,9 @@ test('PostgreSQL real persiste y aísla el ciclo Core completo', { skip: !integr
   const jobs = new JobService(dependencies);
   const approvals = new ApprovalService(dependencies);
   try {
+    await pool.query(`INSERT INTO rhia.app_user (id, organization_id, email, display_name, auth_provider)
+      VALUES ($1,$2,'core-integration-manager@example.invalid','Core Integration Manager','TEST')`,
+    [manager.id, organizationId]);
     const company = await companies.create(agent, {
       canonicalName: 'Core PostgreSQL Integration', websiteRoot: 'https://example.invalid', idempotencyKey: 'integration:company:001',
     }, '33000000-0000-4000-8000-000000000002');
@@ -173,10 +178,38 @@ test('PostgreSQL real persiste y aísla el ciclo Core completo', { skip: !integr
       idempotencyKey: 'integration:approval:001',
     }, requestCorrelationId);
     assert.equal(requested.approval.correlationId, requestCorrelationId);
+    const approvalTenants = await pool.query<{ approval_organization: string; action_organization: string; approver_organization: string }>(`SELECT
+      (SELECT organization_id::text FROM rhia.approval WHERE id=$1) AS approval_organization,
+      (SELECT job.organization_id::text FROM rhia.approval approval
+        JOIN rhia.action action ON action.id=approval.action_id
+        JOIN rhia.execution execution ON execution.id=action.execution_id
+        JOIN rhia.job job ON job.id=execution.job_id WHERE approval.id=$1) AS action_organization,
+      (SELECT organization_id::text FROM rhia.app_user WHERE id=$2) AS approver_organization`, [approvalId, manager.id]);
+    assert.deepEqual(approvalTenants.rows[0], {
+      approval_organization: organizationId, action_organization: organizationId, approver_organization: organizationId,
+    });
     const decided = await approvals.decide(manager, approvalId, {
       decision: 'APPROVED', reason: 'Prueba humana controlada', idempotencyKey: 'integration:approval:decision:001',
     }, '33000000-0000-4000-8000-000000000006');
     assert.equal(decided.approval.status, 'APPROVED');
+
+    await pool.query(`UPDATE rhia.job SET status='FAILED', completed_at=$3, updated_at=$3
+      WHERE organization_id=$1 AND id=$2`, [organizationId, jobId, '2026-08-21T21:00:00.000Z']);
+    const retried = await jobs.retry(manager, jobId, { idempotencyKey: 'integration:job:retry:001' },
+      '33000000-0000-4000-8000-000000000007');
+    const retryReplay = await jobs.retry(manager, jobId, { idempotencyKey: 'integration:job:retry:001' },
+      '33000000-0000-4000-8000-000000000007');
+    assert.equal(retried.job.status, 'RETRY_SCHEDULED');
+    assert.equal(retried.job.retryCount, 1);
+    assert.equal(retryReplay.replayed, true);
+    const cancelled = await jobs.cancel(manager, jobId, {
+      reason: 'Cancelar prueba temporal', idempotencyKey: 'integration:job:cancel:001',
+    }, '33000000-0000-4000-8000-000000000008');
+    assert.equal(cancelled.job.status, 'CANCELLED');
+    await assert.rejects(approvals.create(agent, {
+      jobId, action: 'CHANGE_PRICE', reasonCode: 'RHIA_APPROVAL_CANCELLED_JOB',
+      summary: 'Debe permanecer bloqueada', targetRef: opportunityId, idempotencyKey: 'integration:approval:blocked:001',
+    }, '33000000-0000-4000-8000-000000000009'), /job cancelado/);
 
     assert.equal((await companies.list(agent)).some((value) => value.id === companyId), true);
     assert.equal((await contacts.list(agent)).some((value) => value.id === contactId), true);
@@ -196,7 +229,7 @@ test('PostgreSQL real persiste y aísla el ciclo Core completo', { skip: !integr
        JOIN rhia.execution execution ON execution.id=action.execution_id
        WHERE approval.id=$5 AND approval.correlation_id=$6 AND execution.trace_id=$6)::text AS controls`,
     [companyId, contactId, opportunityId, jobId, approvalId, requestCorrelationId]);
-    assert.deepEqual(state.rows[0], { resources: '5', audits: '6', ledger: '6', controls: '1' });
+    assert.deepEqual(state.rows[0], { resources: '5', audits: '8', ledger: '8', controls: '1' });
   } finally {
     await pool.end();
   }

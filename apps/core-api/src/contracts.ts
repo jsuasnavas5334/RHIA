@@ -108,6 +108,11 @@ const resourceResponse = <T extends z.ZodType>(schema: T) =>
 const resourceListResponse = <T extends z.ZodType>(schema: T) =>
   z.object({ version: ContractVersionSchema, data: z.array(schema) }).strict();
 
+export const SessionContextResponseSchema = z.object({
+  version: ContractVersionSchema,
+  data: z.object({ roles: z.array(z.enum(['ADMIN', 'MANAGER', 'OPERATOR', 'VIEWER'])).min(1) }).strict(),
+}).strict();
+
 export const ContactResponseSchema = resourceResponse(ContactSchema);
 export const ContactListResponseSchema = resourceListResponse(ContactSchema);
 export const OpportunityResponseSchema = resourceResponse(OpportunitySchema);
@@ -120,15 +125,22 @@ export const StartJobSchema = z.object({
   priority: z.number().int().min(0).max(100).default(50),
   idempotencyKey: z.string().trim().min(8).max(160).regex(/^[A-Za-z0-9._:-]+$/),
 }).strict();
+export const RetryJobSchema = z.object({
+  idempotencyKey: z.string().trim().min(8).max(160).regex(/^[A-Za-z0-9._:-]+$/),
+}).strict();
+export const CancelJobSchema = z.object({
+  reason: z.string().trim().min(1).max(1000).optional(),
+  idempotencyKey: z.string().trim().min(8).max(160).regex(/^[A-Za-z0-9._:-]+$/),
+}).strict();
 export const JobRecordSchema = z.object({
   id: UuidSchema,
   organizationId: UuidSchema,
   jobType: JobTypeSchema,
   input: z.record(z.string(), z.unknown()),
-  status: z.literal('PENDING'),
+  status: z.enum(['PENDING', 'QUEUED', 'RUNNING', 'RETRY_SCHEDULED', 'SUCCEEDED', 'PARTIAL', 'FAILED', 'CANCELLED', 'DEAD_LETTER']),
   priority: z.number().int().min(0).max(100),
   idempotencyKey: z.string(),
-  retryCount: z.literal(0),
+  retryCount: z.number().int().nonnegative(),
   nextAttemptAt: TimestampSchema.nullable(),
   createdAt: TimestampSchema,
   updatedAt: TimestampSchema,
@@ -177,6 +189,28 @@ export const validateJobRequest = JobRequestSchema;
 export const validateApprovalRequest = ApprovalRequestSchema;
 export const validateApprovalDecision = ApprovalDecisionSchema;
 
+export const EngineHealthScoreSchema = z
+  .object({
+    engine: z.string().min(1),
+    score: z.number().min(0).max(1).nullable(),
+    classification: z.enum(['SALUDABLE', 'INESTABLE', 'DEGRADADO', 'SIN_DATOS', 'SIN_DATOS_SUFICIENTES']),
+    sampleWeight: z.number().nonnegative(),
+    eventCount: z.number().int().nonnegative(),
+  })
+  .strict();
+
+export const SearchHealthResponseSchema = z
+  .object({
+    version: ContractVersionSchema,
+    data: z.array(EngineHealthScoreSchema),
+    meta: z.object({
+      windowDays: z.number().positive(),
+      halfLifeHours: z.number().positive(),
+      generatedAt: TimestampSchema,
+    }).strict(),
+  })
+  .strict();
+
 export const CoreApiErrorResponseSchema = z
   .object({
     version: ContractVersionSchema,
@@ -192,6 +226,9 @@ export type Opportunity = z.infer<typeof OpportunitySchema>;
 export type CreateOpportunity = z.infer<typeof CreateOpportunitySchema>;
 export type JobRecord = z.infer<typeof JobRecordSchema>;
 export type StartJob = z.infer<typeof StartJobSchema>;
+export type RetryJob = z.infer<typeof RetryJobSchema>;
+export type CancelJob = z.infer<typeof CancelJobSchema>;
 export type ApprovalRecord = z.infer<typeof ApprovalRecordSchema>;
 export type CreateApproval = z.infer<typeof CreateApprovalSchema>;
 export type DecideApproval = z.infer<typeof DecideApprovalSchema>;
+export type EngineHealthScoreDto = z.infer<typeof EngineHealthScoreSchema>;

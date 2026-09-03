@@ -745,33 +745,85 @@
       "estructura_respuesta_valida": true,
       "estado_tecnico": "RESPUESTA_CON_ALERTAS",
       "estado_resultados": "CON_RESULTADOS",
-      "cobertura_resultados": "BAJA",
+      "cobertura_resultados": "ALTA",
       "total_resultados": 20,
       "resultados_con_url": 20,
       "urls_unicas": 20,
-      "dominios_unicos": 0,
-      "dominios_detectados": [],
+      "dominios_unicos": 15,
+      "dominios_detectados": [
+        "facebook.com",
+        "tiktok.com",
+        "universidadviu.com",
+        "instagram.com",
+        "uteg.edu.ec",
+        "dokumen.pub",
+        "rfilc.org",
+        "bibliotecadigital.univalle.edu.co",
+        "repositorio.uasb.edu.ec",
+        "imprentanacional.go.cr",
+        "erplawyers.com",
+        "cr.linkedin.com",
+        "es.scribd.com",
+        "researchgate.net",
+        "saber.ucv.ve"
+      ],
       "motores_detectados": [
         "google cse"
       ],
       "motores_no_responden": [
         {
           "motor": "brave",
-          "motivo": "too many requests"
+          "motivo": "too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "duckduckgo",
-          "motivo": "CAPTCHA"
+          "motivo": "CAPTCHA",
+          "tipo": "CAPTCHA"
         },
         {
           "motor": "startpage",
-          "motivo": "Suspended: CAPTCHA"
+          "motivo": "Suspended: CAPTCHA",
+          "tipo": "CAPTCHA"
         }
       ],
-      "siguiente_accion_consulta": "EVALUAR_EVIDENCIA_ENTIDAD"
+      "siguiente_accion_consulta": "EVALUAR_EVIDENCIA_ENTIDAD",
+      "search_health_events": [
+        {
+          "component": "search_engine:google cse",
+          "status": "OK",
+          "detail": {
+            "query": "\"Empresa X\" \"Costa Rica\" \"San José\" (\"sitio oficial\" OR official OR corporativo)"
+          }
+        },
+        {
+          "component": "search_engine:brave",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"Costa Rica\" \"San José\" (\"sitio oficial\" OR official OR corporativo)",
+            "motivo": "too many requests"
+          }
+        },
+        {
+          "component": "search_engine:duckduckgo",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"Costa Rica\" \"San José\" (\"sitio oficial\" OR official OR corporativo)",
+            "motivo": "CAPTCHA"
+          }
+        },
+        {
+          "component": "search_engine:startpage",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"Costa Rica\" \"San José\" (\"sitio oficial\" OR official OR corporativo)",
+            "motivo": "Suspended: CAPTCHA"
+          }
+        }
+      ]
     },
     "salud_busqueda_global": {
-      "version": "RHIA_SEARCH_HEALTH_V1",
+      "version": "RHIA_SEARCH_HEALTH_V2",
       "total_consultas": 18,
       "consultas_respuesta_valida": 18,
       "consultas_invalidas": 0,
@@ -780,7 +832,7 @@
       "consultas_con_alertas_motor": 18,
       "total_resultados": 20,
       "urls_unicas_globales": 20,
-      "dominios_unicos_globales": 0,
+      "dominios_unicos_globales": 15,
       "porcentaje_respuestas_validas": 100,
       "porcentaje_consultas_con_resultados": 6,
       "salud_tecnica_global": "DEGRADADA",
@@ -828,25 +880,63 @@
       "motores_no_responden": [
         {
           "motor": "brave",
-          "motivo": "Suspended: too many requests"
+          "motivo": "Suspended: too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "duckduckgo",
-          "motivo": "CAPTCHA"
+          "motivo": "CAPTCHA",
+          "tipo": "CAPTCHA"
         },
         {
           "motor": "google cse",
-          "motivo": "too many requests"
+          "motivo": "too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "startpage",
-          "motivo": "Suspended: CAPTCHA"
+          "motivo": "Suspended: CAPTCHA",
+          "tipo": "CAPTCHA"
         }
       ],
-      "siguiente_accion_consulta": "REFORMULAR_CONSULTA"
+      "siguiente_accion_consulta": "RETRY_BACKOFF",
+      "search_health_events": [
+        {
+          "component": "search_engine:brave",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"Costa Rica\" \"San José\" (operador OR \"operador local\" OR franquicia OR franquiciado OR franchisee OR licensee OR licenciatario OR representación OR representante OR distribuidor)",
+            "motivo": "Suspended: too many requests"
+          }
+        },
+        {
+          "component": "search_engine:duckduckgo",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"Costa Rica\" \"San José\" (operador OR \"operador local\" OR franquicia OR franquiciado OR franchisee OR licensee OR licenciatario OR representación OR representante OR distribuidor)",
+            "motivo": "CAPTCHA"
+          }
+        },
+        {
+          "component": "search_engine:google cse",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"Costa Rica\" \"San José\" (operador OR \"operador local\" OR franquicia OR franquiciado OR franchisee OR licensee OR licenciatario OR representación OR representante OR distribuidor)",
+            "motivo": "too many requests"
+          }
+        },
+        {
+          "component": "search_engine:startpage",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"Costa Rica\" \"San José\" (operador OR \"operador local\" OR franquicia OR franquiciado OR franchisee OR licensee OR licenciatario OR representación OR representante OR distribuidor)",
+            "motivo": "Suspended: CAPTCHA"
+          }
+        }
+      ]
     },
     "salud_busqueda_global": {
-      "version": "RHIA_SEARCH_HEALTH_V1",
+      "version": "RHIA_SEARCH_HEALTH_V2",
       "total_consultas": 18,
       "consultas_respuesta_valida": 18,
       "consultas_invalidas": 0,
@@ -855,7 +945,7 @@
       "consultas_con_alertas_motor": 18,
       "total_resultados": 20,
       "urls_unicas_globales": 20,
-      "dominios_unicos_globales": 0,
+      "dominios_unicos_globales": 15,
       "porcentaje_respuestas_validas": 100,
       "porcentaje_consultas_con_resultados": 6,
       "salud_tecnica_global": "DEGRADADA",
@@ -903,25 +993,63 @@
       "motores_no_responden": [
         {
           "motor": "brave",
-          "motivo": "Suspended: too many requests"
+          "motivo": "Suspended: too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "duckduckgo",
-          "motivo": "CAPTCHA"
+          "motivo": "CAPTCHA",
+          "tipo": "CAPTCHA"
         },
         {
           "motor": "google cse",
-          "motivo": "Suspended: too many requests"
+          "motivo": "Suspended: too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "startpage",
-          "motivo": "Suspended: CAPTCHA"
+          "motivo": "Suspended: CAPTCHA",
+          "tipo": "CAPTCHA"
         }
       ],
-      "siguiente_accion_consulta": "REFORMULAR_CONSULTA"
+      "siguiente_accion_consulta": "RETRY_BACKOFF",
+      "search_health_events": [
+        {
+          "component": "search_engine:brave",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"Costa Rica\" (\"razón social\" OR \"razon social\" OR \"legal entity\" OR sociedad OR compañía OR compania OR S.A. OR S.A.S. OR SAS)",
+            "motivo": "Suspended: too many requests"
+          }
+        },
+        {
+          "component": "search_engine:duckduckgo",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"Costa Rica\" (\"razón social\" OR \"razon social\" OR \"legal entity\" OR sociedad OR compañía OR compania OR S.A. OR S.A.S. OR SAS)",
+            "motivo": "CAPTCHA"
+          }
+        },
+        {
+          "component": "search_engine:google cse",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"Costa Rica\" (\"razón social\" OR \"razon social\" OR \"legal entity\" OR sociedad OR compañía OR compania OR S.A. OR S.A.S. OR SAS)",
+            "motivo": "Suspended: too many requests"
+          }
+        },
+        {
+          "component": "search_engine:startpage",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"Costa Rica\" (\"razón social\" OR \"razon social\" OR \"legal entity\" OR sociedad OR compañía OR compania OR S.A. OR S.A.S. OR SAS)",
+            "motivo": "Suspended: CAPTCHA"
+          }
+        }
+      ]
     },
     "salud_busqueda_global": {
-      "version": "RHIA_SEARCH_HEALTH_V1",
+      "version": "RHIA_SEARCH_HEALTH_V2",
       "total_consultas": 18,
       "consultas_respuesta_valida": 18,
       "consultas_invalidas": 0,
@@ -930,7 +1058,7 @@
       "consultas_con_alertas_motor": 18,
       "total_resultados": 20,
       "urls_unicas_globales": 20,
-      "dominios_unicos_globales": 0,
+      "dominios_unicos_globales": 15,
       "porcentaje_respuestas_validas": 100,
       "porcentaje_consultas_con_resultados": 6,
       "salud_tecnica_global": "DEGRADADA",
@@ -978,25 +1106,63 @@
       "motores_no_responden": [
         {
           "motor": "brave",
-          "motivo": "Suspended: too many requests"
+          "motivo": "Suspended: too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "duckduckgo",
-          "motivo": "CAPTCHA"
+          "motivo": "CAPTCHA",
+          "tipo": "CAPTCHA"
         },
         {
           "motor": "google cse",
-          "motivo": "Suspended: too many requests"
+          "motivo": "Suspended: too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "startpage",
-          "motivo": "Suspended: CAPTCHA"
+          "motivo": "Suspended: CAPTCHA",
+          "tipo": "CAPTCHA"
         }
       ],
-      "siguiente_accion_consulta": "REFORMULAR_CONSULTA"
+      "siguiente_accion_consulta": "RETRY_BACKOFF",
+      "search_health_events": [
+        {
+          "component": "search_engine:brave",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"Costa Rica\" \"San José\" (\"trabaja con nosotros\" OR empleos OR empleo OR careers OR jobs OR \"talento humano\" OR \"recursos humanos\" OR contratación OR contratacion OR selección OR seleccion)",
+            "motivo": "Suspended: too many requests"
+          }
+        },
+        {
+          "component": "search_engine:duckduckgo",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"Costa Rica\" \"San José\" (\"trabaja con nosotros\" OR empleos OR empleo OR careers OR jobs OR \"talento humano\" OR \"recursos humanos\" OR contratación OR contratacion OR selección OR seleccion)",
+            "motivo": "CAPTCHA"
+          }
+        },
+        {
+          "component": "search_engine:google cse",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"Costa Rica\" \"San José\" (\"trabaja con nosotros\" OR empleos OR empleo OR careers OR jobs OR \"talento humano\" OR \"recursos humanos\" OR contratación OR contratacion OR selección OR seleccion)",
+            "motivo": "Suspended: too many requests"
+          }
+        },
+        {
+          "component": "search_engine:startpage",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"Costa Rica\" \"San José\" (\"trabaja con nosotros\" OR empleos OR empleo OR careers OR jobs OR \"talento humano\" OR \"recursos humanos\" OR contratación OR contratacion OR selección OR seleccion)",
+            "motivo": "Suspended: CAPTCHA"
+          }
+        }
+      ]
     },
     "salud_busqueda_global": {
-      "version": "RHIA_SEARCH_HEALTH_V1",
+      "version": "RHIA_SEARCH_HEALTH_V2",
       "total_consultas": 18,
       "consultas_respuesta_valida": 18,
       "consultas_invalidas": 0,
@@ -1005,7 +1171,7 @@
       "consultas_con_alertas_motor": 18,
       "total_resultados": 20,
       "urls_unicas_globales": 20,
-      "dominios_unicos_globales": 0,
+      "dominios_unicos_globales": 15,
       "porcentaje_respuestas_validas": 100,
       "porcentaje_consultas_con_resultados": 6,
       "salud_tecnica_global": "DEGRADADA",
@@ -1053,25 +1219,63 @@
       "motores_no_responden": [
         {
           "motor": "brave",
-          "motivo": "Suspended: too many requests"
+          "motivo": "Suspended: too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "duckduckgo",
-          "motivo": "CAPTCHA"
+          "motivo": "CAPTCHA",
+          "tipo": "CAPTCHA"
         },
         {
           "motor": "google cse",
-          "motivo": "Suspended: too many requests"
+          "motivo": "Suspended: too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "startpage",
-          "motivo": "Suspended: CAPTCHA"
+          "motivo": "Suspended: CAPTCHA",
+          "tipo": "CAPTCHA"
         }
       ],
-      "siguiente_accion_consulta": "REFORMULAR_CONSULTA"
+      "siguiente_accion_consulta": "RETRY_BACKOFF",
+      "search_health_events": [
+        {
+          "component": "search_engine:brave",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"Costa Rica\" (\"grupo empresarial\" OR holding OR grupo OR propietario OR owner OR parent company OR subsidiaria OR subsidiary)",
+            "motivo": "Suspended: too many requests"
+          }
+        },
+        {
+          "component": "search_engine:duckduckgo",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"Costa Rica\" (\"grupo empresarial\" OR holding OR grupo OR propietario OR owner OR parent company OR subsidiaria OR subsidiary)",
+            "motivo": "CAPTCHA"
+          }
+        },
+        {
+          "component": "search_engine:google cse",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"Costa Rica\" (\"grupo empresarial\" OR holding OR grupo OR propietario OR owner OR parent company OR subsidiaria OR subsidiary)",
+            "motivo": "Suspended: too many requests"
+          }
+        },
+        {
+          "component": "search_engine:startpage",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"Costa Rica\" (\"grupo empresarial\" OR holding OR grupo OR propietario OR owner OR parent company OR subsidiaria OR subsidiary)",
+            "motivo": "Suspended: CAPTCHA"
+          }
+        }
+      ]
     },
     "salud_busqueda_global": {
-      "version": "RHIA_SEARCH_HEALTH_V1",
+      "version": "RHIA_SEARCH_HEALTH_V2",
       "total_consultas": 18,
       "consultas_respuesta_valida": 18,
       "consultas_invalidas": 0,
@@ -1080,7 +1284,7 @@
       "consultas_con_alertas_motor": 18,
       "total_resultados": 20,
       "urls_unicas_globales": 20,
-      "dominios_unicos_globales": 0,
+      "dominios_unicos_globales": 15,
       "porcentaje_respuestas_validas": 100,
       "porcentaje_consultas_con_resultados": 6,
       "salud_tecnica_global": "DEGRADADA",
@@ -1128,25 +1332,63 @@
       "motores_no_responden": [
         {
           "motor": "brave",
-          "motivo": "Suspended: too many requests"
+          "motivo": "Suspended: too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "duckduckgo",
-          "motivo": "CAPTCHA"
+          "motivo": "CAPTCHA",
+          "tipo": "CAPTCHA"
         },
         {
           "motor": "google cse",
-          "motivo": "Suspended: too many requests"
+          "motivo": "Suspended: too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "startpage",
-          "motivo": "Suspended: CAPTCHA"
+          "motivo": "Suspended: CAPTCHA",
+          "tipo": "CAPTCHA"
         }
       ],
-      "siguiente_accion_consulta": "REFORMULAR_CONSULTA"
+      "siguiente_accion_consulta": "RETRY_BACKOFF",
+      "search_health_events": [
+        {
+          "component": "search_engine:brave",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"San José\" \"Costa Rica\"",
+            "motivo": "Suspended: too many requests"
+          }
+        },
+        {
+          "component": "search_engine:duckduckgo",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"San José\" \"Costa Rica\"",
+            "motivo": "CAPTCHA"
+          }
+        },
+        {
+          "component": "search_engine:google cse",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"San José\" \"Costa Rica\"",
+            "motivo": "Suspended: too many requests"
+          }
+        },
+        {
+          "component": "search_engine:startpage",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"San José\" \"Costa Rica\"",
+            "motivo": "Suspended: CAPTCHA"
+          }
+        }
+      ]
     },
     "salud_busqueda_global": {
-      "version": "RHIA_SEARCH_HEALTH_V1",
+      "version": "RHIA_SEARCH_HEALTH_V2",
       "total_consultas": 18,
       "consultas_respuesta_valida": 18,
       "consultas_invalidas": 0,
@@ -1155,7 +1397,7 @@
       "consultas_con_alertas_motor": 18,
       "total_resultados": 20,
       "urls_unicas_globales": 20,
-      "dominios_unicos_globales": 0,
+      "dominios_unicos_globales": 15,
       "porcentaje_respuestas_validas": 100,
       "porcentaje_consultas_con_resultados": 6,
       "salud_tecnica_global": "DEGRADADA",
@@ -1203,25 +1445,63 @@
       "motores_no_responden": [
         {
           "motor": "brave",
-          "motivo": "Suspended: too many requests"
+          "motivo": "Suspended: too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "duckduckgo",
-          "motivo": "CAPTCHA"
+          "motivo": "CAPTCHA",
+          "tipo": "CAPTCHA"
         },
         {
           "motor": "google cse",
-          "motivo": "Suspended: too many requests"
+          "motivo": "Suspended: too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "startpage",
-          "motivo": "Suspended: CAPTCHA"
+          "motivo": "Suspended: CAPTCHA",
+          "tipo": "CAPTCHA"
         }
       ],
-      "siguiente_accion_consulta": "REFORMULAR_CONSULTA"
+      "siguiente_accion_consulta": "RETRY_BACKOFF",
+      "search_health_events": [
+        {
+          "component": "search_engine:brave",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"United States\" \"San Jose\" (\"sitio oficial\" OR official OR corporativo)",
+            "motivo": "Suspended: too many requests"
+          }
+        },
+        {
+          "component": "search_engine:duckduckgo",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"United States\" \"San Jose\" (\"sitio oficial\" OR official OR corporativo)",
+            "motivo": "CAPTCHA"
+          }
+        },
+        {
+          "component": "search_engine:google cse",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"United States\" \"San Jose\" (\"sitio oficial\" OR official OR corporativo)",
+            "motivo": "Suspended: too many requests"
+          }
+        },
+        {
+          "component": "search_engine:startpage",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"United States\" \"San Jose\" (\"sitio oficial\" OR official OR corporativo)",
+            "motivo": "Suspended: CAPTCHA"
+          }
+        }
+      ]
     },
     "salud_busqueda_global": {
-      "version": "RHIA_SEARCH_HEALTH_V1",
+      "version": "RHIA_SEARCH_HEALTH_V2",
       "total_consultas": 18,
       "consultas_respuesta_valida": 18,
       "consultas_invalidas": 0,
@@ -1230,7 +1510,7 @@
       "consultas_con_alertas_motor": 18,
       "total_resultados": 20,
       "urls_unicas_globales": 20,
-      "dominios_unicos_globales": 0,
+      "dominios_unicos_globales": 15,
       "porcentaje_respuestas_validas": 100,
       "porcentaje_consultas_con_resultados": 6,
       "salud_tecnica_global": "DEGRADADA",
@@ -1278,25 +1558,63 @@
       "motores_no_responden": [
         {
           "motor": "brave",
-          "motivo": "Suspended: too many requests"
+          "motivo": "Suspended: too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "duckduckgo",
-          "motivo": "CAPTCHA"
+          "motivo": "CAPTCHA",
+          "tipo": "CAPTCHA"
         },
         {
           "motor": "google cse",
-          "motivo": "Suspended: too many requests"
+          "motivo": "Suspended: too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "startpage",
-          "motivo": "Suspended: CAPTCHA"
+          "motivo": "Suspended: CAPTCHA",
+          "tipo": "CAPTCHA"
         }
       ],
-      "siguiente_accion_consulta": "REFORMULAR_CONSULTA"
+      "siguiente_accion_consulta": "RETRY_BACKOFF",
+      "search_health_events": [
+        {
+          "component": "search_engine:brave",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"United States\" \"San Jose\" (operador OR \"operador local\" OR franquicia OR franquiciado OR franchisee OR licensee OR licenciatario OR representación OR representante OR distribuidor)",
+            "motivo": "Suspended: too many requests"
+          }
+        },
+        {
+          "component": "search_engine:duckduckgo",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"United States\" \"San Jose\" (operador OR \"operador local\" OR franquicia OR franquiciado OR franchisee OR licensee OR licenciatario OR representación OR representante OR distribuidor)",
+            "motivo": "CAPTCHA"
+          }
+        },
+        {
+          "component": "search_engine:google cse",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"United States\" \"San Jose\" (operador OR \"operador local\" OR franquicia OR franquiciado OR franchisee OR licensee OR licenciatario OR representación OR representante OR distribuidor)",
+            "motivo": "Suspended: too many requests"
+          }
+        },
+        {
+          "component": "search_engine:startpage",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"United States\" \"San Jose\" (operador OR \"operador local\" OR franquicia OR franquiciado OR franchisee OR licensee OR licenciatario OR representación OR representante OR distribuidor)",
+            "motivo": "Suspended: CAPTCHA"
+          }
+        }
+      ]
     },
     "salud_busqueda_global": {
-      "version": "RHIA_SEARCH_HEALTH_V1",
+      "version": "RHIA_SEARCH_HEALTH_V2",
       "total_consultas": 18,
       "consultas_respuesta_valida": 18,
       "consultas_invalidas": 0,
@@ -1305,7 +1623,7 @@
       "consultas_con_alertas_motor": 18,
       "total_resultados": 20,
       "urls_unicas_globales": 20,
-      "dominios_unicos_globales": 0,
+      "dominios_unicos_globales": 15,
       "porcentaje_respuestas_validas": 100,
       "porcentaje_consultas_con_resultados": 6,
       "salud_tecnica_global": "DEGRADADA",
@@ -1353,25 +1671,63 @@
       "motores_no_responden": [
         {
           "motor": "brave",
-          "motivo": "Suspended: too many requests"
+          "motivo": "Suspended: too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "duckduckgo",
-          "motivo": "CAPTCHA"
+          "motivo": "CAPTCHA",
+          "tipo": "CAPTCHA"
         },
         {
           "motor": "google cse",
-          "motivo": "Suspended: too many requests"
+          "motivo": "Suspended: too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "startpage",
-          "motivo": "Suspended: CAPTCHA"
+          "motivo": "Suspended: CAPTCHA",
+          "tipo": "CAPTCHA"
         }
       ],
-      "siguiente_accion_consulta": "REFORMULAR_CONSULTA"
+      "siguiente_accion_consulta": "RETRY_BACKOFF",
+      "search_health_events": [
+        {
+          "component": "search_engine:brave",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"United States\" (\"razón social\" OR \"razon social\" OR \"legal entity\" OR sociedad OR compañía OR compania OR S.A. OR S.A.S. OR SAS)",
+            "motivo": "Suspended: too many requests"
+          }
+        },
+        {
+          "component": "search_engine:duckduckgo",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"United States\" (\"razón social\" OR \"razon social\" OR \"legal entity\" OR sociedad OR compañía OR compania OR S.A. OR S.A.S. OR SAS)",
+            "motivo": "CAPTCHA"
+          }
+        },
+        {
+          "component": "search_engine:google cse",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"United States\" (\"razón social\" OR \"razon social\" OR \"legal entity\" OR sociedad OR compañía OR compania OR S.A. OR S.A.S. OR SAS)",
+            "motivo": "Suspended: too many requests"
+          }
+        },
+        {
+          "component": "search_engine:startpage",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"United States\" (\"razón social\" OR \"razon social\" OR \"legal entity\" OR sociedad OR compañía OR compania OR S.A. OR S.A.S. OR SAS)",
+            "motivo": "Suspended: CAPTCHA"
+          }
+        }
+      ]
     },
     "salud_busqueda_global": {
-      "version": "RHIA_SEARCH_HEALTH_V1",
+      "version": "RHIA_SEARCH_HEALTH_V2",
       "total_consultas": 18,
       "consultas_respuesta_valida": 18,
       "consultas_invalidas": 0,
@@ -1380,7 +1736,7 @@
       "consultas_con_alertas_motor": 18,
       "total_resultados": 20,
       "urls_unicas_globales": 20,
-      "dominios_unicos_globales": 0,
+      "dominios_unicos_globales": 15,
       "porcentaje_respuestas_validas": 100,
       "porcentaje_consultas_con_resultados": 6,
       "salud_tecnica_global": "DEGRADADA",
@@ -1428,25 +1784,63 @@
       "motores_no_responden": [
         {
           "motor": "brave",
-          "motivo": "Suspended: too many requests"
+          "motivo": "Suspended: too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "duckduckgo",
-          "motivo": "CAPTCHA"
+          "motivo": "CAPTCHA",
+          "tipo": "CAPTCHA"
         },
         {
           "motor": "google cse",
-          "motivo": "Suspended: too many requests"
+          "motivo": "Suspended: too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "startpage",
-          "motivo": "Suspended: CAPTCHA"
+          "motivo": "Suspended: CAPTCHA",
+          "tipo": "CAPTCHA"
         }
       ],
-      "siguiente_accion_consulta": "REFORMULAR_CONSULTA"
+      "siguiente_accion_consulta": "RETRY_BACKOFF",
+      "search_health_events": [
+        {
+          "component": "search_engine:brave",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"United States\" \"San Jose\" (\"trabaja con nosotros\" OR empleos OR empleo OR careers OR jobs OR \"talento humano\" OR \"recursos humanos\" OR contratación OR contratacion OR selección OR seleccion)",
+            "motivo": "Suspended: too many requests"
+          }
+        },
+        {
+          "component": "search_engine:duckduckgo",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"United States\" \"San Jose\" (\"trabaja con nosotros\" OR empleos OR empleo OR careers OR jobs OR \"talento humano\" OR \"recursos humanos\" OR contratación OR contratacion OR selección OR seleccion)",
+            "motivo": "CAPTCHA"
+          }
+        },
+        {
+          "component": "search_engine:google cse",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"United States\" \"San Jose\" (\"trabaja con nosotros\" OR empleos OR empleo OR careers OR jobs OR \"talento humano\" OR \"recursos humanos\" OR contratación OR contratacion OR selección OR seleccion)",
+            "motivo": "Suspended: too many requests"
+          }
+        },
+        {
+          "component": "search_engine:startpage",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"United States\" \"San Jose\" (\"trabaja con nosotros\" OR empleos OR empleo OR careers OR jobs OR \"talento humano\" OR \"recursos humanos\" OR contratación OR contratacion OR selección OR seleccion)",
+            "motivo": "Suspended: CAPTCHA"
+          }
+        }
+      ]
     },
     "salud_busqueda_global": {
-      "version": "RHIA_SEARCH_HEALTH_V1",
+      "version": "RHIA_SEARCH_HEALTH_V2",
       "total_consultas": 18,
       "consultas_respuesta_valida": 18,
       "consultas_invalidas": 0,
@@ -1455,7 +1849,7 @@
       "consultas_con_alertas_motor": 18,
       "total_resultados": 20,
       "urls_unicas_globales": 20,
-      "dominios_unicos_globales": 0,
+      "dominios_unicos_globales": 15,
       "porcentaje_respuestas_validas": 100,
       "porcentaje_consultas_con_resultados": 6,
       "salud_tecnica_global": "DEGRADADA",
@@ -1503,25 +1897,63 @@
       "motores_no_responden": [
         {
           "motor": "brave",
-          "motivo": "Suspended: too many requests"
+          "motivo": "Suspended: too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "duckduckgo",
-          "motivo": "CAPTCHA"
+          "motivo": "CAPTCHA",
+          "tipo": "CAPTCHA"
         },
         {
           "motor": "google cse",
-          "motivo": "Suspended: too many requests"
+          "motivo": "Suspended: too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "startpage",
-          "motivo": "Suspended: CAPTCHA"
+          "motivo": "Suspended: CAPTCHA",
+          "tipo": "CAPTCHA"
         }
       ],
-      "siguiente_accion_consulta": "REFORMULAR_CONSULTA"
+      "siguiente_accion_consulta": "RETRY_BACKOFF",
+      "search_health_events": [
+        {
+          "component": "search_engine:brave",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"United States\" (\"grupo empresarial\" OR holding OR grupo OR propietario OR owner OR parent company OR subsidiaria OR subsidiary)",
+            "motivo": "Suspended: too many requests"
+          }
+        },
+        {
+          "component": "search_engine:duckduckgo",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"United States\" (\"grupo empresarial\" OR holding OR grupo OR propietario OR owner OR parent company OR subsidiaria OR subsidiary)",
+            "motivo": "CAPTCHA"
+          }
+        },
+        {
+          "component": "search_engine:google cse",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"United States\" (\"grupo empresarial\" OR holding OR grupo OR propietario OR owner OR parent company OR subsidiaria OR subsidiary)",
+            "motivo": "Suspended: too many requests"
+          }
+        },
+        {
+          "component": "search_engine:startpage",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"United States\" (\"grupo empresarial\" OR holding OR grupo OR propietario OR owner OR parent company OR subsidiaria OR subsidiary)",
+            "motivo": "Suspended: CAPTCHA"
+          }
+        }
+      ]
     },
     "salud_busqueda_global": {
-      "version": "RHIA_SEARCH_HEALTH_V1",
+      "version": "RHIA_SEARCH_HEALTH_V2",
       "total_consultas": 18,
       "consultas_respuesta_valida": 18,
       "consultas_invalidas": 0,
@@ -1530,7 +1962,7 @@
       "consultas_con_alertas_motor": 18,
       "total_resultados": 20,
       "urls_unicas_globales": 20,
-      "dominios_unicos_globales": 0,
+      "dominios_unicos_globales": 15,
       "porcentaje_respuestas_validas": 100,
       "porcentaje_consultas_con_resultados": 6,
       "salud_tecnica_global": "DEGRADADA",
@@ -1578,25 +2010,63 @@
       "motores_no_responden": [
         {
           "motor": "brave",
-          "motivo": "Suspended: too many requests"
+          "motivo": "Suspended: too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "duckduckgo",
-          "motivo": "CAPTCHA"
+          "motivo": "CAPTCHA",
+          "tipo": "CAPTCHA"
         },
         {
           "motor": "google cse",
-          "motivo": "Suspended: too many requests"
+          "motivo": "Suspended: too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "startpage",
-          "motivo": "Suspended: CAPTCHA"
+          "motivo": "Suspended: CAPTCHA",
+          "tipo": "CAPTCHA"
         }
       ],
-      "siguiente_accion_consulta": "REFORMULAR_CONSULTA"
+      "siguiente_accion_consulta": "RETRY_BACKOFF",
+      "search_health_events": [
+        {
+          "component": "search_engine:brave",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"San Jose\" \"United States\"",
+            "motivo": "Suspended: too many requests"
+          }
+        },
+        {
+          "component": "search_engine:duckduckgo",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"San Jose\" \"United States\"",
+            "motivo": "CAPTCHA"
+          }
+        },
+        {
+          "component": "search_engine:google cse",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"San Jose\" \"United States\"",
+            "motivo": "Suspended: too many requests"
+          }
+        },
+        {
+          "component": "search_engine:startpage",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"San Jose\" \"United States\"",
+            "motivo": "Suspended: CAPTCHA"
+          }
+        }
+      ]
     },
     "salud_busqueda_global": {
-      "version": "RHIA_SEARCH_HEALTH_V1",
+      "version": "RHIA_SEARCH_HEALTH_V2",
       "total_consultas": 18,
       "consultas_respuesta_valida": 18,
       "consultas_invalidas": 0,
@@ -1605,7 +2075,7 @@
       "consultas_con_alertas_motor": 18,
       "total_resultados": 20,
       "urls_unicas_globales": 20,
-      "dominios_unicos_globales": 0,
+      "dominios_unicos_globales": 15,
       "porcentaje_respuestas_validas": 100,
       "porcentaje_consultas_con_resultados": 6,
       "salud_tecnica_global": "DEGRADADA",
@@ -1653,25 +2123,63 @@
       "motores_no_responden": [
         {
           "motor": "brave",
-          "motivo": "Suspended: too many requests"
+          "motivo": "Suspended: too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "duckduckgo",
-          "motivo": "CAPTCHA"
+          "motivo": "CAPTCHA",
+          "tipo": "CAPTCHA"
         },
         {
           "motor": "google cse",
-          "motivo": "Suspended: too many requests"
+          "motivo": "Suspended: too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "startpage",
-          "motivo": "Suspended: CAPTCHA"
+          "motivo": "Suspended: CAPTCHA",
+          "tipo": "CAPTCHA"
         }
       ],
-      "siguiente_accion_consulta": "REFORMULAR_CONSULTA"
+      "siguiente_accion_consulta": "RETRY_BACKOFF",
+      "search_health_events": [
+        {
+          "component": "search_engine:brave",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"Belize\" \"San Jose\" (\"sitio oficial\" OR official OR corporativo)",
+            "motivo": "Suspended: too many requests"
+          }
+        },
+        {
+          "component": "search_engine:duckduckgo",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"Belize\" \"San Jose\" (\"sitio oficial\" OR official OR corporativo)",
+            "motivo": "CAPTCHA"
+          }
+        },
+        {
+          "component": "search_engine:google cse",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"Belize\" \"San Jose\" (\"sitio oficial\" OR official OR corporativo)",
+            "motivo": "Suspended: too many requests"
+          }
+        },
+        {
+          "component": "search_engine:startpage",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"Belize\" \"San Jose\" (\"sitio oficial\" OR official OR corporativo)",
+            "motivo": "Suspended: CAPTCHA"
+          }
+        }
+      ]
     },
     "salud_busqueda_global": {
-      "version": "RHIA_SEARCH_HEALTH_V1",
+      "version": "RHIA_SEARCH_HEALTH_V2",
       "total_consultas": 18,
       "consultas_respuesta_valida": 18,
       "consultas_invalidas": 0,
@@ -1680,7 +2188,7 @@
       "consultas_con_alertas_motor": 18,
       "total_resultados": 20,
       "urls_unicas_globales": 20,
-      "dominios_unicos_globales": 0,
+      "dominios_unicos_globales": 15,
       "porcentaje_respuestas_validas": 100,
       "porcentaje_consultas_con_resultados": 6,
       "salud_tecnica_global": "DEGRADADA",
@@ -1728,25 +2236,63 @@
       "motores_no_responden": [
         {
           "motor": "brave",
-          "motivo": "Suspended: too many requests"
+          "motivo": "Suspended: too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "duckduckgo",
-          "motivo": "CAPTCHA"
+          "motivo": "CAPTCHA",
+          "tipo": "CAPTCHA"
         },
         {
           "motor": "google cse",
-          "motivo": "Suspended: too many requests"
+          "motivo": "Suspended: too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "startpage",
-          "motivo": "Suspended: CAPTCHA"
+          "motivo": "Suspended: CAPTCHA",
+          "tipo": "CAPTCHA"
         }
       ],
-      "siguiente_accion_consulta": "REFORMULAR_CONSULTA"
+      "siguiente_accion_consulta": "RETRY_BACKOFF",
+      "search_health_events": [
+        {
+          "component": "search_engine:brave",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"Belize\" \"San Jose\" (operador OR \"operador local\" OR franquicia OR franquiciado OR franchisee OR licensee OR licenciatario OR representación OR representante OR distribuidor)",
+            "motivo": "Suspended: too many requests"
+          }
+        },
+        {
+          "component": "search_engine:duckduckgo",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"Belize\" \"San Jose\" (operador OR \"operador local\" OR franquicia OR franquiciado OR franchisee OR licensee OR licenciatario OR representación OR representante OR distribuidor)",
+            "motivo": "CAPTCHA"
+          }
+        },
+        {
+          "component": "search_engine:google cse",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"Belize\" \"San Jose\" (operador OR \"operador local\" OR franquicia OR franquiciado OR franchisee OR licensee OR licenciatario OR representación OR representante OR distribuidor)",
+            "motivo": "Suspended: too many requests"
+          }
+        },
+        {
+          "component": "search_engine:startpage",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"Belize\" \"San Jose\" (operador OR \"operador local\" OR franquicia OR franquiciado OR franchisee OR licensee OR licenciatario OR representación OR representante OR distribuidor)",
+            "motivo": "Suspended: CAPTCHA"
+          }
+        }
+      ]
     },
     "salud_busqueda_global": {
-      "version": "RHIA_SEARCH_HEALTH_V1",
+      "version": "RHIA_SEARCH_HEALTH_V2",
       "total_consultas": 18,
       "consultas_respuesta_valida": 18,
       "consultas_invalidas": 0,
@@ -1755,7 +2301,7 @@
       "consultas_con_alertas_motor": 18,
       "total_resultados": 20,
       "urls_unicas_globales": 20,
-      "dominios_unicos_globales": 0,
+      "dominios_unicos_globales": 15,
       "porcentaje_respuestas_validas": 100,
       "porcentaje_consultas_con_resultados": 6,
       "salud_tecnica_global": "DEGRADADA",
@@ -1803,25 +2349,63 @@
       "motores_no_responden": [
         {
           "motor": "brave",
-          "motivo": "Suspended: too many requests"
+          "motivo": "Suspended: too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "duckduckgo",
-          "motivo": "CAPTCHA"
+          "motivo": "CAPTCHA",
+          "tipo": "CAPTCHA"
         },
         {
           "motor": "google cse",
-          "motivo": "Suspended: too many requests"
+          "motivo": "Suspended: too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "startpage",
-          "motivo": "Suspended: CAPTCHA"
+          "motivo": "Suspended: CAPTCHA",
+          "tipo": "CAPTCHA"
         }
       ],
-      "siguiente_accion_consulta": "REFORMULAR_CONSULTA"
+      "siguiente_accion_consulta": "RETRY_BACKOFF",
+      "search_health_events": [
+        {
+          "component": "search_engine:brave",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"Belize\" (\"razón social\" OR \"razon social\" OR \"legal entity\" OR sociedad OR compañía OR compania OR S.A. OR S.A.S. OR SAS)",
+            "motivo": "Suspended: too many requests"
+          }
+        },
+        {
+          "component": "search_engine:duckduckgo",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"Belize\" (\"razón social\" OR \"razon social\" OR \"legal entity\" OR sociedad OR compañía OR compania OR S.A. OR S.A.S. OR SAS)",
+            "motivo": "CAPTCHA"
+          }
+        },
+        {
+          "component": "search_engine:google cse",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"Belize\" (\"razón social\" OR \"razon social\" OR \"legal entity\" OR sociedad OR compañía OR compania OR S.A. OR S.A.S. OR SAS)",
+            "motivo": "Suspended: too many requests"
+          }
+        },
+        {
+          "component": "search_engine:startpage",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"Belize\" (\"razón social\" OR \"razon social\" OR \"legal entity\" OR sociedad OR compañía OR compania OR S.A. OR S.A.S. OR SAS)",
+            "motivo": "Suspended: CAPTCHA"
+          }
+        }
+      ]
     },
     "salud_busqueda_global": {
-      "version": "RHIA_SEARCH_HEALTH_V1",
+      "version": "RHIA_SEARCH_HEALTH_V2",
       "total_consultas": 18,
       "consultas_respuesta_valida": 18,
       "consultas_invalidas": 0,
@@ -1830,7 +2414,7 @@
       "consultas_con_alertas_motor": 18,
       "total_resultados": 20,
       "urls_unicas_globales": 20,
-      "dominios_unicos_globales": 0,
+      "dominios_unicos_globales": 15,
       "porcentaje_respuestas_validas": 100,
       "porcentaje_consultas_con_resultados": 6,
       "salud_tecnica_global": "DEGRADADA",
@@ -1878,25 +2462,63 @@
       "motores_no_responden": [
         {
           "motor": "brave",
-          "motivo": "Suspended: too many requests"
+          "motivo": "Suspended: too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "duckduckgo",
-          "motivo": "CAPTCHA"
+          "motivo": "CAPTCHA",
+          "tipo": "CAPTCHA"
         },
         {
           "motor": "google cse",
-          "motivo": "Suspended: too many requests"
+          "motivo": "Suspended: too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "startpage",
-          "motivo": "Suspended: CAPTCHA"
+          "motivo": "Suspended: CAPTCHA",
+          "tipo": "CAPTCHA"
         }
       ],
-      "siguiente_accion_consulta": "REFORMULAR_CONSULTA"
+      "siguiente_accion_consulta": "RETRY_BACKOFF",
+      "search_health_events": [
+        {
+          "component": "search_engine:brave",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"Belize\" \"San Jose\" (\"trabaja con nosotros\" OR empleos OR empleo OR careers OR jobs OR \"talento humano\" OR \"recursos humanos\" OR contratación OR contratacion OR selección OR seleccion)",
+            "motivo": "Suspended: too many requests"
+          }
+        },
+        {
+          "component": "search_engine:duckduckgo",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"Belize\" \"San Jose\" (\"trabaja con nosotros\" OR empleos OR empleo OR careers OR jobs OR \"talento humano\" OR \"recursos humanos\" OR contratación OR contratacion OR selección OR seleccion)",
+            "motivo": "CAPTCHA"
+          }
+        },
+        {
+          "component": "search_engine:google cse",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"Belize\" \"San Jose\" (\"trabaja con nosotros\" OR empleos OR empleo OR careers OR jobs OR \"talento humano\" OR \"recursos humanos\" OR contratación OR contratacion OR selección OR seleccion)",
+            "motivo": "Suspended: too many requests"
+          }
+        },
+        {
+          "component": "search_engine:startpage",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"Belize\" \"San Jose\" (\"trabaja con nosotros\" OR empleos OR empleo OR careers OR jobs OR \"talento humano\" OR \"recursos humanos\" OR contratación OR contratacion OR selección OR seleccion)",
+            "motivo": "Suspended: CAPTCHA"
+          }
+        }
+      ]
     },
     "salud_busqueda_global": {
-      "version": "RHIA_SEARCH_HEALTH_V1",
+      "version": "RHIA_SEARCH_HEALTH_V2",
       "total_consultas": 18,
       "consultas_respuesta_valida": 18,
       "consultas_invalidas": 0,
@@ -1905,7 +2527,7 @@
       "consultas_con_alertas_motor": 18,
       "total_resultados": 20,
       "urls_unicas_globales": 20,
-      "dominios_unicos_globales": 0,
+      "dominios_unicos_globales": 15,
       "porcentaje_respuestas_validas": 100,
       "porcentaje_consultas_con_resultados": 6,
       "salud_tecnica_global": "DEGRADADA",
@@ -1953,25 +2575,63 @@
       "motores_no_responden": [
         {
           "motor": "brave",
-          "motivo": "Suspended: too many requests"
+          "motivo": "Suspended: too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "duckduckgo",
-          "motivo": "CAPTCHA"
+          "motivo": "CAPTCHA",
+          "tipo": "CAPTCHA"
         },
         {
           "motor": "google cse",
-          "motivo": "Suspended: too many requests"
+          "motivo": "Suspended: too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "startpage",
-          "motivo": "Suspended: CAPTCHA"
+          "motivo": "Suspended: CAPTCHA",
+          "tipo": "CAPTCHA"
         }
       ],
-      "siguiente_accion_consulta": "REFORMULAR_CONSULTA"
+      "siguiente_accion_consulta": "RETRY_BACKOFF",
+      "search_health_events": [
+        {
+          "component": "search_engine:brave",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"Belize\" (\"grupo empresarial\" OR holding OR grupo OR propietario OR owner OR parent company OR subsidiaria OR subsidiary)",
+            "motivo": "Suspended: too many requests"
+          }
+        },
+        {
+          "component": "search_engine:duckduckgo",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"Belize\" (\"grupo empresarial\" OR holding OR grupo OR propietario OR owner OR parent company OR subsidiaria OR subsidiary)",
+            "motivo": "CAPTCHA"
+          }
+        },
+        {
+          "component": "search_engine:google cse",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"Belize\" (\"grupo empresarial\" OR holding OR grupo OR propietario OR owner OR parent company OR subsidiaria OR subsidiary)",
+            "motivo": "Suspended: too many requests"
+          }
+        },
+        {
+          "component": "search_engine:startpage",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"Belize\" (\"grupo empresarial\" OR holding OR grupo OR propietario OR owner OR parent company OR subsidiaria OR subsidiary)",
+            "motivo": "Suspended: CAPTCHA"
+          }
+        }
+      ]
     },
     "salud_busqueda_global": {
-      "version": "RHIA_SEARCH_HEALTH_V1",
+      "version": "RHIA_SEARCH_HEALTH_V2",
       "total_consultas": 18,
       "consultas_respuesta_valida": 18,
       "consultas_invalidas": 0,
@@ -1980,7 +2640,7 @@
       "consultas_con_alertas_motor": 18,
       "total_resultados": 20,
       "urls_unicas_globales": 20,
-      "dominios_unicos_globales": 0,
+      "dominios_unicos_globales": 15,
       "porcentaje_respuestas_validas": 100,
       "porcentaje_consultas_con_resultados": 6,
       "salud_tecnica_global": "DEGRADADA",
@@ -2028,25 +2688,63 @@
       "motores_no_responden": [
         {
           "motor": "brave",
-          "motivo": "Suspended: too many requests"
+          "motivo": "Suspended: too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "duckduckgo",
-          "motivo": "CAPTCHA"
+          "motivo": "CAPTCHA",
+          "tipo": "CAPTCHA"
         },
         {
           "motor": "google cse",
-          "motivo": "Suspended: too many requests"
+          "motivo": "Suspended: too many requests",
+          "tipo": "RATE_LIMIT"
         },
         {
           "motor": "startpage",
-          "motivo": "Suspended: CAPTCHA"
+          "motivo": "Suspended: CAPTCHA",
+          "tipo": "CAPTCHA"
         }
       ],
-      "siguiente_accion_consulta": "REFORMULAR_CONSULTA"
+      "siguiente_accion_consulta": "RETRY_BACKOFF",
+      "search_health_events": [
+        {
+          "component": "search_engine:brave",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"San Jose\" \"Belize\"",
+            "motivo": "Suspended: too many requests"
+          }
+        },
+        {
+          "component": "search_engine:duckduckgo",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"San Jose\" \"Belize\"",
+            "motivo": "CAPTCHA"
+          }
+        },
+        {
+          "component": "search_engine:google cse",
+          "status": "RATE_LIMIT",
+          "detail": {
+            "query": "\"Empresa X\" \"San Jose\" \"Belize\"",
+            "motivo": "Suspended: too many requests"
+          }
+        },
+        {
+          "component": "search_engine:startpage",
+          "status": "CAPTCHA",
+          "detail": {
+            "query": "\"Empresa X\" \"San Jose\" \"Belize\"",
+            "motivo": "Suspended: CAPTCHA"
+          }
+        }
+      ]
     },
     "salud_busqueda_global": {
-      "version": "RHIA_SEARCH_HEALTH_V1",
+      "version": "RHIA_SEARCH_HEALTH_V2",
       "total_consultas": 18,
       "consultas_respuesta_valida": 18,
       "consultas_invalidas": 0,
@@ -2055,7 +2753,7 @@
       "consultas_con_alertas_motor": 18,
       "total_resultados": 20,
       "urls_unicas_globales": 20,
-      "dominios_unicos_globales": 0,
+      "dominios_unicos_globales": 15,
       "porcentaje_respuestas_validas": 100,
       "porcentaje_consultas_con_resultados": 6,
       "salud_tecnica_global": "DEGRADADA",
