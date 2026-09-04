@@ -1,21 +1,21 @@
 {
-  "version": "1.0.62-claude-ph06-t003-done",
-  "updatedAt": "2026-09-03T00:55:00-05:00",
-  "state": "PH06_T004_READY",
+  "version": "1.0.63-claude-ph06-t004-done",
+  "updatedAt": "2026-09-03T21:55:00-05:00",
+  "state": "PH06_T005_READY",
   "currentPhase": {
     "id": "PH06",
     "name": "Search, evidencia e identidad"
   },
   "currentTask": {
-    "id": "PH06-T004",
-    "name": "Resolver Company Group/Entity/Location",
-    "objective": "Ver Task Packet PH06-T004 en PLAN_MAESTRO.md (seccion 24). Puede ejecutarse en paralelo con PH06-T003 (ahora DONE); leer sus dependencias propias en el packet antes de empezar, no asumir que son las mismas de PH06-T003.",
+    "id": "PH06-T005",
+    "name": "Implementar dedupe y cache de investigación",
+    "objective": "Ver Task Packet PH06-T005 en PLAN_MAESTRO.md (seccion 24). Dependencias PH06-T003 y PH06-T004, ambas ahora DONE. Leer su Task Packet completo antes de empezar, no asumir alcance.",
     "status": "READY",
-    "note": "PH06-T003 (Implementar Evidence Pipeline) paso a DONE en esta sesion (misma sesion Cowork con carpeta conectada). Entregable 'Evidence v1': nuevo paquete puro packages/evidence-pipeline (@rhia/evidence-pipeline) con schema.ts (EvidenceSource/Evidence/Fact, reflejando 1:1 las tablas reales de packages/db/src/schema.ts de PH03-T001), excerpt-hash.ts (sha256 normalizado, nunca persiste texto crudo), source-reliability.ts (heuristica v1 por labels de dominio gov/gob/edu/ac + sourceType), claim-extraction.ts (regex EMPLOYEE_COUNT/FOUNDED_YEAR/HEADQUARTERS_LOCATION), evidence-builder.ts (buildEvidenceFromSearchResult, reusa canonicalizeUrl de @rhia/search-orchestrator), fact-collapse.ts (collapseToFacts + markStaleEvidence: duplicados colapsan via noisy-or, contradicciones nunca se fusionan -un fact por valor con penalizacion x0.6-, evidencia STALE no sostiene un fact nuevo por si sola). Evidencia real: tsc --noEmit y build real (tsc nativo /usr/local/lib/node_modules_global/bin/tsc) exit 0; node --test packages/evidence-pipeline/dist/*.test.js: 24/24 pass (excerpt-hash 4, source-reliability 4, claim-extraction 5, evidence-builder 4, fact-collapse 7 -incluyendo las 3 pruebas requeridas del packet: duplicate/contradictory/stale evidence-); tsc --noEmit de apps/core-api sin regresion; git diff --check limpio. Los 3 criterios de aceptacion del packet (cada fact tiene supporting evidence, duplicados colapsan, fecha/fuente preservadas) tienen evidencia real. NO se conecto a persistencia real (Postgres evidence_source/evidence/fact) ni al despacho ToolCallSchema{toolKind:SEARCH} end-to-end (mismo patron que PH06-T002: se entrego la libreria, la integracion de runtime queda pendiente para una tarea de integracion dedicada). Ver docs/progress/PH06-T003.md (seccion completa) y session-log SES-20260903-62. Siguiente tarea PH06-T004 no se inicio en este ciclo por alcance/tiempo; leer solo su Task Packet (PLAN_MAESTRO.md seccion 24) antes de empezar -- sus dependencias propias no se revisaron aun."
+    "note": "PH06-T004 (Resolver Company Group/Entity/Location) paso a DONE en esta sesion (ciclo autonomo horario, misma sesion Cowork con carpeta conectada). Entregable 'Entity Resolver v1': nuevo paquete puro packages/entity-resolver (@rhia/entity-resolver) con schema.ts (señales NameSignal/LegalIdentifierSignal/LocationSignal/OwnershipSignal + KnownEntity + EntityResolutionResult), name-normalization.ts (normalizeCompanyName quita sufijos legales EN/ES/otros, nameSimilarity Jaccard), legal-identifier.ts (normalizeLegalIdentifier + legalIdentifiersMatch, mismo numero en paises distintos nunca matchea), location-resolver.ts (resolveLocation: lista de ciudades ambiguas conocidas -San Jose, Santiago, Georgetown...-, AMBIGUOUS explicito ante conflicto o ausencia de señal de pais, nunca fuerza un pais por defecto), relationship-resolver.ts (detectRelationship liga subsidiary/operator/parent a un KnownEntity via nombre de contraparte), confidence.ts (combineConfidence noisy-or + applyConflictPenalties), entity-matcher.ts (matchByLegalIdentifier concluyente, matchByNameAndLocation descarta de plano candidatos con pais en conflicto), entity-resolver.ts (resolveCompanyEntity orquestador: prioridad legal identifier > ownership > nombre+ubicacion; NEEDS_REVIEW si confianza <0.55 o ubicacion AMBIGUOUS o empate de nombre, nunca RESOLVED silencioso). Evidencia real: tsc --noEmit y build real (tsc nativo /usr/local/lib/node_modules_global/bin/tsc) exit 0; node --test packages/entity-resolver/dist/*.test.js: 40/40 pass, incluyendo las 3 pruebas requeridas del packet (Ambiguous city, Same name different company, Subsidiary test) y los 3 criterios de aceptacion (no mezcla San Jose CR/US/Belize, multinacional conserva grupo comun, confidence bajo no auto-confirma); tsc --noEmit de apps/core-api sin regresion; git diff --check limpio (tras reintento por .git/index.lock transitorio, mismo incidente no bloqueante ya documentado en PH06-T003). Ver docs/progress/PH06-T004.md (seccion completa) y session-log SES-20260903-63. Fuera de alcance documentado (no simulado como hecho): sin gold dataset real (validacion final del packet pendiente), sin conexion a persistencia real ni a la salida de @rhia/evidence-pipeline (Fact -> señales de este resolver), lista de ciudades ambiguas es v1 corta y ampliable."
   },
   "counts": {
     "totalTasks": 51,
-    "done": 23,
+    "done": 24,
     "inProgress": 0,
     "blocked": 0,
     "totalGates": 8,

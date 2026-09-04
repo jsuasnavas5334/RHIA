@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-03T00:55:00-05:00",
+  "updatedAt": "2026-09-03T21:55:00-05:00",
   "sessions": [
     {
       "id": "SES-20260819-01",
@@ -2158,6 +2158,48 @@
         "Penalizacion x0.6 sobre la confianza noisy-or para facts contradictorios (constante documentada, ajustable) en vez de elegir arbitrariamente un valor 'ganador'."
       ],
       "next": "PH06-T004 -- Resolver Company Group/Entity/Location (puede ejecutarse en paralelo, ahora que PH06-T003 cerro). Alternativa: integracion de persistencia real de Evidence Pipeline si se prioriza cerrar el circuito de datos antes de seguir el Run Order."
+    },
+    {
+      "id": "SES-20260903-63",
+      "startedAt": "2026-09-03T21:00:00-05:00",
+      "taskId": "PH06-T004",
+      "status": "DONE",
+      "title": "Resolver Company Group/Entity/Location (Entity Resolver v1)",
+      "summary": "Ciclo autonomo horario (misma sesion Cowork, carpeta conectada, sin device_bash). Se implemento el packet PH06-T004 completo: nuevo paquete puro packages/entity-resolver (@rhia/entity-resolver), hermano de evidence-pipeline/search-orchestrator. No lee ni escribe company_group/company_entity/company_location/company_alias (PH03-T001) -- recibe señales ya extraidas y candidatos existentes ya cargados por el llamador, y devuelve una decision de resolucion (matchedGroupId/isNewGroup/location/relationship/confidence/conflicts explicitos) lista para persistir o escalar. Prioridad de matching: legal identifier (concluyente) > ownership explicito (liga grupo comun de multinacional cruzando paises) > nombre+ubicacion compatible (el mas debil, descartado de plano si hay conflicto de pais explicito). resolveLocation nunca fuerza un pais: ante conflicto de señales de pais o ausencia de señal para una ciudad de la lista de ambiguas conocidas (San Jose, Santiago, Georgetown...), devuelve AMBIGUOUS explicito. resolveCompanyEntity nunca declara RESOLVED si la confianza combinada (noisy-or) cae bajo 0.55, si la ubicacion quedo AMBIGUOUS, o si hubo empate real de nombre entre candidatos -- siempre con al menos un conflicto explicito registrado al escalar a NEEDS_REVIEW.",
+      "changes": [
+        "packages/entity-resolver/ (nuevo paquete): package.json, tsconfig.json, src/schema.ts, src/name-normalization.ts (+test), src/legal-identifier.ts (+test), src/location-resolver.ts (+test), src/relationship-resolver.ts (+test), src/confidence.ts (+test), src/entity-matcher.ts (+test), src/entity-resolver.ts (+test), src/index.ts.",
+        "node_modules/@rhia/entity-resolver: symlink creado a mano (node_modules esta en .gitignore, npm install no viable en este sandbox -- ver CLAUDE.md).",
+        "docs/progress/PH06-T004.md: nuevo, evidencia completa del ciclo.",
+        "data/project-status.json: version 1.0.63, done 23->24, currentTask PH06-T004->PH06-T005."
+      ],
+      "tests": [
+        "tsc -p packages/entity-resolver/tsconfig.json --noEmit (tsc nativo 7.0.2, mismo binario que el repo): exit 0.",
+        "tsc -p packages/entity-resolver/tsconfig.json (build real) -> dist/*.js: exit 0.",
+        "node --test packages/entity-resolver/dist/*.test.js: 40/40 pass (name-normalization 7, legal-identifier 4, location-resolver 7, relationship-resolver 4, confidence 5, entity-matcher 6, entity-resolver 9).",
+        "tsc -p apps/core-api/tsconfig.json --noEmit: exit 0 (sin regresion).",
+        "git diff --check: exit 0 (tras reintento por .git/index.lock transitorio, mismo incidente no bloqueante ya documentado en PH06-T003)."
+      ],
+      "evidence": [
+        "entity-resolver.test.ts cubre las 3 pruebas requeridas del packet: Ambiguous city (San Jose sin señal de pais -> AMBIGUOUS+NEEDS_REVIEW; CR vs US en conflicto directo -> igual AMBIGUOUS), Same name different company (mismo nombre exacto Acme Corp, US conocido vs CR del candidato, sin legal identifier ni ownership -> isNewGroup true, no se fusiona), Subsidiary test (señal de ownership liga la subsidiaria al companyGroupId de la matriz conocida).",
+        "Los 3 criterios de aceptacion del packet tienen evidencia real: no mezcla San Jose CR/US/Belize (3 variantes de test: sin señal, CR-vs-US, CR-vs-BZ-vs-US, todas AMBIGUOUS); multinacional conserva grupo comun (dos subsidiarias en paises distintos, mismo companyGroupId via ownership); confidence bajo no auto-confirma (señal debil 0.2 sin match -> NEEDS_REVIEW con conflicto explicito registrado)."
+      ],
+      "risks": [
+        "Sin gold dataset real -- la Validacion final del packet (\"Gold dataset supera umbral acordado antes de release\") queda pendiente de un dataset dedicado; las pruebas de este ciclo son unitarias sobre casos sinteticos representativos, no una validacion estadistica sobre datos reales.",
+        "No se conecto a persistencia real (company_group/company_entity/company_location/company_alias) ni a un flujo que cargue KnownEntity[] desde Postgres -- el paquete recibe candidatos ya cargados por el llamador (mismo patron que Evidence Pipeline).",
+        "No se conecto a la salida real de @rhia/evidence-pipeline (Fact con predicados como HEADQUARTERS_LOCATION) -- este resolver usa su propio formato de señales, desacoplado deliberadamente de los claimType actuales de evidence-pipeline; la integracion queda para una tarea dedicada.",
+        "KNOWN_AMBIGUOUS_CITIES es una lista v1 corta (8 entradas), no exhaustiva -- documentado en el propio archivo como heuristica ampliable.",
+        "scripts/verify-repository-baseline.ps1 (PowerShell) no se pudo ejecutar desde este sandbox Linux -- pendiente en Windows.",
+        ".git/index.lock con timestamp anterior causo un fallo transitorio en el primer intento de git diff --check; no se forzo su borrado, se reintento unos segundos despues y funciono con normalidad (mismo incidente ya documentado en PH06-T003)."
+      ],
+      "decisions": [
+        "Ubicar Entity Resolver como packages/entity-resolver nuevo (no dentro de apps/core-api) -- misma decision de PH05-T002/PH06-T002/PH06-T003: el packet solo señala \"entity resolution\" como area afectada, sin workspace previo.",
+        "Prioridad de matching legal identifier > ownership > nombre+ubicacion (en vez de una unica formula de similitud) para evitar explicitamente el error \"resolver por string similarity solamente\" del packet.",
+        "matchByNameAndLocation descarta de plano (no solo penaliza) cualquier candidato con pais declarado distinto del pais ya resuelto -- un conflicto de pais explicito nunca se deja \"ganar\" por una alta similitud de nombre.",
+        "resolveLocation exige que TODAS las señales de pais coincidan entre si; ante conflicto o ausencia total de señal para una ciudad de la lista corta de ambiguas conocidas, declara AMBIGUOUS en vez de elegir el pais mas probable.",
+        "Umbral de escalacion ESCALATION_CONFIDENCE_THRESHOLD = 0.55 (constante documentada, ajustable) -- confianza combinada por debajo nunca declara RESOLVED.",
+        "Formato de señales de entrada (NameSignal/LegalIdentifierSignal/LocationSignal/OwnershipSignal) deliberadamente propio, no acoplado a los claimType actuales de evidence-pipeline -- la integracion Fact->señales queda para una tarea dedicada."
+      ],
+      "next": "PH06-T005 -- Implementar dedupe y cache de investigacion (dependencias PH06-T003 y PH06-T004, ambas ahora DONE). Alternativa: integracion de persistencia real de Evidence Pipeline y/o Entity Resolver si se prioriza cerrar el circuito de datos antes de seguir el Run Order."
     }
   ]
 }
