@@ -8,9 +8,12 @@ import { CompanyGroupService } from './company-service.js';
 import { ApprovalService, JobService } from './control-services.js';
 import { createCoreHttpServer, type PrincipalAuthenticator } from './http-server.js';
 import {
-  MemoryApprovalRepository, MemoryAuditSink, MemoryCompanyGroupRepository, MemoryContactRepository, MemoryIdempotencyStore,
-  MemoryJobRepository, MemoryOpportunityRepository, MemorySearchHealthRepository, MemoryUnitOfWork,
+  MemoryApprovalRepository, MemoryAuditSink, MemoryCompanyEntityRepository, MemoryCompanyGroupRepository, MemoryCompanyLocationRepository,
+  MemoryContactPointRepository, MemoryContactRepository, MemoryIdempotencyStore, MemoryJobRepository, MemoryOpportunityRepository,
+  MemorySearchHealthRepository, MemoryUnitOfWork,
 } from './memory-adapters.js';
+import { ContactPointService } from './contact-point-service.js';
+import { StaticEncryptionKeyProvider, encryptContactPointValue } from './contact-point-crypto.js';
 import { ContactService, OpportunityService } from './record-services.js';
 import { SearchHealthService } from './search-health-service.js';
 
@@ -37,7 +40,10 @@ const correlationId = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
 
 const fixture = () => {
   const companies = new MemoryCompanyGroupRepository();
+  const companyEntities = new MemoryCompanyEntityRepository();
+  const companyLocations = new MemoryCompanyLocationRepository();
   const contacts = new MemoryContactRepository();
+  const contactPoints = new MemoryContactPointRepository();
   const opportunities = new MemoryOpportunityRepository();
   const jobs = new MemoryJobRepository();
   const approvals = new MemoryApprovalRepository();
@@ -49,10 +55,19 @@ const fixture = () => {
     'ffffffff-ffff-4fff-8fff-ffffffffffff',
     '12345678-1234-4234-8234-123456789abc',
     'abcdefab-cdef-4abc-8def-abcdefabcdef',
+    '10000000-0000-4000-8000-000000000001',
+    '10000000-0000-4000-8000-000000000002',
+    '10000000-0000-4000-8000-000000000003',
+    '10000000-0000-4000-8000-000000000004',
+    '10000000-0000-4000-8000-000000000005',
+    '10000000-0000-4000-8000-000000000006',
   ];
   const dependencies = {
     companies,
+    companyEntities,
+    companyLocations,
     contacts,
+    contactPoints,
     opportunities,
     jobs,
     approvals,
@@ -60,21 +75,28 @@ const fixture = () => {
     audit,
     unitOfWork: new MemoryUnitOfWork(),
     searchHealth,
+    encryptionKeys: new StaticEncryptionKeyProvider(),
     newId: () => ids.shift() ?? '99999999-9999-4999-8999-999999999999',
     now: () => new Date('2026-08-21T14:00:00.000Z'),
   };
+  const contactPointService = new ContactPointService(dependencies);
   return {
     api: new CoreApi(
-      new CompanyGroupService(dependencies), new ContactService(dependencies), new OpportunityService(dependencies),
+      new CompanyGroupService(dependencies), new ContactService(dependencies), contactPointService, new OpportunityService(dependencies),
       new JobService(dependencies), new ApprovalService(dependencies), new SearchHealthService(dependencies),
     ),
     companies,
+    companyEntities,
+    companyLocations,
     contacts,
+    contactPoints,
+    contactPointService,
     opportunities,
     jobs,
     approvals,
     audit,
     searchHealth,
+    dependencies,
   };
 };
 
@@ -144,6 +166,218 @@ test('reutilizar idempotency key con otro payload produce conflicto normalizado'
   assert.equal((conflict.body as { error: { code: string } }).error.code, 'RHIA_CONTRACT_INVALID_PAYLOAD');
 });
 
+test('no duplica empresas por ciudad cuando comparten dominio: mismo websiteRoot con distinta idempotencyKey reutiliza la company existente (PH07-T001)', async () => {
+  // Simula dos discovery jobs independientes que encuentran la MISMA company
+  // en distinta ciudad (p. ej. via una búsqueda en Quito y otra vez vía
+  // Guayaquil): cada job genera su propia idempotencyKey, así que el ledger
+  // de idempotencia por sí solo no evita el duplicado. Se compara por
+  // websiteRoot (dominio), no por canonicalName -- ver el comentario de
+  // normalizeWebsiteRoot en company-service.ts para por qué nombre-only se
+  // descartó deliberadamente (fusionaría empresas distintas con el mismo
+  // nombre en ciudades distintas).
+  const { api, companies, audit } = fixture();
+  const first = await api.handle({
+    method: 'POST', path: '/api/v1/companies', principal: manager, correlationId,
+    body: { canonicalName: 'Acme Corp Quito', websiteRoot: 'https://www.acme.example.com/', idempotencyKey: 'job:quito:acme' },
+  });
+  const second = await api.handle({
+    method: 'POST', path: '/api/v1/companies', principal: manager, correlationId,
+    body: { canonicalName: 'Acme Corporation Guayaquil', websiteRoot: 'https://ACME.example.com', idempotencyKey: 'job:guayaquil:acme' },
+  });
+  assert.equal(first.status, 201);
+  assert.equal(second.status, 200);
+  assert.equal(companies.records.length, 1);
+  assert.equal(audit.events.length, 1);
+  assert.deepEqual((second.body as { data: unknown }).data, (first.body as { data: unknown }).data);
+
+  // Repetir la MISMA idempotencyKey del segundo job debe seguir devolviendo
+  // la company existente vía el ledger de idempotencia normal (cubre que el
+  // registro de idempotencia del camino de dedup-por-dominio quedó bien
+  // guardado, no solo el resultado inmediato).
+  const replay = await api.handle({
+    method: 'POST', path: '/api/v1/companies', principal: manager, correlationId,
+    body: { canonicalName: 'Acme Corporation Guayaquil', websiteRoot: 'https://ACME.example.com', idempotencyKey: 'job:guayaquil:acme' },
+  });
+  assert.equal(replay.status, 200);
+  assert.equal(companies.records.length, 1);
+  assert.equal(audit.events.length, 1);
+});
+
+test('no fusiona companies con el mismo nombre pero dominios distintos (o sin dominio) -- protege contra falsos positivos', async () => {
+  const { api, companies } = fixture();
+  await api.handle({
+    method: 'POST', path: '/api/v1/companies', principal: manager, correlationId,
+    body: { canonicalName: 'Acme Corp', websiteRoot: 'https://acme-quito.example.com', idempotencyKey: 'job:acme:quito' },
+  });
+  await api.handle({
+    method: 'POST', path: '/api/v1/companies', principal: manager, correlationId,
+    body: { canonicalName: 'Acme Corp', websiteRoot: 'https://acme-bogota.example.com', idempotencyKey: 'job:acme:bogota' },
+  });
+  await api.handle({
+    method: 'POST', path: '/api/v1/companies', principal: manager, correlationId,
+    body: { canonicalName: 'Acme Corp', idempotencyKey: 'job:acme:sin-dominio' },
+  });
+  assert.equal(companies.records.length, 3);
+});
+
+test('Entity Resolver (PH06-T004) wiring real: mismo nombre+país reutiliza la company aunque la ciudad sea distinta -- criterio "No duplica empresas por ciudad" resuelto con señales de identidad, no solo por dominio', async () => {
+  // A diferencia del test de dedupe por dominio (websiteRoot) de arriba, este
+  // cubre el caso que ese fix dejaba sin resolver: el mismo discovery job
+  // encuentra "Acme Exportadora SA" primero vía una búsqueda en Quito y luego
+  // vía una búsqueda en Guayaquil -- SIN ningún websiteRoot -- y el criterio
+  // de aceptación del packet es literalmente "no duplica empresas por
+  // ciudad". Con `location` en el payload, CompanyGroupService.create ahora
+  // invoca a @rhia/entity-resolver (PH06-T004): mismo nombre + mismo país
+  // (aunque cambie la ciudad) resuelve al MISMO grupo.
+  const { api, companies, companyEntities, companyLocations, audit } = fixture();
+  const first = await api.handle({
+    method: 'POST', path: '/api/v1/companies', principal: manager, correlationId,
+    body: {
+      canonicalName: 'Acme Exportadora SA',
+      location: { countryCode: 'EC', city: 'Quito' },
+      idempotencyKey: 'job:resolver:quito',
+    },
+  });
+  assert.equal(first.status, 201);
+  assert.equal((first.body as { data: { globalIdentityStatus: string } }).data.globalIdentityStatus, 'RESOLVED');
+  assert.equal(companies.records.length, 1);
+  assert.equal(companyEntities.records.length, 1);
+  assert.equal(companyLocations.records.length, 1);
+
+  const second = await api.handle({
+    method: 'POST', path: '/api/v1/companies', principal: manager, correlationId,
+    body: {
+      canonicalName: 'Acme Exportadora SA',
+      location: { countryCode: 'EC', city: 'Guayaquil' },
+      idempotencyKey: 'job:resolver:guayaquil',
+    },
+  });
+  assert.equal(second.status, 200);
+  assert.deepEqual((second.body as { data: unknown }).data, (first.body as { data: unknown }).data);
+  // No se creó una company nueva ni una segunda entity/location -- se
+  // reutilizó el grupo existente tal cual (soporte multi-entidad por grupo
+  // queda fuera de alcance, ver comentario de `create` en company-service.ts).
+  assert.equal(companies.records.length, 1);
+  assert.equal(companyEntities.records.length, 1);
+  assert.equal(companyLocations.records.length, 1);
+  assert.equal(audit.events.length, 1);
+});
+
+test('Entity Resolver: mismo nombre PERO país distinto NO fusiona -- protege el mismo falso-merge que el dedupe por dominio ya evitaba', async () => {
+  // Control negativo directo del test anterior: "Acme Exportadora SA" en
+  // Ecuador y una empresa DISTINTA que por coincidencia comparte el mismo
+  // nombre en EE. UU. no deben terminar como el mismo company_group --
+  // exactamente el error "resolver por string similarity solamente" que
+  // @rhia/entity-resolver fue diseñado para evitar (criterio "no mezcla San
+  // José CR/US/Belize" de PH06-T004, aplicado aquí a nivel de país).
+  const { api, companies } = fixture();
+  await api.handle({
+    method: 'POST', path: '/api/v1/companies', principal: manager, correlationId,
+    body: {
+      canonicalName: 'Acme Exportadora SA',
+      location: { countryCode: 'EC', city: 'Quito' },
+      idempotencyKey: 'job:resolver:ec',
+    },
+  });
+  const other = await api.handle({
+    method: 'POST', path: '/api/v1/companies', principal: manager, correlationId,
+    body: {
+      canonicalName: 'Acme Exportadora SA',
+      location: { countryCode: 'US', city: 'Denver' },
+      idempotencyKey: 'job:resolver:us',
+    },
+  });
+  assert.equal(other.status, 201);
+  assert.equal(companies.records.length, 2);
+  assert.notEqual(
+    (other.body as { data: { id: string } }).data.id,
+    companies.records[0]?.id,
+  );
+});
+
+test('Entity Resolver: legal identifier compartido fusiona aunque nombre y ciudad sean distintos', async () => {
+  // El legal identifier es la señal más fuerte (acción 2 del packet
+  // PH06-T004): un RUC/EIN compartido liga la misma entidad legal aunque el
+  // nombre comercial cambie (alias/rebranding) y la ciudad registrada
+  // difiera -- a diferencia del match por nombre+ubicación, este NUNCA se
+  // descarta por conflicto de ciudad (solo por conflicto de país).
+  const { api, companies } = fixture();
+  const first = await api.handle({
+    method: 'POST', path: '/api/v1/companies', principal: manager, correlationId,
+    body: {
+      canonicalName: 'Beta Industrial LLC',
+      legalIdentifier: 'RUC-0009998887',
+      location: { countryCode: 'EC', city: 'Cuenca' },
+      idempotencyKey: 'job:resolver:beta-cuenca',
+    },
+  });
+  assert.equal(first.status, 201);
+  const second = await api.handle({
+    method: 'POST', path: '/api/v1/companies', principal: manager, correlationId,
+    body: {
+      canonicalName: 'Beta Group SAS',
+      // Mismo identificador, distinto formato (espacio en vez de guion) --
+      // normalizeLegalIdentifier debe igualarlos de todas formas.
+      legalIdentifier: 'RUC 0009998887',
+      location: { countryCode: 'EC', city: 'Loja' },
+      idempotencyKey: 'job:resolver:beta-loja',
+    },
+  });
+  assert.equal(second.status, 200);
+  assert.deepEqual((second.body as { data: unknown }).data, (first.body as { data: unknown }).data);
+  assert.equal(companies.records.length, 1);
+});
+
+test('Entity Resolver: ambigüedad de nombre entre dos grupos ya conocidos no auto-confirma -- crea company nueva marcada AMBIGUOUS para revisión', async () => {
+  // Criterio de aceptación de PH06-T004 "Confidence bajo no auto-confirma":
+  // cuando el nombre de entrada coincide de forma comparable con MÁS de un
+  // grupo conocido (empate real, no una única mejor opción), el resolver
+  // reporta NEEDS_REVIEW y no elige ninguno de los dos -- se crea una company
+  // nueva (no bloquea al operador) pero con globalIdentityStatus=AMBIGUOUS en
+  // vez de RESOLVED, para que quede visible como pendiente de revisión
+  // humana en vez de fusionarse silenciosamente con el candidato incorrecto.
+  const { api, companies } = fixture();
+  await api.handle({
+    method: 'POST', path: '/api/v1/companies', principal: manager, correlationId,
+    body: {
+      canonicalName: 'Comercial Andina Textiles',
+      location: { countryCode: 'EC', city: 'Quito' },
+      idempotencyKey: 'job:resolver:delta-export',
+    },
+  });
+  await api.handle({
+    method: 'POST', path: '/api/v1/companies', principal: manager, correlationId,
+    body: {
+      canonicalName: 'Comercial Andina Quimicos',
+      location: { countryCode: 'EC', city: 'Quito' },
+      idempotencyKey: 'job:resolver:delta-group',
+    },
+  });
+  assert.equal(companies.records.length, 2);
+
+  const ambiguous = await api.handle({
+    method: 'POST', path: '/api/v1/companies', principal: manager, correlationId,
+    body: {
+      canonicalName: 'Comercial Andina',
+      location: { countryCode: 'EC', city: 'Quito' },
+      idempotencyKey: 'job:resolver:delta-ambiguo',
+    },
+  });
+  assert.equal(ambiguous.status, 201);
+  assert.equal((ambiguous.body as { data: { globalIdentityStatus: string } }).data.globalIdentityStatus, 'AMBIGUOUS');
+  assert.equal(companies.records.length, 3);
+});
+
+test('Entity Resolver: legalIdentifier sin location es rechazado por el contrato (company_entity.country_code es NOT NULL)', async () => {
+  const { api } = fixture();
+  const response = await api.handle({
+    method: 'POST', path: '/api/v1/companies', principal: manager, correlationId,
+    body: { canonicalName: 'Sin Ubicacion SA', legalIdentifier: 'RUC-123', idempotencyKey: 'job:resolver:sin-location' },
+  });
+  assert.equal(response.status, 400);
+  assert.equal((response.body as { error: { code: string } }).error.code, 'RHIA_CONTRACT_INVALID_PAYLOAD');
+});
+
 test('viewer y service sin capability no pueden escribir', async () => {
   const { api } = fixture();
   const body = { canonicalName: 'Empresa Andina', idempotencyKey: 'company:denied:001' };
@@ -173,6 +407,74 @@ test('listado aplica aislamiento por organizationId', async () => {
   assert.equal(response.status, 200);
   assert.equal(data.length, 1);
   assert.equal(data[0]?.organizationId, organizationA);
+});
+
+test('GET /api/v1/companies/:id arma Company 360 con contacts, opportunities y timeline unificado (PH07-T001)', async () => {
+  const { api } = fixture();
+  const companyResponse = await api.handle({
+    method: 'POST', path: '/api/v1/companies', principal: manager, correlationId,
+    body: { canonicalName: 'Empresa 360', idempotencyKey: 'company:360:001' },
+  });
+  const companyId = (companyResponse.body as { data: { id: string } }).data.id;
+
+  const contactResponse = await api.handle({
+    method: 'POST', path: '/api/v1/contacts', principal: manager, correlationId,
+    body: { companyGroupId: companyId, fullName: 'Ana Torres', idempotencyKey: 'contact:360:001' },
+  });
+  const contactId = (contactResponse.body as { data: { id: string } }).data.id;
+
+  const opportunityResponse = await api.handle({
+    method: 'POST', path: '/api/v1/opportunities', principal: manager, correlationId,
+    body: { companyGroupId: companyId, marketCountry: 'EC', idempotencyKey: 'opportunity:360:001' },
+  });
+  const opportunityId = (opportunityResponse.body as { data: { id: string } }).data.id;
+
+  // Otra company del mismo tenant, sin relación -- no debe aparecer en el 360 de la primera.
+  await api.handle({
+    method: 'POST', path: '/api/v1/companies', principal: manager, correlationId,
+    body: { canonicalName: 'Empresa Ajena', idempotencyKey: 'company:360:ajena' },
+  });
+
+  const detail = await api.handle({ method: 'GET', path: `/api/v1/companies/${companyId}`, principal: manager, correlationId });
+  assert.equal(detail.status, 200);
+  const data = (detail.body as {
+    data: {
+      company: { id: string };
+      contacts: readonly { id: string }[];
+      opportunities: readonly { id: string }[];
+      timeline: readonly { resourceId: string; action: string }[];
+    };
+  }).data;
+  assert.equal(data.company.id, companyId);
+  assert.deepEqual(data.contacts.map((contact) => contact.id), [contactId]);
+  assert.deepEqual(data.opportunities.map((opportunity) => opportunity.id), [opportunityId]);
+  assert.equal(data.timeline.length, 3);
+  assert.deepEqual(new Set(data.timeline.map((event) => event.resourceId)), new Set([companyId, contactId, opportunityId]));
+  assert.deepEqual(
+    data.timeline.map((event) => event.action).sort(),
+    ['COMPANY_GROUP_CREATED', 'CONTACT_CREATED', 'OPPORTUNITY_CREATED'],
+  );
+});
+
+test('GET /api/v1/companies/:id de otro tenant o inexistente devuelve error de contrato normalizado', async () => {
+  const { api } = fixture();
+  const created = await api.handle({
+    method: 'POST', path: '/api/v1/companies', principal: manager, correlationId,
+    body: { canonicalName: 'Empresa Tenant A', idempotencyKey: 'company:360:tenant-a' },
+  });
+  const companyId = (created.body as { data: { id: string } }).data.id;
+
+  const crossTenant = await api.handle({
+    method: 'GET', path: `/api/v1/companies/${companyId}`, principal: otherManager, correlationId,
+  });
+  const missing = await api.handle({
+    method: 'GET', path: '/api/v1/companies/99999999-9999-4999-8999-999999999999', principal: manager, correlationId,
+  });
+
+  assert.equal(crossTenant.status, 400);
+  assert.equal(missing.status, 400);
+  assert.equal((crossTenant.body as { error: { code: string } }).error.code, 'RHIA_CONTRACT_INVALID_PAYLOAD');
+  assert.equal((missing.body as { error: { code: string } }).error.code, 'RHIA_CONTRACT_INVALID_PAYLOAD');
 });
 
 test('payload inválido y ruta desconocida usan error RHIA normalizado', async () => {
@@ -500,4 +802,111 @@ test('transporte HTTP rechaza autenticación, JSON inválido y payload grande', 
     assert.equal(invalid.status, 400);
     assert.equal(oversized.status, 413);
   }, async () => manager, 32);
+});
+
+// PH07-T003 (Contact Validation v1).
+test('contact points: email con formato invalido nace INVALID -- criterio "No envia a INVALID"', async () => {
+  const { api, contactPoints } = fixture();
+  const contactCreate = await api.handle({
+    method: 'POST', path: '/api/v1/contacts', principal: manager, correlationId,
+    body: { companyGroupId: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', fullName: 'Ana Torres', idempotencyKey: 'contact:ana:002' },
+  });
+  const contactId = (contactCreate.body as { data: { id: string } }).data.id;
+
+  const response = await api.handle({
+    method: 'POST', path: `/api/v1/contacts/${contactId}/points`, principal: manager, correlationId,
+    body: { pointType: 'EMAIL', rawValue: 'esto-no-es-un-email', idempotencyKey: 'point:ana:email:001' },
+  });
+
+  assert.equal(response.status, 201);
+  const body = response.body as { data: { validationStatus: string; valueMasked: string } };
+  assert.equal(body.data.validationStatus, 'INVALID');
+  assert.equal(contactPoints.records[0]?.validationStatus, 'INVALID');
+});
+
+test('contact points: telefono duplicado (distinto formato, distinta idempotencyKey) no crea una segunda fila -- "Dedup hash"/"Duplicate phone"', async () => {
+  const { api, contactPoints, audit } = fixture();
+  const contactCreate = await api.handle({
+    method: 'POST', path: '/api/v1/contacts', principal: manager, correlationId,
+    body: { companyGroupId: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', fullName: 'Carlos Ruiz', idempotencyKey: 'contact:carlos:001' },
+  });
+  const contactId = (contactCreate.body as { data: { id: string } }).data.id;
+
+  const first = await api.handle({
+    method: 'POST', path: `/api/v1/contacts/${contactId}/points`, principal: manager, correlationId,
+    body: { pointType: 'PHONE', rawValue: '+593 99 123 4567', idempotencyKey: 'point:carlos:phone:001' },
+  });
+  // Mismo telefono, formato distinto (guiones en vez de espacios) y una
+  // idempotencyKey DISTINTA -- simula dos hits de Contact Discovery
+  // encontrando el mismo numero por caminos distintos.
+  const second = await api.handle({
+    method: 'POST', path: `/api/v1/contacts/${contactId}/points`, principal: manager, correlationId,
+    body: { pointType: 'PHONE', rawValue: '+593-99-123-4567', idempotencyKey: 'point:carlos:phone:002' },
+  });
+
+  assert.equal(first.status, 201);
+  assert.equal(second.status, 200); // dedupeado -- no es un recurso nuevo.
+  const firstId = (first.body as { data: { id: string } }).data.id;
+  const secondId = (second.body as { data: { id: string } }).data.id;
+  assert.equal(firstId, secondId);
+  assert.equal(contactPoints.records.filter((point) => point.contactId === contactId).length, 1);
+  assert.equal(audit.events.filter((event) => event.action === 'CONTACT_POINT_CREATED').length, 1);
+});
+
+test('contact points: PII protegida -- la respuesta y el registro persistido nunca exponen el valor en claro', async () => {
+  const { api, contactPoints } = fixture();
+  const contactCreate = await api.handle({
+    method: 'POST', path: '/api/v1/contacts', principal: manager, correlationId,
+    body: { companyGroupId: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', fullName: 'Maria Lopez', idempotencyKey: 'contact:maria:001' },
+  });
+  const contactId = (contactCreate.body as { data: { id: string } }).data.id;
+  const rawEmail = 'maria.lopez@empresa-secreta.com';
+
+  const response = await api.handle({
+    method: 'POST', path: `/api/v1/contacts/${contactId}/points`, principal: manager, correlationId,
+    body: { pointType: 'EMAIL', rawValue: rawEmail, idempotencyKey: 'point:maria:email:001' },
+  });
+
+  const responseText = JSON.stringify(response.body);
+  assert.ok(!responseText.includes(rawEmail), 'la respuesta HTTP no debe contener el email en claro');
+  assert.equal((response.body as { data: { valueMasked: string } }).data.valueMasked, 'm**********@empresa-secreta.com');
+
+  const record = contactPoints.records[0];
+  assert.ok(record);
+  // El buffer cifrado nunca contiene el valor en claro como substring --
+  // AES-256-GCM produce ciphertext indistinguible de datos aleatorios, muy
+  // distinto de "ofuscar" el texto.
+  const encryptedAsLatin1 = record!.valueEncrypted.toString('latin1');
+  assert.ok(!encryptedAsLatin1.includes(rawEmail));
+  assert.ok(!encryptedAsLatin1.includes('maria.lopez'));
+});
+
+test('contact points: staleness degrada VERIFIED a UNVERIFIED en lectura -- "Unknown no se presenta como verified"/"Stale validation"', async () => {
+  const { contactPoints, contactPointService, dependencies } = fixture();
+  const now = dependencies.now();
+  const staleValidatedAt = new Date(now.getTime() - 400 * 24 * 60 * 60 * 1000).toISOString();
+
+  // Construido directamente en el repositorio (no via create(), que nunca
+  // produce VERIFIED sin un provider real conectado -- ver "Fuera de
+  // alcance" en docs/progress/PH07-T003.md) para simular un punto que un
+  // provider SI confirmo hace tiempo.
+  const staleContactId = '10000000-0000-4000-8000-000000000099';
+  contactPoints.records.push({
+    id: '10000000-0000-4000-8000-000000000098', organizationId: organizationA, contactId: staleContactId, pointType: 'EMAIL',
+    valueEncrypted: encryptContactPointValue('ceo@acme.com', dependencies.encryptionKeys.getKey()), valueHash: 'a'.repeat(64),
+    validationStatus: 'VERIFIED', sourceId: null, lastValidatedAt: staleValidatedAt, createdAt: staleValidatedAt, updatedAt: staleValidatedAt,
+  });
+
+  const points = await contactPointService.listByContact(manager, staleContactId);
+  assert.equal(points.length, 1);
+  assert.equal(points[0]?.validationStatus, 'UNVERIFIED');
+});
+
+test('contact points: viewer no puede crear ni escribir puntos de contacto', async () => {
+  const { api } = fixture();
+  const response = await api.handle({
+    method: 'POST', path: '/api/v1/contacts/eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee/points', principal: viewer, correlationId,
+    body: { pointType: 'EMAIL', rawValue: 'viewer@acme.com', idempotencyKey: 'point:viewer:001' },
+  });
+  assert.equal(response.status, 403);
 });

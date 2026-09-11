@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    name: Build, typecheck y test suite completa
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.19.0'
+          cache: 'npm'
+
+      - name: Instalar dependencias (lockfile real)
+        run: npm ci
+
+      - name: Build (monorepo, build:prerequisites + workspaces)
+        run: npm run build
+
+      - name: Typecheck (todos los workspaces)
+        run: npm run typecheck
+
+      - name: Test suite (todos los workspaces; casos con Postgres real
+          se saltan automáticamente sin RHIA_TEST_DATABASE_URL)
+        run: npm run test
+
+      - name: Baseline comercial (Empresa X / San José, RHIA-COM-002)
+        run: node scripts/test-commercial-baseline.mjs

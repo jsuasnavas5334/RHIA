@@ -15,13 +15,37 @@ export const CompanyGroupSchema = z
   })
   .strict();
 
+/** PH07-T001 (wiring Entity Resolver, PH06-T004): `legalIdentifier`/`location`
+ * son señales OPCIONALES de identidad que un caller con evidencia real (p. ej.
+ * un futuro job de discovery, o un formulario administrativo que capture país/
+ * ciudad) puede aportar para que `CompanyGroupService.create` invoque a
+ * `@rhia/entity-resolver` en vez de depender solo de `websiteRoot`. Se
+ * persisten en `company_entity`/`company_location` -- tablas YA EXISTENTES de
+ * PH03-T001, sin crecer el esquema -- solo cuando se provee `location`
+ * (`company_entity.country_code`/`company_location.city` son NOT NULL, así
+ * que no hay forma real de persistir un `legalIdentifier` sin un país que lo
+ * acompañe; de ahí el refine de abajo). Sin estas señales, `create` sigue
+ * comportándose exactamente igual que antes (solo dedupe por `websiteRoot`). */
 export const CreateCompanyGroupSchema = z
   .object({
     canonicalName: z.string().trim().min(1).max(240),
     websiteRoot: z.string().url().max(500).optional(),
+    legalIdentifier: z.string().trim().min(1).max(80).optional(),
+    location: z
+      .object({
+        countryCode: z.string().regex(/^[A-Z]{2}$/),
+        city: z.string().trim().min(1).max(160),
+        administrativeArea: z.string().trim().min(1).max(160).optional(),
+      })
+      .strict()
+      .optional(),
     idempotencyKey: z.string().trim().min(8).max(160).regex(/^[A-Za-z0-9._:-]+$/),
   })
-  .strict();
+  .strict()
+  .refine((value) => !value.legalIdentifier || value.location !== undefined, {
+    message: 'legalIdentifier requiere location (país/ciudad) -- company_entity.country_code es NOT NULL.',
+    path: ['legalIdentifier'],
+  });
 
 export const CompanyGroupResponseSchema = z
   .object({
@@ -113,8 +137,95 @@ export const SessionContextResponseSchema = z.object({
   data: z.object({ roles: z.array(z.enum(['ADMIN', 'MANAGER', 'OPERATOR', 'VIEWER'])).min(1) }).strict(),
 }).strict();
 
+export const TimelineEventSchema = z
+  .object({
+    id: UuidSchema,
+    action: z.enum([
+      'COMPANY_GROUP_CREATED', 'CONTACT_CREATED', 'CONTACT_POINT_CREATED', 'OPPORTUNITY_CREATED', 'JOB_CREATED', 'JOB_RETRY_SCHEDULED',
+      'JOB_CANCELLED', 'APPROVAL_REQUESTED', 'APPROVAL_DECIDED',
+    ]),
+    resourceType: z.enum(['COMPANY_GROUP', 'CONTACT', 'CONTACT_POINT', 'OPPORTUNITY', 'JOB', 'APPROVAL']),
+    resourceId: UuidSchema,
+    occurredAt: TimestampSchema,
+  })
+  .strict();
+
+export const CompanyDetailSchema = z
+  .object({
+    company: CompanyGroupSchema,
+    contacts: z.array(ContactSchema),
+    opportunities: z.array(OpportunitySchema),
+    timeline: z.array(TimelineEventSchema),
+  })
+  .strict();
+
+export const CompanyDetailResponseSchema = z
+  .object({
+    version: ContractVersionSchema,
+    data: CompanyDetailSchema,
+  })
+  .strict();
+
 export const ContactResponseSchema = resourceResponse(ContactSchema);
 export const ContactListResponseSchema = resourceListResponse(ContactSchema);
+
+/** PH07-T003 (Contact Validation v1). `pointType` es una lista chica y
+ * estable (no crece con cada nuevo canal, distinto de una "lista rigida de
+ * cargos" -- aqui SI tiene sentido un enum cerrado porque el formato de
+ * validacion cambia por tipo de canal, no por dominio de negocio). */
+export const ContactPointTypeSchema = z.enum(['EMAIL', 'PHONE', 'WHATSAPP']);
+
+/** `UNVERIFIED`: formato ya normalizado/validado pero sin confirmar contra
+ * un provider real (accion 4 del packet, "usar validators/provider cuando
+ * se configure" -- ver "Fuera de alcance" en docs/progress/PH07-T003.md).
+ * `INVALID`: fallo la validacion de formato (accion 3) -- criterio de
+ * aceptacion "No envia a INVALID". `VERIFIED`: confirmado por un provider
+ * real -- inalcanzable en este ciclo sin credenciales, pero el estado ya
+ * existe en el contrato para cuando se conecte uno. Nunca se expone un
+ * status derivado ("STALE") como valor persistido -- ver
+ * `effectiveValidationStatus` en contact-point-service.ts: criterio
+ * "Unknown no se presenta como verified" se resuelve degradando VERIFIED a
+ * UNVERIFIED en LECTURA cuando la validacion quedo vieja, no con un quinto
+ * estado guardado. */
+export const ContactPointValidationStatusSchema = z.enum(['UNVERIFIED', 'INVALID', 'VERIFIED']);
+
+/** Nunca expone el valor real (email/telefono) ni su forma normalizada --
+ * solo `valueMasked` (ej. "j***@acme.com", "***1234") y `valueHash` (sha256,
+ * ya no reversible al valor real sin fuerza bruta) -- criterio de aceptacion
+ * "PII protegida". El valor real solo vive cifrado (`value_encrypted`,
+ * `contact_point` en packages/db/src/schema.ts, PH03-T001) y nunca sale de
+ * `apps/core-api/src/contact-point-service.ts` sin enmascarar. */
+export const ContactPointSchema = z
+  .object({
+    id: UuidSchema,
+    organizationId: UuidSchema,
+    contactId: UuidSchema,
+    pointType: ContactPointTypeSchema,
+    valueMasked: z.string().min(1).max(240),
+    valueHash: z.string().regex(/^[0-9a-f]{64}$/),
+    validationStatus: ContactPointValidationStatusSchema,
+    sourceId: UuidSchema.nullable(),
+    lastValidatedAt: TimestampSchema.nullable(),
+    createdAt: TimestampSchema,
+    updatedAt: TimestampSchema,
+  })
+  .strict();
+
+export const CreateContactPointSchema = z
+  .object({
+    contactId: UuidSchema,
+    pointType: ContactPointTypeSchema,
+    // Unico campo que recibe el valor real -- nunca se devuelve en ninguna
+    // respuesta (ver ContactPointSchema.valueMasked) ni se persiste sin
+    // cifrar. max(320) cubre el limite practico de un email (RFC 5321).
+    rawValue: z.string().trim().min(1).max(320),
+    sourceId: UuidSchema.optional(),
+    idempotencyKey: z.string().trim().min(8).max(160).regex(/^[A-Za-z0-9._:-]+$/),
+  })
+  .strict();
+
+export const ContactPointResponseSchema = resourceResponse(ContactPointSchema);
+export const ContactPointListResponseSchema = resourceListResponse(ContactPointSchema);
 export const OpportunityResponseSchema = resourceResponse(OpportunitySchema);
 export const OpportunityListResponseSchema = resourceListResponse(OpportunitySchema);
 
@@ -222,6 +333,8 @@ export type CompanyGroup = z.infer<typeof CompanyGroupSchema>;
 export type CreateCompanyGroup = z.infer<typeof CreateCompanyGroupSchema>;
 export type Contact = z.infer<typeof ContactSchema>;
 export type CreateContact = z.infer<typeof CreateContactSchema>;
+export type ContactPoint = z.infer<typeof ContactPointSchema>;
+export type CreateContactPoint = z.infer<typeof CreateContactPointSchema>;
 export type Opportunity = z.infer<typeof OpportunitySchema>;
 export type CreateOpportunity = z.infer<typeof CreateOpportunitySchema>;
 export type JobRecord = z.infer<typeof JobRecordSchema>;
@@ -232,3 +345,5 @@ export type ApprovalRecord = z.infer<typeof ApprovalRecordSchema>;
 export type CreateApproval = z.infer<typeof CreateApprovalSchema>;
 export type DecideApproval = z.infer<typeof DecideApprovalSchema>;
 export type EngineHealthScoreDto = z.infer<typeof EngineHealthScoreSchema>;
+export type TimelineEvent = z.infer<typeof TimelineEventSchema>;
+export type CompanyDetail = z.infer<typeof CompanyDetailSchema>;

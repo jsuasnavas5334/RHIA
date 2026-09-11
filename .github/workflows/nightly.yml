@@ -1,0 +1,78 @@
+name: Nightly (Postgres real efímero)
+
+on:
+  schedule:
+    # 07:00 UTC ~ 02:00 America/Guayaquil -- horario de baja actividad.
+    - cron: '0 7 * * *'
+  workflow_dispatch: {}
+
+concurrency:
+  group: nightly-${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  postgres-integration:
+    name: Suite completa contra PostgreSQL real (efímero, sin datos de
+      producción)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: rhia_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      RHIA_TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/rhia_test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.19.0'
+          cache: 'npm'
+
+      - name: Instalar dependencias (lockfile real)
+        run: npm ci
+
+      - name: Build (monorepo, build:prerequisites + workspaces)
+        run: npm run build
+
+      - name: Aplicar migraciones reales del repo (packages/db/migrations,
+          en orden, contra la base efímera vacía -- no crece el esquema,
+          solo aplica lo ya existente)
+        run: |
+          set -e
+          for f in packages/db/migrations/000*.sql; do
+            echo "-- aplicando $f"
+            psql "$RHIA_TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f "$f"
+          done
+
+      - name: Aplicar seeds reales del repo
+        run: |
+          set -e
+          for f in packages/db/seeds/000*.sql; do
+            echo "-- aplicando $f"
+            psql "$RHIA_TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f "$f"
+          done
+
+      - name: Test suite completa (subset "PostgreSQL real ..." corre de
+          verdad con RHIA_TEST_DATABASE_URL seteada; nunca contra
+          proveedores de IA de pago)
+        run: npm run test
+
+      - name: Baseline comercial (Empresa X / San José, RHIA-COM-002)
+        run: node scripts/test-commercial-baseline.mjs

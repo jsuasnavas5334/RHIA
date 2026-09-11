@@ -1,11 +1,13 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { Pool, PoolClient, QueryResultRow } from 'pg';
 import type { SearchHealthEventRecord } from '@rhia/search-health';
+import { EnvEncryptionKeyProvider } from './contact-point-crypto.js';
 import type {
   ApprovalRecord, CompanyGroup, Contact, JobRecord, Opportunity,
 } from './contracts.js';
 import type {
-  AuditEvent, AuditSink, CoreDependencies, CoreUnitOfWork, IdempotencyRecord, IdempotencyStore, SearchHealthRepository,
+  AuditEvent, AuditSink, CompanyEntityRecord, CompanyLocationRecord, ContactPointRecord, CoreDependencies, CoreUnitOfWork, IdempotencyRecord,
+  IdempotencyStore, SearchHealthRepository,
 } from './ports.js';
 
 type TimestampValue = Date | string;
@@ -63,12 +65,32 @@ const mapCompany = (row: DatabaseRow): CompanyGroup => ({
   websiteRoot: nullableText(row['website_root']), globalIdentityStatus: text(row['global_identity_status']) as CompanyGroup['globalIdentityStatus'],
   createdAt: iso(row['created_at'] as TimestampValue), updatedAt: iso(row['updated_at'] as TimestampValue),
 });
+const mapCompanyEntity = (row: DatabaseRow): CompanyEntityRecord => ({
+  id: text(row['id']), organizationId: text(row['organization_id']), companyGroupId: text(row['company_group_id']),
+  legalName: text(row['legal_name']), tradeName: nullableText(row['trade_name']), countryCode: text(row['country_code']),
+  legalIdentifier: nullableText(row['legal_identifier']), entityType: text(row['entity_type']), status: text(row['status']),
+  createdAt: iso(row['created_at'] as TimestampValue), updatedAt: iso(row['updated_at'] as TimestampValue),
+});
+const mapCompanyLocation = (row: DatabaseRow): CompanyLocationRecord => ({
+  id: text(row['id']), organizationId: text(row['organization_id']), companyEntityId: text(row['company_entity_id']),
+  countryCode: text(row['country_code']), administrativeArea: nullableText(row['administrative_area']), city: text(row['city']),
+  address: nullableText(row['address']), isHeadquarters: Boolean(row['is_headquarters']),
+  createdAt: iso(row['created_at'] as TimestampValue), updatedAt: iso(row['updated_at'] as TimestampValue),
+});
 const mapContact = (row: DatabaseRow): Contact => ({
   id: text(row['id']), organizationId: text(row['organization_id']), companyGroupId: text(row['company_group_id']),
   companyEntityId: nullableText(row['company_entity_id']), fullName: text(row['full_name']), title: nullableText(row['title']),
   department: nullableText(row['department']), seniority: nullableText(row['seniority']), countryCode: nullableText(row['country_code']),
   city: nullableText(row['city']), linkedinUrl: nullableText(row['linkedin_url']), status: text(row['status']) as Contact['status'],
   createdAt: iso(row['created_at']), updatedAt: iso(row['updated_at']),
+});
+const mapContactPoint = (row: DatabaseRow): ContactPointRecord => ({
+  id: text(row['id']), organizationId: text(row['organization_id']), contactId: text(row['contact_id']),
+  pointType: text(row['point_type']) as ContactPointRecord['pointType'],
+  valueEncrypted: row['value_encrypted'] as Buffer, valueHash: text(row['value_hash']),
+  validationStatus: text(row['validation_status']) as ContactPointRecord['validationStatus'],
+  sourceId: nullableText(row['source_id']), lastValidatedAt: nullableIso(row['last_validated_at']),
+  createdAt: iso(row['created_at'] as TimestampValue), updatedAt: iso(row['updated_at'] as TimestampValue),
 });
 const mapOpportunity = (row: DatabaseRow): Opportunity => ({
   id: text(row['id']), organizationId: text(row['organization_id']), companyGroupId: text(row['company_group_id']),
@@ -94,6 +116,13 @@ const mapApproval = (row: DatabaseRow): ApprovalRecord => ({
   decidedAt: nullableIso(row['decided_at']), expiresAt: nullableIso(row['expires_at']), updatedAt: iso(row['updated_at']),
 });
 
+const mapAuditEvent = (row: DatabaseRow): AuditEvent => ({
+  id: text(row['id']), organizationId: text(row['organization_id']), actorId: text(row['actor_ref']),
+  actorType: text(row['actor_type']) as AuditEvent['actorType'], action: text(row['action']) as AuditEvent['action'],
+  resourceType: text(row['resource_type']) as AuditEvent['resourceType'], resourceId: text(row['resource_id']),
+  afterHash: text(row['after_hash']), occurredAt: iso(row['occurred_at'] as TimestampValue), correlationId: text(row['trace_id']),
+});
+
 const approvalSelection = `
   SELECT approval.*,
     COALESCE(approval.requested_by_user_id, approval.requested_by_agent_instance_id,
@@ -101,7 +130,11 @@ const approvalSelection = `
   FROM rhia.approval approval
   JOIN rhia.action action ON action.id = approval.action_id`;
 
-export class PostgresCorePersistence implements IdempotencyStore, AuditSink {
+export class PostgresCorePersistence implements IdempotencyStore {
+  // Nota: no declara `implements AuditSink` directamente porque ya expone
+  // `listByOrganization` con otra firma (company groups); `append` +
+  // `listAuditByOrganization` se adaptan a AuditSink mediante un shim en
+  // createPostgresCoreDependencies (ver más abajo).
   constructor(private readonly session: PostgresSession) {}
 
   async create(company: CompanyGroup | Contact | Opportunity | JobRecord | ApprovalRecord): Promise<void> {
@@ -117,6 +150,18 @@ export class PostgresCorePersistence implements IdempotencyStore, AuditSink {
       (id, organization_id, canonical_name, website_root, global_identity_status, created_at, updated_at)
       VALUES ($1,$2,$3,$4,$5,$6,$7)`, [company.id, company.organizationId, company.canonicalName, company.websiteRoot,
       company.globalIdentityStatus, company.createdAt, company.updatedAt]);
+  }
+  async createCompanyEntity(entity: CompanyEntityRecord): Promise<void> {
+    await this.session.query(`INSERT INTO rhia.company_entity
+      (id, organization_id, company_group_id, legal_name, trade_name, country_code, legal_identifier, entity_type, status, created_at, updated_at)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`, [entity.id, entity.organizationId, entity.companyGroupId, entity.legalName,
+      entity.tradeName, entity.countryCode, entity.legalIdentifier, entity.entityType, entity.status, entity.createdAt, entity.updatedAt]);
+  }
+  async createCompanyLocation(location: CompanyLocationRecord): Promise<void> {
+    await this.session.query(`INSERT INTO rhia.company_location
+      (id, organization_id, company_entity_id, country_code, administrative_area, city, address, is_headquarters, created_at, updated_at)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`, [location.id, location.organizationId, location.companyEntityId, location.countryCode,
+      location.administrativeArea, location.city, location.address, location.isHeadquarters, location.createdAt, location.updatedAt]);
   }
   private async createContact(contact: Contact): Promise<void> {
     await this.session.query(`INSERT INTO rhia.contact
@@ -166,10 +211,51 @@ export class PostgresCorePersistence implements IdempotencyStore, AuditSink {
       approval.correlationId, JSON.stringify(approval)]);
   }
 
+  /** PH07-T003: `contact_point.value_encrypted` es `bytea` -- se inserta/lee
+   * como Buffer directo (el driver `pg` mapea bytea<->Buffer sin conversion
+   * manual), nunca como texto (evita cualquier ruta accidental que loguee o
+   * serialice el valor cifrado como string). */
+  async createContactPoint(point: ContactPointRecord): Promise<void> {
+    await this.session.query(`INSERT INTO rhia.contact_point
+      (id, organization_id, contact_id, point_type, value_encrypted, value_hash, validation_status, source_id, last_validated_at, created_at, updated_at)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`, [point.id, point.organizationId, point.contactId, point.pointType,
+      point.valueEncrypted, point.valueHash, point.validationStatus, point.sourceId, point.lastValidatedAt, point.createdAt, point.updatedAt]);
+  }
+  async listContactPointsByContact(organizationId: string, contactId: string): Promise<readonly ContactPointRecord[]> {
+    const result = await this.session.query<DatabaseRow>(
+      'SELECT * FROM rhia.contact_point WHERE organization_id=$1 AND contact_id=$2 ORDER BY created_at, id', [organizationId, contactId]);
+    return result.rows.map(mapContactPoint);
+  }
+  async findContactPointByHash(
+    organizationId: string, contactId: string, pointType: ContactPointRecord['pointType'], valueHash: string,
+  ): Promise<ContactPointRecord | undefined> {
+    const result = await this.session.query<DatabaseRow>(
+      'SELECT * FROM rhia.contact_point WHERE organization_id=$1 AND contact_id=$2 AND point_type=$3 AND value_hash=$4',
+      [organizationId, contactId, pointType, valueHash]);
+    const row = result.rows[0];
+    return row ? mapContactPoint(row) : undefined;
+  }
+
   async listByOrganization(organizationId: string): Promise<readonly CompanyGroup[]> {
     const result = await this.session.query<DatabaseRow>(
       'SELECT * FROM rhia.company_group WHERE organization_id=$1 ORDER BY created_at, id', [organizationId]);
     return result.rows.map(mapCompany);
+  }
+  async findCompanyById(organizationId: string, companyGroupId: string): Promise<CompanyGroup | undefined> {
+    const result = await this.session.query<DatabaseRow>(
+      'SELECT * FROM rhia.company_group WHERE organization_id=$1 AND id=$2', [organizationId, companyGroupId]);
+    const row = result.rows[0];
+    return row ? mapCompany(row) : undefined;
+  }
+  async listCompanyEntitiesByOrganization(organizationId: string): Promise<readonly CompanyEntityRecord[]> {
+    const result = await this.session.query<DatabaseRow>(
+      'SELECT * FROM rhia.company_entity WHERE organization_id=$1 ORDER BY created_at, id', [organizationId]);
+    return result.rows.map(mapCompanyEntity);
+  }
+  async listCompanyLocationsByOrganization(organizationId: string): Promise<readonly CompanyLocationRecord[]> {
+    const result = await this.session.query<DatabaseRow>(
+      'SELECT * FROM rhia.company_location WHERE organization_id=$1 ORDER BY created_at, id', [organizationId]);
+    return result.rows.map(mapCompanyLocation);
   }
   async listContactsByOrganization(organizationId: string): Promise<readonly Contact[]> {
     const result = await this.session.query<DatabaseRow>('SELECT * FROM rhia.contact WHERE organization_id=$1 ORDER BY created_at, id', [organizationId]);
@@ -234,6 +320,11 @@ export class PostgresCorePersistence implements IdempotencyStore, AuditSink {
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`, [event.id, event.organizationId, event.actorId, event.actorType, event.action,
       event.resourceType, event.resourceId, event.afterHash, event.occurredAt, event.correlationId]);
   }
+  async listAuditByOrganization(organizationId: string): Promise<readonly AuditEvent[]> {
+    const result = await this.session.query<DatabaseRow>(
+      'SELECT * FROM rhia.audit_event WHERE organization_id=$1 ORDER BY occurred_at DESC, id', [organizationId]);
+    return result.rows.map(mapAuditEvent);
+  }
 }
 
 const mapSearchHealthEvent = (row: DatabaseRow): SearchHealthEventRecord => ({
@@ -267,8 +358,23 @@ export const createPostgresCoreDependencies = (
   const persistence = new PostgresCorePersistence(session);
   const searchHealth = new PostgresSearchHealthRepository(session);
   return {
-    companies: { create: (value) => persistence.create(value), listByOrganization: (id) => persistence.listByOrganization(id) },
+    companies: {
+      create: (value) => persistence.create(value), listByOrganization: (id) => persistence.listByOrganization(id),
+      findById: (organizationId, companyGroupId) => persistence.findCompanyById(organizationId, companyGroupId),
+    },
+    companyEntities: {
+      create: (value) => persistence.createCompanyEntity(value), listByOrganization: (id) => persistence.listCompanyEntitiesByOrganization(id),
+    },
+    companyLocations: {
+      create: (value) => persistence.createCompanyLocation(value), listByOrganization: (id) => persistence.listCompanyLocationsByOrganization(id),
+    },
     contacts: { create: (value) => persistence.create(value), listByOrganization: (id) => persistence.listContactsByOrganization(id) },
+    contactPoints: {
+      create: (value) => persistence.createContactPoint(value),
+      listByContact: (organizationId, contactId) => persistence.listContactPointsByContact(organizationId, contactId),
+      findByHash: (organizationId, contactId, pointType, valueHash) =>
+        persistence.findContactPointByHash(organizationId, contactId, pointType, valueHash),
+    },
     opportunities: { create: (value) => persistence.create(value), listByOrganization: (id) => persistence.listOpportunitiesByOrganization(id) },
     jobs: {
       create: (value) => persistence.create(value),
@@ -281,6 +387,14 @@ export const createPostgresCoreDependencies = (
       findById: (organizationId, approvalId) => persistence.findById(organizationId, approvalId),
       update: (value) => persistence.update(value),
     },
-    idempotency: persistence, audit: persistence, unitOfWork: session, searchHealth, ...utilities,
+    idempotency: persistence, audit: { append: (event) => persistence.append(event), listByOrganization: (id) => persistence.listAuditByOrganization(id) }, unitOfWork: session, searchHealth,
+    // PH07-T003: sin variable de entorno configurada, cualquier intento
+    // real de cifrar/descifrar un contact_point falla explicitamente (ver
+    // EnvEncryptionKeyProvider en contact-point-crypto.ts) -- no hay clave
+    // por defecto en el codigo, es responsabilidad de operaciones humanas
+    // aprovisionar RHIA_CONTACT_POINT_ENCRYPTION_KEY antes de usar Contact
+    // Validation en producción.
+    encryptionKeys: new EnvEncryptionKeyProvider(),
+    ...utilities,
   };
 };

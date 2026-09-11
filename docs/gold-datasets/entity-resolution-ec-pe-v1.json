@@ -1,0 +1,820 @@
+{
+  "name": "entity-resolution-ec-pe-v1",
+  "description": "Gold dataset de identidad de empresas (Ecuador vs Peru) para validar @rhia/entity-resolver, GATE-04. Curado a mano por el usuario (George) y pegado en el chat el 2026-09-07.",
+  "source": "Aportado directamente por el usuario en la conversacion Cowork, 2026-09-07. Marcas/razones sociales reales de empresas que operan en Ecuador y Peru.",
+  "columns": {
+    "marca": "Nombre de marca/empresa comercial compartido (senal de tipo TRADE)",
+    "razonSocialEcuador": "Razon social legal de la entidad en Ecuador (senal de tipo LEGAL, countryCode EC)",
+    "razonSocialPeru": "Razon social legal de la entidad en Peru (senal de tipo LEGAL, countryCode PE)",
+    "category": "Etiqueta humana normalizada: SAME_GROUP (mismo grupo corporativo), DISTINCT (empresa distinta/operador local independiente), GLOBAL_NETWORK (red profesional global, entidades legalmente separadas por pais bajo marca compartida -- caso ambiguo por diseno, no forzado a SAME/DISTINCT), DIRECT_LINK (misma entidad legal opera en ambos paises)",
+    "detail": "Aclaracion opcional que el usuario agrego despues de los dos puntos en la etiqueta original"
+  },
+  "labelCounts": {
+    "SAME_GROUP": 83,
+    "DISTINCT": 12,
+    "DIRECT_LINK": 1,
+    "GLOBAL_NETWORK": 4
+  },
+  "rows": [
+    {
+      "id": 1,
+      "marca": "Nestlé",
+      "razonSocialEcuador": "Nestlé Ecuador S.A.",
+      "razonSocialPeru": "Nestlé Perú S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 2,
+      "marca": "P&G",
+      "razonSocialEcuador": "Procter & Gamble Ecuador Cía. Ltda.",
+      "razonSocialPeru": "Procter & Gamble Perú S.R.L.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 3,
+      "marca": "Colgate-Palmolive",
+      "razonSocialEcuador": "Colgate-Palmolive del Ecuador Sociedad Anónima Industrial y Comercial",
+      "razonSocialPeru": "Colgate-Palmolive Perú S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 4,
+      "marca": "PepsiCo",
+      "razonSocialEcuador": "PepsiCo Alimentos Ecuador Cía. Ltda.",
+      "razonSocialPeru": "PepsiCo Alimentos Perú S.R.L.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 5,
+      "marca": "Kimberly-Clark",
+      "razonSocialEcuador": "Kimberly-Clark Ecuador S.A.",
+      "razonSocialPeru": "Kimberly-Clark Perú S.R.L.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 6,
+      "marca": "Unilever",
+      "razonSocialEcuador": "Unilever Andina Ecuador S.A.",
+      "razonSocialPeru": "Unilever Andina Perú S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 7,
+      "marca": "Mondelēz",
+      "razonSocialEcuador": "Mondelez Ecuador C. Ltda.",
+      "razonSocialPeru": "Mondelez Perú S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 8,
+      "marca": "Alicorp",
+      "razonSocialEcuador": "Alicorp Ecuador S.A.",
+      "razonSocialPeru": "Alicorp S.A.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 9,
+      "marca": "Bimbo",
+      "razonSocialEcuador": "Bimbo Ecuador S.A.",
+      "razonSocialPeru": "Bimbo del Perú S.A.C.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 10,
+      "marca": "Natura",
+      "razonSocialEcuador": "Natura Cosméticos Ecuador S.A.",
+      "razonSocialPeru": "Natura Cosméticos S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 11,
+      "marca": "Avon",
+      "razonSocialEcuador": "Productos Avon Ecuador S.A.",
+      "razonSocialPeru": "Productos Avon S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 12,
+      "marca": "Belcorp",
+      "razonSocialEcuador": "Grupo Ecuador Transbel S.A.",
+      "razonSocialPeru": "Belcorp Perú Corporate Services S.A.C. / empresas vinculadas",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 13,
+      "marca": "Henkel",
+      "razonSocialEcuador": "Henkel Ecuatoriana S.A.",
+      "razonSocialPeru": "Henkel Peruana S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 14,
+      "marca": "Reckitt",
+      "razonSocialEcuador": "Reckitt Benckiser Ecuador S.A.",
+      "razonSocialPeru": "Reckitt Benckiser Perú S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 15,
+      "marca": "Tetra Pak",
+      "razonSocialEcuador": "Tetra Pak Cía. Ltda.",
+      "razonSocialPeru": "Tetra Pak S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 16,
+      "marca": "3M",
+      "razonSocialEcuador": "3M Ecuador C.A.",
+      "razonSocialPeru": "3M Perú S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 17,
+      "marca": "Coca-Cola / Arca Continental",
+      "razonSocialEcuador": "Bebidas Arca Continental Ecuador ARCADOR S.A.",
+      "razonSocialPeru": "Arca Continental Lindley S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 18,
+      "marca": "AB InBev",
+      "razonSocialEcuador": "Cervecería Nacional CN S.A.",
+      "razonSocialPeru": "Unión de Cervecerías Peruanas Backus y Johnston S.A.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 19,
+      "marca": "Cargill",
+      "razonSocialEcuador": "Cargill del Ecuador Cargillecuador Cía. Ltda.",
+      "razonSocialPeru": "Cargill Americas Perú S.R.L.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 20,
+      "marca": "BASF",
+      "razonSocialEcuador": "BASF Ecuatoriana S.A.",
+      "razonSocialPeru": "BASF Peruana S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 21,
+      "marca": "McDonald's",
+      "razonSocialEcuador": "Arcgold del Ecuador S.A.",
+      "razonSocialPeru": "Operaciones Arcos Dorados de Perú S.A.",
+      "category": "SAME_GROUP",
+      "detail": "Arcos Dorados"
+    },
+    {
+      "id": 22,
+      "marca": "KFC",
+      "razonSocialEcuador": "Int Food Services Corp S.A.",
+      "razonSocialPeru": "Delosi S.A.",
+      "category": "DISTINCT",
+      "detail": null
+    },
+    {
+      "id": 23,
+      "marca": "Starbucks",
+      "razonSocialEcuador": "Delonorte S.A.",
+      "razonSocialPeru": "Lasino S.A.",
+      "category": "SAME_GROUP",
+      "detail": "Delosi"
+    },
+    {
+      "id": 24,
+      "marca": "Pizza Hut",
+      "razonSocialEcuador": "Sociedad de Turismo Sodetur S.A.S.",
+      "razonSocialPeru": "SIGDELO S.A.C.",
+      "category": "DISTINCT",
+      "detail": null
+    },
+    {
+      "id": 25,
+      "marca": "Burger King",
+      "razonSocialEcuador": "Alimentos del Golfo S.A.S.",
+      "razonSocialPeru": "Saidel S.A.C.",
+      "category": "DISTINCT",
+      "detail": null
+    },
+    {
+      "id": 26,
+      "marca": "Chili's",
+      "razonSocialEcuador": "Restaurantes Unidos Restaunsa S.A.",
+      "razonSocialPeru": "Cindel S.A.",
+      "category": "DISTINCT",
+      "detail": null
+    },
+    {
+      "id": 27,
+      "marca": "TGI Fridays",
+      "razonSocialEcuador": "Juliecom S.A.",
+      "razonSocialPeru": "Franquicias Alimentarias S.A.",
+      "category": "DISTINCT",
+      "detail": null
+    },
+    {
+      "id": 28,
+      "marca": "Bayer",
+      "razonSocialEcuador": "Bayer S.A.",
+      "razonSocialPeru": "Bayer S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 29,
+      "marca": "Roche",
+      "razonSocialEcuador": "Roche Ecuador S.A.",
+      "razonSocialPeru": "Roche Farma (Perú) S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 30,
+      "marca": "Pfizer",
+      "razonSocialEcuador": "Pfizer Cía. Ltda.",
+      "razonSocialPeru": "Pfizer S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 31,
+      "marca": "Sanofi",
+      "razonSocialEcuador": "Sanofi-Aventis del Ecuador S.A.",
+      "razonSocialPeru": "Sanofi-Aventis del Perú S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 32,
+      "marca": "Abbott",
+      "razonSocialEcuador": "Abbott Laboratories del Ecuador S.A.",
+      "razonSocialPeru": "Abbott Laboratories S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 33,
+      "marca": "Novartis",
+      "razonSocialEcuador": "Novartis Ecuador S.A.",
+      "razonSocialPeru": "Novartis Biosciences Perú S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 34,
+      "marca": "MSD",
+      "razonSocialEcuador": "Merck Sharp & Dohme Ecuador Cía. Ltda.",
+      "razonSocialPeru": "Merck Sharp & Dohme Perú S.R.L.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 35,
+      "marca": "GSK",
+      "razonSocialEcuador": "GlaxoSmithKline Ecuador S.A.",
+      "razonSocialPeru": "GlaxoSmithKline Perú S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 36,
+      "marca": "AstraZeneca",
+      "razonSocialEcuador": "AstraZeneca Ecuador S.A.",
+      "razonSocialPeru": "AstraZeneca Perú S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 37,
+      "marca": "Boehringer Ingelheim",
+      "razonSocialEcuador": "Boehringer Ingelheim del Ecuador Cía. Ltda.",
+      "razonSocialPeru": "Boehringer Ingelheim Perú S.A.C.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 38,
+      "marca": "B. Braun",
+      "razonSocialEcuador": "B. Braun Medical Ecuador S.A.",
+      "razonSocialPeru": "B. Braun Medical Perú S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 39,
+      "marca": "Johnson & Johnson",
+      "razonSocialEcuador": "Johnson & Johnson del Ecuador S.A.",
+      "razonSocialPeru": "Johnson & Johnson del Perú S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 40,
+      "marca": "Medtronic",
+      "razonSocialEcuador": "Medtronic Ecuador S.A.",
+      "razonSocialPeru": "Medtronic Perú S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 41,
+      "marca": "Baxter",
+      "razonSocialEcuador": "Baxter Ecuador S.A.",
+      "razonSocialPeru": "Baxter del Perú S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 42,
+      "marca": "ABB",
+      "razonSocialEcuador": "ABB Ecuador S.A.",
+      "razonSocialPeru": "ABB S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 43,
+      "marca": "Siemens",
+      "razonSocialEcuador": "Siemens S.A. / operación Siemens Ecuador",
+      "razonSocialPeru": "Siemens S.A.C.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 44,
+      "marca": "Schneider Electric",
+      "razonSocialEcuador": "Schneider Electric Ecuador S.A.",
+      "razonSocialPeru": "Schneider Electric Perú S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 45,
+      "marca": "Bosch",
+      "razonSocialEcuador": "Robert Bosch Ecuador Cía. Ltda.",
+      "razonSocialPeru": "Robert Bosch S.A.C.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 46,
+      "marca": "Honeywell",
+      "razonSocialEcuador": "Honeywell Perú S.A. – operación registrada en Ecuador",
+      "razonSocialPeru": "Honeywell Perú S.A.",
+      "category": "DIRECT_LINK",
+      "detail": null
+    },
+    {
+      "id": 47,
+      "marca": "Hilti",
+      "razonSocialEcuador": "Hilti Ecuador S.A.",
+      "razonSocialPeru": "Hilti Perú S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 48,
+      "marca": "SKF",
+      "razonSocialEcuador": "SKF del Ecuador S.A.",
+      "razonSocialPeru": "SKF del Perú S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 49,
+      "marca": "Atlas Copco",
+      "razonSocialEcuador": "Atlas Copco Ecuador Cía. Ltda.",
+      "razonSocialPeru": "Atlas Copco Peruana S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 50,
+      "marca": "Scania",
+      "razonSocialEcuador": "Scania Ecuador S.A.",
+      "razonSocialPeru": "Scania del Perú S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 51,
+      "marca": "Volvo",
+      "razonSocialEcuador": "Volvo Group Ecuador / sociedad local del grupo",
+      "razonSocialPeru": "Volvo Perú S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 52,
+      "marca": "Caterpillar",
+      "razonSocialEcuador": "Importadora Industrial Agrícola S.A. – IIASA",
+      "razonSocialPeru": "Ferreyros S.A.",
+      "category": "DISTINCT",
+      "detail": null
+    },
+    {
+      "id": 53,
+      "marca": "Toyota",
+      "razonSocialEcuador": "Toyota del Ecuador S.A.",
+      "razonSocialPeru": "Toyota del Perú S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 54,
+      "marca": "Kia",
+      "razonSocialEcuador": "AEKIA S.A.",
+      "razonSocialPeru": "Kia Import Perú S.A.C.",
+      "category": "DISTINCT",
+      "detail": "estructuras locales distintas"
+    },
+    {
+      "id": 55,
+      "marca": "Hyundai",
+      "razonSocialEcuador": "Negocios Automotrices Neohyundai S.A.",
+      "razonSocialPeru": "Automotores Gildemeister Perú S.A.",
+      "category": "DISTINCT",
+      "detail": null
+    },
+    {
+      "id": 56,
+      "marca": "BMW",
+      "razonSocialEcuador": "Alvarez Barba S.A.",
+      "razonSocialPeru": "Inchcape Motors Perú S.A.",
+      "category": "DISTINCT",
+      "detail": null
+    },
+    {
+      "id": 57,
+      "marca": "MINI",
+      "razonSocialEcuador": "Alvarez Barba S.A.",
+      "razonSocialPeru": "Inchcape Motors Perú S.A.",
+      "category": "DISTINCT",
+      "detail": null
+    },
+    {
+      "id": 58,
+      "marca": "Mercedes-Benz",
+      "razonSocialEcuador": "Autolider Ecuador S.A.S. / Inchcape",
+      "razonSocialPeru": "Diveimport S.A. – Divemotor",
+      "category": "DISTINCT",
+      "detail": null
+    },
+    {
+      "id": 59,
+      "marca": "Subaru",
+      "razonSocialEcuador": "Autolider Ecuador S.A.S. / Inchcape",
+      "razonSocialPeru": "Inchcape Automotriz Perú S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 60,
+      "marca": "Renault",
+      "razonSocialEcuador": "Automotores y Anexos S.A. – AYASA",
+      "razonSocialPeru": "Inchcape Automotriz Perú S.A.",
+      "category": "DISTINCT",
+      "detail": null
+    },
+    {
+      "id": 61,
+      "marca": "Chevrolet / GM",
+      "razonSocialEcuador": "General Motors del Ecuador S.A.",
+      "razonSocialPeru": "General Motors Perú S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 62,
+      "marca": "Microsoft",
+      "razonSocialEcuador": "Microsoft del Ecuador S.A.",
+      "razonSocialPeru": "Microsoft Perú S.R.L.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 63,
+      "marca": "IBM",
+      "razonSocialEcuador": "IBM del Ecuador C.A.",
+      "razonSocialPeru": "IBM del Perú S.A.C.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 64,
+      "marca": "Oracle",
+      "razonSocialEcuador": "Oracle Ecuador Cía. Ltda.",
+      "razonSocialPeru": "Oracle Corporation del Perú S.A.C.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 65,
+      "marca": "SAP",
+      "razonSocialEcuador": "SAP Ecuador S.A.",
+      "razonSocialPeru": "SAP Perú S.A.C.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 66,
+      "marca": "Cisco",
+      "razonSocialEcuador": "Cisco Systems Ecuador Cía. Ltda.",
+      "razonSocialPeru": "Cisco Systems Perú S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 67,
+      "marca": "Huawei",
+      "razonSocialEcuador": "Huawei Technologies Ecuador Cía. Ltda.",
+      "razonSocialPeru": "Huawei del Perú S.A.C.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 68,
+      "marca": "Nokia",
+      "razonSocialEcuador": "Nokia Solutions and Networks Ecuador S.A.",
+      "razonSocialPeru": "Nokia Solutions and Networks Perú S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 69,
+      "marca": "Ericsson",
+      "razonSocialEcuador": "Ericsson de Ecuador C.A.",
+      "razonSocialPeru": "Ericsson del Perú S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 70,
+      "marca": "Samsung",
+      "razonSocialEcuador": "Samsung Electronics Latinoamérica (Zona Libre) S.A. – operación Ecuador",
+      "razonSocialPeru": "Samsung Electronics Perú S.A.C.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 71,
+      "marca": "LG",
+      "razonSocialEcuador": "LG Electronics Panama S.A., Sucursal Ecuador",
+      "razonSocialPeru": "LG Electronics Perú S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 72,
+      "marca": "HP Inc.",
+      "razonSocialEcuador": "HP Inc. Ecuador / sociedad local del grupo",
+      "razonSocialPeru": "HP Inc. Perú S.R.L.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 73,
+      "marca": "Hewlett Packard Enterprise",
+      "razonSocialEcuador": "Hewlett Packard Enterprise Ecuador Cía. Ltda.",
+      "razonSocialPeru": "Hewlett Packard Enterprise Perú S.R.L.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 74,
+      "marca": "Lenovo",
+      "razonSocialEcuador": "Lenovo Ecuador Cía. Ltda.",
+      "razonSocialPeru": "Lenovo Perú S.R.L.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 75,
+      "marca": "Epson",
+      "razonSocialEcuador": "Epsodecua Cía. Ltda.",
+      "razonSocialPeru": "Epson Perú S.A.",
+      "category": "SAME_GROUP",
+      "detail": "operación oficial"
+    },
+    {
+      "id": 76,
+      "marca": "Kyndryl",
+      "razonSocialEcuador": "Kyndryl Ecuador S.A.S.",
+      "razonSocialPeru": "Kyndryl Perú S.A.C.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 77,
+      "marca": "Globant",
+      "razonSocialEcuador": "Globant-Ecuador S.A.S.",
+      "razonSocialPeru": "Globant Perú S.A.C.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 78,
+      "marca": "Equifax",
+      "razonSocialEcuador": "Equifax Ecuador C.A. Buró de Información Crediticia",
+      "razonSocialPeru": "Equifax Perú S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 79,
+      "marca": "Mercado Libre",
+      "razonSocialEcuador": "Mercado Libre Ecuador Cía. Ltda.",
+      "razonSocialPeru": "Mercado Libre Perú S.R.L.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 80,
+      "marca": "Rappi",
+      "razonSocialEcuador": "RappiEC S.A.S.",
+      "razonSocialPeru": "Rappi S.A.C.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 81,
+      "marca": "Claro",
+      "razonSocialEcuador": "Consorcio Ecuatoriano de Telecomunicaciones S.A. CONECEL",
+      "razonSocialPeru": "América Móvil Perú S.A.C.",
+      "category": "SAME_GROUP",
+      "detail": "América Móvil"
+    },
+    {
+      "id": 82,
+      "marca": "Cirion Technologies",
+      "razonSocialEcuador": "Cirion Technologies Ecuador S.A.",
+      "razonSocialPeru": "Cirion Technologies Perú S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 83,
+      "marca": "DHL Express",
+      "razonSocialEcuador": "DHL Express (Ecuador) S.A.",
+      "razonSocialPeru": "DHL Express Perú S.A.C.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 84,
+      "marca": "Kuehne+Nagel",
+      "razonSocialEcuador": "Kuehne + Nagel S.A.",
+      "razonSocialPeru": "Kuehne + Nagel S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 85,
+      "marca": "Maersk",
+      "razonSocialEcuador": "Maersk del Ecuador C.A.",
+      "razonSocialPeru": "Maersk Line Perú S.A.C. / entidades Maersk locales",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 86,
+      "marca": "DSV",
+      "razonSocialEcuador": "DSV Air & Sea S.A.",
+      "razonSocialPeru": "DSV Air & Sea S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 87,
+      "marca": "CEVA Logistics",
+      "razonSocialEcuador": "CEVA Freight Management de Ecuador CEVALOGISTICS-ECUADOR Cía. Ltda.",
+      "razonSocialPeru": "CEVA Logistics Perú S.R.L.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 88,
+      "marca": "FedEx",
+      "razonSocialEcuador": "Federal Express Corporation – operación/sucursal Ecuador",
+      "razonSocialPeru": "Federal Express Corporation – operación Perú",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 89,
+      "marca": "SGS",
+      "razonSocialEcuador": "SGS del Ecuador S.A.",
+      "razonSocialPeru": "SGS del Perú S.A.C.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 90,
+      "marca": "Bureau Veritas",
+      "razonSocialEcuador": "Bureau Veritas Ecuador S.A.",
+      "razonSocialPeru": "Bureau Veritas del Perú S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 91,
+      "marca": "DP World",
+      "razonSocialEcuador": "DP World Posorja S.A.",
+      "razonSocialPeru": "DP World Callao S.R.L.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 92,
+      "marca": "LATAM Airlines",
+      "razonSocialEcuador": "LATAM-Airlines Ecuador S.A.",
+      "razonSocialPeru": "LATAM Airlines Perú S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 93,
+      "marca": "Inchcape",
+      "razonSocialEcuador": "Autolider Ecuador S.A.S. / otras sociedades Inchcape",
+      "razonSocialPeru": "Inchcape Automotriz Perú S.A. / otras sociedades Inchcape",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 94,
+      "marca": "Deloitte",
+      "razonSocialEcuador": "Deloitte & Touche Ecuador Cía. Ltda. y vinculadas",
+      "razonSocialPeru": "Deloitte Touche Tohmatsu / firmas Deloitte Perú",
+      "category": "GLOBAL_NETWORK",
+      "detail": null
+    },
+    {
+      "id": 95,
+      "marca": "PwC",
+      "razonSocialEcuador": "PricewaterhouseCoopers del Ecuador Cía. Ltda.",
+      "razonSocialPeru": "PricewaterhouseCoopers S. Civil de R.L.",
+      "category": "GLOBAL_NETWORK",
+      "detail": null
+    },
+    {
+      "id": 96,
+      "marca": "EY",
+      "razonSocialEcuador": "Ernst & Young Ecuador E&Y Cía. Ltda.",
+      "razonSocialPeru": "Ernst & Young Asesores S. Civil de R.L. / vinculadas",
+      "category": "GLOBAL_NETWORK",
+      "detail": null
+    },
+    {
+      "id": 97,
+      "marca": "KPMG",
+      "razonSocialEcuador": "KPMG del Ecuador Cía. Ltda.",
+      "razonSocialPeru": "KPMG Asesores S. Civil de R.L. / vinculadas",
+      "category": "GLOBAL_NETWORK",
+      "detail": null
+    },
+    {
+      "id": 98,
+      "marca": "ManpowerGroup",
+      "razonSocialEcuador": "Manpower Ecuador S.A. / entidades locales Manpower",
+      "razonSocialPeru": "Manpower Perú S.A.C.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 99,
+      "marca": "Adecco",
+      "razonSocialEcuador": "Adecco Ecuador S.A.",
+      "razonSocialPeru": "Adecco Perú S.A. / Adecco Consulting S.A.",
+      "category": "SAME_GROUP",
+      "detail": null
+    },
+    {
+      "id": 100,
+      "marca": "Chubb",
+      "razonSocialEcuador": "Chubb Seguros Ecuador S.A.",
+      "razonSocialPeru": "Chubb Perú S.A. Compañía de Seguros y Reaseguros",
+      "category": "SAME_GROUP",
+      "detail": null
+    }
+  ]
+}

@@ -1,25 +1,25 @@
 {
-  "version": "1.0.63-claude-ph06-t004-done",
-  "updatedAt": "2026-09-03T21:55:00-05:00",
-  "state": "PH06_T005_READY",
+  "version": "1.0.117-claude-ph10-t002-partial-no-new-facts",
+  "updatedAt": "2026-09-11T15:20:00Z",
+  "state": "PH10_T002_PARTIAL_GITHUB_WORKFLOWS_COPIED_LOCALLY_NOT_PUSHED_DEVICE_BASH_STILL_DOWN",
   "currentPhase": {
-    "id": "PH06",
-    "name": "Search, evidencia e identidad"
+    "id": "PH10",
+    "name": "Seguridad, testing y resiliencia"
   },
   "currentTask": {
-    "id": "PH06-T005",
-    "name": "Implementar dedupe y cache de investigación",
-    "objective": "Ver Task Packet PH06-T005 en PLAN_MAESTRO.md (seccion 24). Dependencias PH06-T003 y PH06-T004, ambas ahora DONE. Leer su Task Packet completo antes de empezar, no asumir alcance.",
-    "status": "READY",
-    "note": "PH06-T004 (Resolver Company Group/Entity/Location) paso a DONE en esta sesion (ciclo autonomo horario, misma sesion Cowork con carpeta conectada). Entregable 'Entity Resolver v1': nuevo paquete puro packages/entity-resolver (@rhia/entity-resolver) con schema.ts (señales NameSignal/LegalIdentifierSignal/LocationSignal/OwnershipSignal + KnownEntity + EntityResolutionResult), name-normalization.ts (normalizeCompanyName quita sufijos legales EN/ES/otros, nameSimilarity Jaccard), legal-identifier.ts (normalizeLegalIdentifier + legalIdentifiersMatch, mismo numero en paises distintos nunca matchea), location-resolver.ts (resolveLocation: lista de ciudades ambiguas conocidas -San Jose, Santiago, Georgetown...-, AMBIGUOUS explicito ante conflicto o ausencia de señal de pais, nunca fuerza un pais por defecto), relationship-resolver.ts (detectRelationship liga subsidiary/operator/parent a un KnownEntity via nombre de contraparte), confidence.ts (combineConfidence noisy-or + applyConflictPenalties), entity-matcher.ts (matchByLegalIdentifier concluyente, matchByNameAndLocation descarta de plano candidatos con pais en conflicto), entity-resolver.ts (resolveCompanyEntity orquestador: prioridad legal identifier > ownership > nombre+ubicacion; NEEDS_REVIEW si confianza <0.55 o ubicacion AMBIGUOUS o empate de nombre, nunca RESOLVED silencioso). Evidencia real: tsc --noEmit y build real (tsc nativo /usr/local/lib/node_modules_global/bin/tsc) exit 0; node --test packages/entity-resolver/dist/*.test.js: 40/40 pass, incluyendo las 3 pruebas requeridas del packet (Ambiguous city, Same name different company, Subsidiary test) y los 3 criterios de aceptacion (no mezcla San Jose CR/US/Belize, multinacional conserva grupo comun, confidence bajo no auto-confirma); tsc --noEmit de apps/core-api sin regresion; git diff --check limpio (tras reintento por .git/index.lock transitorio, mismo incidente no bloqueante ya documentado en PH06-T003). Ver docs/progress/PH06-T004.md (seccion completa) y session-log SES-20260903-63. Fuera de alcance documentado (no simulado como hecho): sin gold dataset real (validacion final del packet pendiente), sin conexion a persistencia real ni a la salida de @rhia/evidence-pipeline (Fact -> señales de este resolver), lista de ciudades ambiguas es v1 corta y ampliable."
+    "id": "PH10-T002",
+    "name": "Construir suite de regresión comercial",
+    "objective": "Run Order (PLAN_MAESTRO.md seccion 26): automatizar los flujos criticos de PH06-PH08 (CI test suite). Dependencias PH01-T004 (DONE), PH08-T005 (DONE). Puede ejecutarse en paralelo con PH10-T003 (DONE).",
+    "status": "PARTIAL",
+    "note": "SES-20260911-117 (scheduled task, ciclo 9; chequeo breve, sin hechos nuevos respecto a SES-116): device_bash sigue caido (mismo error exacto de Plan9/virtiofs); .git/logs/HEAD sigue en cd5776c7 (sin commits nuevos); raw.githubusercontent.com/.../ci.yml sigue devolviendo 404 (verificado con WebFetch); .github/workflows/ci.yml y nightly.yml en el dispositivo mantienen el mismo tamano y mtime que documento SES-116 (sin cambios). Escaneo recursivo propio de apps/ (776) + packages/ (986) confirma 0 archivos de codigo fuente con mtime posterior al checkpoint de SES-116. PLAN_MAESTRO.md seccion 26 (Run Order) releida completa: confirma que PH11-T002/T003/T004 siguen detras de GATE-06 (que depende de PH10-T004, bloqueada por device_bash) -- ninguna tarea del Run Order esta desbloqueada en paralelo. Por 0 hechos nuevos, no se repitio build/typecheck/test (evidencia identica ya documentada por SES-108/111/112) ni se envio notificacion push (criterio explicito: solo ante hecho nuevo real, y no lo hay desde la notificacion de SES-116). No se reabrio PH10-T004 ni se adelanto PH11-T002/T003/T004. Detalle completo en docs/progress/PH10-T002.md (\"Actualizacion -- SES-20260911-117\"). Cambios escritos al dispositivo via device_commit_files; no se hizo commit/push (CLAUDE.md lo prohibe). Sigue pendiente, solo de resorte humano: publicar con SUBIRALGIT.BAT (workflows ya copiados + package.json + docs), branch protection en GitHub (CI como required status check), y confirmacion del fix bajo Node 24 real (solo via device_bash restaurado -- bug de Windows del 2026-09-08, sin via alterna en el contenedor cloud, ya descartada por SES-113); mas la decision opcional de presupuesto para el subset nightly. Van 9 ciclos consecutivos (SES-108..117) con el mismo bloqueo de plataforma sin resolucion."
   },
   "counts": {
     "totalTasks": 51,
-    "done": 24,
-    "inProgress": 0,
-    "blocked": 0,
+    "done": 43,
+    "inProgress": 1,
+    "blocked": 1,
     "totalGates": 8,
-    "gatesDone": 3
+    "gatesDone": 5
   },
   "guardrails": [
     "Sin borrado de datos ni cambios irreversibles",
@@ -56,32 +56,32 @@
     {
       "id": "PH06",
       "name": "Search, evidencia e identidad",
-      "status": "IN_PROGRESS"
+      "status": "DONE"
     },
     {
       "id": "PH07",
       "name": "CRM, contactos y scoring",
-      "status": "LOCKED"
+      "status": "DONE"
     },
     {
       "id": "PH08",
       "name": "Outreach, conversación y reuniones",
-      "status": "LOCKED"
+      "status": "DONE"
     },
     {
       "id": "PH09",
       "name": "Tools, Playwright y Computer Use",
-      "status": "LOCKED"
+      "status": "DONE"
     },
     {
       "id": "PH10",
       "name": "Seguridad, testing y resiliencia",
-      "status": "LOCKED"
+      "status": "IN_PROGRESS"
     },
     {
       "id": "PH11",
       "name": "Observabilidad y deployment",
-      "status": "LOCKED"
+      "status": "IN_PROGRESS"
     },
     {
       "id": "PH12",

@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { HumanRole } from '@rhia/policy';
 import type { OperationsApproval, OperationsJob } from './operations-center.tsx';
+import type { CompanyDetailData, CoreCompany, CoreContact, CoreOpportunity } from './crm-views.tsx';
 
 type FetchLike = typeof fetch;
 type JsonRecord = Record<string, unknown>;
@@ -14,6 +15,8 @@ const approvalActions = new Set<OperationsApproval['action']>([
   'CHANGE_PRICE', 'GRANT_DISCOUNT', 'CHANGE_COMMERCIAL_TERMS', 'BINDING_COMMITMENT',
 ]);
 const humanRoles = new Set<HumanRole>(['ADMIN', 'MANAGER', 'OPERATOR', 'VIEWER']);
+const companyStatuses = new Set<CoreCompany['globalIdentityStatus']>(['UNRESOLVED', 'RESOLVED', 'AMBIGUOUS']);
+const contactStatuses = new Set<CoreContact['status']>(['UNVERIFIED', 'VERIFIED', 'CONFLICTING']);
 
 const isRecord = (value: unknown): value is JsonRecord => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 const requiredText = (record: JsonRecord, key: string, max = 1000): string => {
@@ -24,6 +27,12 @@ const requiredText = (record: JsonRecord, key: string, max = 1000): string => {
 const requiredNumber = (record: JsonRecord, key: string): number => {
   const value = record[key];
   if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 0) throw new CoreClientError(502, 'Core devolvió una respuesta inválida.');
+  return value;
+};
+const optionalText = (record: JsonRecord, key: string, max = 500): string | null => {
+  const value = record[key];
+  if (value === null) return null;
+  if (typeof value !== 'string' || value.length > max) throw new CoreClientError(502, 'Core devolvió una respuesta inválida.');
   return value;
 };
 
@@ -126,6 +135,77 @@ export class RhiaCoreClient {
         requestedAt: requiredText(value, 'requestedAt', 50), targetLabel: 'Recurso comercial protegido',
       };
     });
+  }
+
+  private companyFrom(value: unknown): CoreCompany {
+    if (!isRecord(value)) throw new CoreClientError(502, 'Core devolvió una company inválida.');
+    const globalIdentityStatus = requiredText(value, 'globalIdentityStatus') as CoreCompany['globalIdentityStatus'];
+    if (!companyStatuses.has(globalIdentityStatus)) throw new CoreClientError(502, 'Core devolvió una company inválida.');
+    return {
+      id: requiredText(value, 'id', 36), canonicalName: requiredText(value, 'canonicalName', 240),
+      websiteRoot: optionalText(value, 'websiteRoot', 500), globalIdentityStatus,
+    };
+  }
+
+  private contactFrom(value: unknown): CoreContact {
+    if (!isRecord(value)) throw new CoreClientError(502, 'Core devolvió un contact inválido.');
+    const status = requiredText(value, 'status') as CoreContact['status'];
+    if (!contactStatuses.has(status)) throw new CoreClientError(502, 'Core devolvió un contact inválido.');
+    return {
+      id: requiredText(value, 'id', 36), companyGroupId: requiredText(value, 'companyGroupId', 36),
+      fullName: requiredText(value, 'fullName', 240), title: optionalText(value, 'title', 240),
+      countryCode: optionalText(value, 'countryCode', 2), city: optionalText(value, 'city', 120), status,
+    };
+  }
+
+  private opportunityFrom(value: unknown): CoreOpportunity {
+    if (!isRecord(value)) throw new CoreClientError(502, 'Core devolvió una opportunity inválida.');
+    return {
+      id: requiredText(value, 'id', 36), companyGroupId: requiredText(value, 'companyGroupId', 36),
+      marketCountry: requiredText(value, 'marketCountry', 2), marketCity: optionalText(value, 'marketCity', 120),
+      stage: requiredText(value, 'stage') as CoreOpportunity['stage'], score: requiredNumber(value, 'score'),
+      status: requiredText(value, 'status') as CoreOpportunity['status'],
+    };
+  }
+
+  public async listCompanies(cookieHeader: string): Promise<readonly CoreCompany[]> {
+    const payload = await this.request('/api/v1/companies', cookieHeader);
+    if (!Array.isArray(payload['data'])) throw new CoreClientError(502, 'Core devolvió una lista de companies inválida.');
+    return payload['data'].map((value) => this.companyFrom(value));
+  }
+
+  public async listContacts(cookieHeader: string): Promise<readonly CoreContact[]> {
+    const payload = await this.request('/api/v1/contacts', cookieHeader);
+    if (!Array.isArray(payload['data'])) throw new CoreClientError(502, 'Core devolvió una lista de contacts inválida.');
+    return payload['data'].map((value) => this.contactFrom(value));
+  }
+
+  public async listOpportunities(cookieHeader: string): Promise<readonly CoreOpportunity[]> {
+    const payload = await this.request('/api/v1/opportunities', cookieHeader);
+    if (!Array.isArray(payload['data'])) throw new CoreClientError(502, 'Core devolvió una lista de opportunities inválida.');
+    return payload['data'].map((value) => this.opportunityFrom(value));
+  }
+
+  public async getCompany(cookieHeader: string, companyId: string): Promise<CompanyDetailData> {
+    if (!UUID.test(companyId)) throw new CoreClientError(400, 'La company seleccionada no es válida.');
+    const payload = await this.request(`/api/v1/companies/${companyId}`, cookieHeader);
+    const data = payload['data'];
+    if (!isRecord(data) || !Array.isArray(data['contacts']) || !Array.isArray(data['opportunities']) || !Array.isArray(data['timeline'])) {
+      throw new CoreClientError(502, 'Core devolvió un Company 360 inválido.');
+    }
+    return {
+      company: this.companyFrom(data['company']),
+      contacts: data['contacts'].map((value) => this.contactFrom(value)),
+      opportunities: data['opportunities'].map((value) => this.opportunityFrom(value)),
+      timeline: data['timeline'].map((value): CompanyDetailData['timeline'][number] => {
+        if (!isRecord(value)) throw new CoreClientError(502, 'Core devolvió un evento de timeline inválido.');
+        return {
+          id: requiredText(value, 'id', 36), action: requiredText(value, 'action', 80),
+          resourceType: requiredText(value, 'resourceType', 40), resourceId: requiredText(value, 'resourceId', 36),
+          occurredAt: requiredText(value, 'occurredAt', 50),
+        };
+      }),
+    };
   }
 
   public async commandJob(cookieHeader: string, jobId: string, command: 'retry' | 'cancel', reason?: string): Promise<void> {

@@ -3,11 +3,13 @@ import { getErrorDefinition, type ErrorCode } from '@rhia/domain';
 import type { Principal } from '@rhia/policy';
 import { z } from 'zod';
 import {
-  ApprovalListResponseSchema, ApprovalResponseSchema, CompanyGroupListResponseSchema, CompanyGroupResponseSchema,
-  ContactListResponseSchema, ContactResponseSchema, CoreApiErrorResponseSchema, JobListResponseSchema, JobResponseSchema,
-  OpportunityListResponseSchema, OpportunityResponseSchema, SearchHealthResponseSchema, SessionContextResponseSchema,
+  ApprovalListResponseSchema, ApprovalResponseSchema, CompanyDetailResponseSchema, CompanyGroupListResponseSchema,
+  CompanyGroupResponseSchema, ContactListResponseSchema, ContactPointListResponseSchema, ContactPointResponseSchema, ContactResponseSchema,
+  CoreApiErrorResponseSchema, JobListResponseSchema, JobResponseSchema, OpportunityListResponseSchema, OpportunityResponseSchema,
+  SearchHealthResponseSchema, SessionContextResponseSchema,
 } from './contracts.js';
 import { CompanyGroupService, CoreServiceError } from './company-service.js';
+import { ContactPointService } from './contact-point-service.js';
 import { ApprovalService, JobService } from './control-services.js';
 import { ContactService, OpportunityService } from './record-services.js';
 import { SearchHealthService } from './search-health-service.js';
@@ -44,6 +46,7 @@ export class CoreApi {
   constructor(
     private readonly companies: CompanyGroupService,
     private readonly contacts: ContactService,
+    private readonly contactPoints: ContactPointService,
     private readonly opportunities: OpportunityService,
     private readonly jobs: JobService,
     private readonly approvals: ApprovalService,
@@ -76,6 +79,11 @@ export class CoreApi {
           }),
         };
       }
+      const companyDetailRoute = request.path.match(/^\/api\/v1\/companies\/([0-9a-f-]{36})$/i);
+      if (companyDetailRoute?.[1] && request.method === 'GET') {
+        const data = await this.companies.getById(request.principal, companyDetailRoute[1]);
+        return { status: 200, body: CompanyDetailResponseSchema.parse({ version: '1.0', data }) };
+      }
       if (request.path === '/api/v1/contacts' && request.method === 'GET') {
         const data = await this.contacts.list(request.principal);
         return { status: 200, body: ContactListResponseSchema.parse({ version: '1.0', data }) };
@@ -85,6 +93,19 @@ export class CoreApi {
         return {
           status: result.replayed ? 200 : 201,
           body: ContactResponseSchema.parse({ version: '1.0', data: result.contact, meta: { idempotentReplay: result.replayed } }),
+        };
+      }
+      const contactPointsRoute = request.path.match(/^\/api\/v1\/contacts\/([0-9a-f-]{36})\/points$/i);
+      if (contactPointsRoute?.[1] && request.method === 'GET') {
+        const data = await this.contactPoints.listByContact(request.principal, contactPointsRoute[1]);
+        return { status: 200, body: ContactPointListResponseSchema.parse({ version: '1.0', data }) };
+      }
+      if (contactPointsRoute?.[1] && request.method === 'POST') {
+        const body = typeof request.body === 'object' && request.body !== null ? { ...request.body, contactId: contactPointsRoute[1] } : request.body;
+        const result = await this.contactPoints.create(request.principal, body, correlationId);
+        return {
+          status: result.replayed ? 200 : 201,
+          body: ContactPointResponseSchema.parse({ version: '1.0', data: result.contactPoint, meta: { idempotentReplay: result.replayed } }),
         };
       }
       if (request.path === '/api/v1/opportunities' && request.method === 'GET') {

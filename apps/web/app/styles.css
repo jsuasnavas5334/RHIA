@@ -118,3 +118,11 @@ button.danger-action { color: #ffb0b0; border-color: #59383e; background: rgba(1
   .approval-context { grid-template-columns: 1fr; }
   .operation-actions, .decision-form > div { align-items: stretch; flex-direction: column; }
 }
+
+.opportunity-board { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.opportunity-column h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.opportunity-column h3 span { padding: 2px 8px; border-radius: 999px; background: #172231; font-size: 11px; }
+.opportunity-column .operation-card { margin-bottom: 12px; }
+.timeline-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.timeline-list li { display: flex; align-items: baseline; gap: 12px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; background: rgba(13, 19, 29, .55); }
+.timeline-list time { color: var(--muted); font-size: 11px; white-space: nowrap; }

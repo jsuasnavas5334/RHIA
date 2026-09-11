@@ -92,7 +92,7 @@ test('PostgreSQL real revierte recurso, audit y ledger como una unidad', { skip:
   });
   const service = new CompanyGroupService({
     ...dependencies,
-    audit: { append: async () => { throw new Error('forced audit failure'); } },
+    audit: { append: async () => { throw new Error('forced audit failure'); }, listByOrganization: async () => [] },
   });
   try {
     await assert.rejects(service.create(principal, {

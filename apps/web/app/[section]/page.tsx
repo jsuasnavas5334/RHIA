@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import type { HumanRole } from '@rhia/policy';
 import { PageStatePanel } from '../../src/app-shell.tsx';
 import { OperationsCenter, type OperationsApproval, type OperationsJob } from '../../src/operations-center.tsx';
+import { CompanyDirectory, ContactDirectory, OpportunityBoard, type CoreCompany, type CoreContact, type CoreOpportunity } from '../../src/crm-views.tsx';
 import { loadRhiaCoreSession } from '../core-session.ts';
 import { approvalDecisionAction, jobCommandAction } from './actions.ts';
 
@@ -95,6 +96,44 @@ export default async function SectionPage({
       {...(connected ? { approvalAction: approvalDecisionAction, jobAction: jobCommandAction } : {})}
       {...(notice ? { notice } : {})}
     />;
+  }
+  if (section === 'companies' || section === 'contacts' || section === 'opportunities') {
+    const query = await searchParams;
+    const country = Array.isArray(query['country']) ? query['country'][0] : query['country'];
+    const city = Array.isArray(query['city']) ? query['city'][0] : query['city'];
+    const configuredOrigin = process.env['RHIA_CORE_API_URL'];
+    const [title, description] = sections[section];
+    let notice: string | undefined;
+    let companies: readonly CoreCompany[] = [];
+    let contacts: readonly CoreContact[] = [];
+    let opportunities: readonly CoreOpportunity[] = [];
+    let loaded = false;
+
+    if (configuredOrigin) {
+      try {
+        const session = await loadRhiaCoreSession();
+        if (section === 'companies') companies = await session.client.listCompanies(session.cookieHeader);
+        if (section === 'contacts') contacts = await session.client.listContacts(session.cookieHeader);
+        if (section === 'opportunities') opportunities = await session.client.listOpportunities(session.cookieHeader);
+        loaded = true;
+      } catch {
+        notice = 'No se pudo validar la sesión con Core. La vista permanece vacía.';
+      }
+    } else if (process.env.NODE_ENV === 'development') {
+      notice = 'Vista previa local: Core no está configurado, no hay datos que mostrar.';
+    } else {
+      notice = 'Core no está configurado. La consola permanece cerrada por seguridad.';
+    }
+
+    return <>
+      <div className="page-heading"><div><span className="eyebrow">Módulo operativo</span><h1>{title}</h1><p>{description}</p></div></div>
+      {notice ? <p className="operations-notice" role="status">{notice}</p> : null}
+      <section className="panel section-panel">
+        {!loaded ? <PageStatePanel state="EMPTY" /> : section === 'companies' ? <CompanyDirectory companies={companies} />
+          : section === 'contacts' ? <ContactDirectory contacts={contacts} filters={{ country, city }} />
+          : <OpportunityBoard filters={{ country, city }} opportunities={opportunities} />}
+      </section>
+    </>;
   }
   const [title, description] = sections[section as SectionKey];
   return <><div className="page-heading"><div><span className="eyebrow">Módulo operativo</span><h1>{title}</h1><p>{description}</p></div></div><section className="panel section-panel"><PageStatePanel state="EMPTY" /></section></>;

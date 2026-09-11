@@ -15,7 +15,7 @@
   ],
   "scripts": {
     "prebuild": "npm run build:prerequisites",
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present > /dev/null 2>&1; npm run build --workspaces --if-present",
     "build:prerequisites": "npm run build --workspace=@rhia/domain --workspace=@rhia/config --workspace=@rhia/contracts --workspace=@rhia/policy",
     "pretypecheck": "npm run build:prerequisites",
     "typecheck": "npm run typecheck --workspaces --if-present",

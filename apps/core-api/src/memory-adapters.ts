@@ -1,6 +1,7 @@
 import type { SearchHealthEventRecord } from '@rhia/search-health';
 import type {
-  ApprovalRepository, AuditEvent, AuditSink, CompanyGroupRepository, ContactRepository, CoreUnitOfWork, IdempotencyRecord, IdempotencyStore,
+  ApprovalRepository, AuditEvent, AuditSink, CompanyEntityRecord, CompanyEntityRepository, CompanyGroupRepository, CompanyLocationRecord,
+  CompanyLocationRepository, ContactPointRecord, ContactPointRepository, ContactRepository, CoreUnitOfWork, IdempotencyRecord, IdempotencyStore,
   JobRepository, OpportunityRepository, SearchHealthRepository,
 } from './ports.js';
 import type { ApprovalRecord, CompanyGroup, Contact, JobRecord, Opportunity } from './contracts.js';
@@ -14,6 +15,34 @@ export class MemoryCompanyGroupRepository implements CompanyGroupRepository {
 
   async listByOrganization(organizationId: string): Promise<readonly CompanyGroup[]> {
     return this.records.filter((company) => company.organizationId === organizationId);
+  }
+
+  async findById(organizationId: string, companyGroupId: string): Promise<CompanyGroup | undefined> {
+    return this.records.find((company) => company.organizationId === organizationId && company.id === companyGroupId);
+  }
+}
+
+export class MemoryCompanyEntityRepository implements CompanyEntityRepository {
+  readonly records: CompanyEntityRecord[] = [];
+
+  async create(entity: CompanyEntityRecord): Promise<void> {
+    this.records.push(entity);
+  }
+
+  async listByOrganization(organizationId: string): Promise<readonly CompanyEntityRecord[]> {
+    return this.records.filter((entity) => entity.organizationId === organizationId);
+  }
+}
+
+export class MemoryCompanyLocationRepository implements CompanyLocationRepository {
+  readonly records: CompanyLocationRecord[] = [];
+
+  async create(location: CompanyLocationRecord): Promise<void> {
+    this.records.push(location);
+  }
+
+  async listByOrganization(organizationId: string): Promise<readonly CompanyLocationRecord[]> {
+    return this.records.filter((location) => location.organizationId === organizationId);
   }
 }
 
@@ -38,6 +67,33 @@ export class MemoryContactRepository implements ContactRepository {
 
   async listByOrganization(organizationId: string): Promise<readonly Contact[]> {
     return this.records.filter((contact) => contact.organizationId === organizationId);
+  }
+}
+
+export class MemoryContactPointRepository implements ContactPointRepository {
+  readonly records: ContactPointRecord[] = [];
+
+  async create(point: ContactPointRecord): Promise<void> {
+    this.records.push(point);
+  }
+
+  async listByContact(organizationId: string, contactId: string): Promise<readonly ContactPointRecord[]> {
+    return this.records.filter((point) => point.organizationId === organizationId && point.contactId === contactId);
+  }
+
+  async findByHash(
+    organizationId: string,
+    contactId: string,
+    pointType: ContactPointRecord['pointType'],
+    valueHash: string,
+  ): Promise<ContactPointRecord | undefined> {
+    return this.records.find(
+      (point) =>
+        point.organizationId === organizationId &&
+        point.contactId === contactId &&
+        point.pointType === pointType &&
+        point.valueHash === valueHash,
+    );
   }
 }
 
@@ -88,6 +144,10 @@ export class MemoryAuditSink implements AuditSink {
 
   async append(event: AuditEvent): Promise<void> {
     this.events.push(event);
+  }
+
+  async listByOrganization(organizationId: string): Promise<readonly AuditEvent[]> {
+    return this.events.filter((event) => event.organizationId === organizationId);
   }
 }
 

@@ -57,3 +57,55 @@ test('origen inseguro o cookie ausente fallan antes de transmitir', async () => 
   const client = new RhiaCoreClient('http://127.0.0.1:4100', async () => { throw new Error('no debe invocarse'); });
   await assert.rejects(client.listApprovals(''), /Inicia sesión/);
 });
+
+test('lista companies sin exponer campos fuera de contrato', async () => {
+  const client = new RhiaCoreClient('http://127.0.0.1:4100', async () => new Response(JSON.stringify({
+    version: '1.0',
+    data: [{
+      id: '33333333-3333-4333-8333-333333333333', organizationId: 'org', canonicalName: 'Empresa Andina', websiteRoot: null,
+      globalIdentityStatus: 'UNRESOLVED', createdAt: '2026-08-21T20:00:00.000Z', updatedAt: '2026-08-21T20:00:00.000Z',
+    }],
+  }), { status: 200 }));
+  const companies = await client.listCompanies('session=opaque');
+  assert.deepEqual(companies, [{
+    id: '33333333-3333-4333-8333-333333333333', canonicalName: 'Empresa Andina', websiteRoot: null, globalIdentityStatus: 'UNRESOLVED',
+  }]);
+});
+
+test('Company 360 arma contacts, opportunities y timeline desde la respuesta de Core', async () => {
+  const client = new RhiaCoreClient('http://127.0.0.1:4100', async () => new Response(JSON.stringify({
+    version: '1.0',
+    data: {
+      company: {
+        id: '33333333-3333-4333-8333-333333333333', organizationId: 'org', canonicalName: 'Empresa 360', websiteRoot: 'https://example.com',
+        globalIdentityStatus: 'RESOLVED', createdAt: '2026-08-21T20:00:00.000Z', updatedAt: '2026-08-21T20:00:00.000Z',
+      },
+      contacts: [{
+        id: '44444444-4444-4444-8444-444444444444', organizationId: 'org', companyGroupId: '33333333-3333-4333-8333-333333333333', companyEntityId: null,
+        fullName: 'Ana Torres', title: 'Gerente RRHH', department: null, seniority: null,
+        countryCode: 'EC', city: 'Quito', linkedinUrl: null, status: 'VERIFIED',
+        createdAt: '2026-08-21T20:00:00.000Z', updatedAt: '2026-08-21T20:00:00.000Z',
+      }],
+      opportunities: [{
+        id: '55555555-5555-4555-8555-555555555555', organizationId: 'org', companyGroupId: '33333333-3333-4333-8333-333333333333', primaryEntityId: null,
+        marketCountry: 'EC', marketCity: 'Quito', stage: 'DISCOVERED', score: 0, scoreVersion: 'core-v1',
+        ownerUserId: null, nextActionAt: null, status: 'OPEN',
+        createdAt: '2026-08-21T20:00:00.000Z', updatedAt: '2026-08-21T20:00:00.000Z',
+      }],
+      timeline: [{
+        id: '66666666-6666-4666-8666-666666666666', action: 'COMPANY_GROUP_CREATED', resourceType: 'COMPANY_GROUP', resourceId: '33333333-3333-4333-8333-333333333333',
+        occurredAt: '2026-08-21T20:00:00.000Z',
+      }],
+    },
+  }), { status: 200 }));
+  const detail = await client.getCompany('session=opaque', '33333333-3333-4333-8333-333333333333');
+  assert.equal(detail.company.canonicalName, 'Empresa 360');
+  assert.equal(detail.contacts[0]?.fullName, 'Ana Torres');
+  assert.equal(detail.opportunities[0]?.marketCity, 'Quito');
+  assert.equal(detail.timeline[0]?.action, 'COMPANY_GROUP_CREATED');
+});
+
+test('Company 360 rechaza un id que no es UUID antes de llamar a Core', async () => {
+  const client = new RhiaCoreClient('http://127.0.0.1:4100', async () => { throw new Error('no debe invocarse'); });
+  await assert.rejects(client.getCompany('session=opaque', 'not-an-id'), /company seleccionada no es válida/);
+});

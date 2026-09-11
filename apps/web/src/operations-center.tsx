@@ -50,7 +50,7 @@ const actionLabel: Readonly<Record<OperationsApproval['action'], string>> = {
   CHANGE_COMMERCIAL_TERMS: 'Cambio de condiciones', BINDING_COMMITMENT: 'Compromiso comercial',
 };
 
-const displayTime = (value: string) => new Intl.DateTimeFormat('es-EC', {
+export const displayTime = (value: string) => new Intl.DateTimeFormat('es-EC', {
   dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/Guayaquil',
 }).format(new Date(value));
 
