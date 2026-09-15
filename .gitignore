@@ -13,6 +13,11 @@ secrets/
 credentials/
 cookies/
 .rhia-secrets/
+# Excepcion: packages/secrets es el workspace npm @rhia/secrets (codigo
+# fuente de cifrado/redaccion, sin valores reales), no una carpeta de
+# secretos reales -- ver docs/progress/PH10-T002.md.
+!packages/secrets/
+!packages/secrets/**
 
 # Node
 node_modules/

@@ -135,7 +135,11 @@ echo.
 echo Archivos preparados para el commit:
 "%GIT_EXE%" --no-pager diff --cached --name-status
 
-"%GIT_EXE%" diff --cached --name-only | findstr /I /R /C:"\.env" /C:"\.pem$" /C:"\.key$" /C:"\.p12$" /C:"\.pfx$" /C:"\.passphrase$" /C:"\.dump$" /C:"\.dump\.gpg$" /C:"secrets/" /C:"\.rhia-secrets/" /C:"credentials/" /C:"cookies/" /C:"backups/" /C:"RHIA-Backups/" | findstr /V /I /R /C:"\.env\.example$" >nul
+REM Excepcion precisa: packages/secrets/ es el workspace npm @rhia/secrets
+REM (codigo fuente de cifrado/redaccion, sin valores reales), no una carpeta
+REM de secretos reales. Ver docs/progress/PH10-T002.md. Se filtra ANTES del
+REM chequeo de nombres sensibles, igual que ya se hace con .env.example.
+"%GIT_EXE%" diff --cached --name-only | findstr /V /I /R /C:"^packages/secrets/" | findstr /I /R /C:"\.env" /C:"\.pem$" /C:"\.key$" /C:"\.p12$" /C:"\.pfx$" /C:"\.passphrase$" /C:"\.dump$" /C:"\.dump\.gpg$" /C:"secrets/" /C:"\.rhia-secrets/" /C:"credentials/" /C:"cookies/" /C:"backups/" /C:"RHIA-Backups/" | findstr /V /I /R /C:"\.env\.example$" >nul
 if not errorlevel 1 (
     echo.
     echo ERROR: Se detecto un nombre de archivo potencialmente sensible.

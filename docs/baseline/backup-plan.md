@@ -72,3 +72,11 @@ Todos los archivos se crean con permisos restringidos. Los dumps contienen datos
 - Resultado: hashes correctos, restore aislado completo y conteos idénticos para 133/133 tablas.
 
 `PH01-T002` queda completada. La segunda copia independiente, el RPO/RTO, la programación y la poda automática pertenecen a `PH10-T004`.
+
+## Continuación en PH10-T004
+
+`docs/runbooks/disaster-recovery-runbook.md` documenta el estado real de
+`PH10-T004` (retención con `scripts/prune-postgres-backups.sh`, monitor de
+antigüedad con `scripts/check-backup-age.sh`, RPO/RTO propuesto y lo que
+falta para declarar el packet `DONE`). Este archivo (`backup-plan.md`)
+queda como quedó al cerrar `PH01-T002`; no se reescribe retroactivamente.

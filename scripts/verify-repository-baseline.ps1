@@ -64,7 +64,12 @@ $versionable = @(
 Assert-RhiaCheck ($versionable.Count -gt 0) 'Archivos publicables enumerados'
 
 $sensitiveName = '(?i)(^|/)(\.env($|\.)|secrets|credentials|cookies|backups|RHIA-Backups|\.rhia-secrets)(/|$)|\.(pem|key|p12|pfx|passphrase|dump|dump\.gpg)$'
-$badNames = @($versionable | Where-Object { $_ -ne '.env.example' -and $_ -match $sensitiveName })
+# Excepcion precisa: packages/secrets/ es el workspace npm @rhia/secrets
+# (codigo fuente de cifrado/redaccion), no una carpeta de secretos reales.
+# Ver docs/progress/PH10-T002.md para el diagnostico completo. No amplia
+# el patron general: solo excluye ese prefijo exacto.
+$allowedSensitivePrefix = '(?i)^packages/secrets/'
+$badNames = @($versionable | Where-Object { $_ -ne '.env.example' -and $_ -match $sensitiveName -and $_ -notmatch $allowedSensitivePrefix })
 Assert-RhiaCheck ($badNames.Count -eq 0) 'Sin nombres sensibles publicables'
 
 $signatures = @(
