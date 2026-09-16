@@ -58,7 +58,8 @@ jobs:
           set -e
           for f in packages/db/migrations/000*.sql; do
             echo "-- aplicando $f"
-            psql "$RHIA_TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f "$f"
+            checksum=$(sha256sum "$f" | cut -d' ' -f1)
+            psql "$RHIA_TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -v migration_checksum="$checksum" -f "$f"
           done
 
       - name: Aplicar seeds reales del repo

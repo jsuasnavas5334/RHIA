@@ -1,7 +1,7 @@
 {
-  "version": "1.0.126-claude-ph10-t004-partial-seventh-cycle-trigger-write-blocked",
-  "updatedAt": "2026-09-15T21:11:00Z",
-  "state": "PH10_T004_PARTIAL_SEVENTH_CONSECUTIVE_CYCLE_TRIGGER_CADENCE_CHANGE_BLOCKED_BY_PLATFORM_PERMISSIONS",
+  "version": "1.0.143-claude-ph10-t004-partial-vigesimo-cuarto-ciclo-sin-cambios-fix-nightly-pendiente-push",
+  "updatedAt": "2026-09-16T15:12:36Z",
+  "state": "PH10_T004_PARTIAL_VIGESIMO_CUARTO_CICLO_SIN_CAMBIOS_BLOQUEO_DOCKER_POSTGRES_N8N_FIX_NIGHTLY_SES141_PENDIENTE_DE_PUSH_HUMANO",
   "currentPhase": {
     "id": "PH10",
     "name": "Seguridad, testing y resiliencia"
@@ -11,12 +11,12 @@
     "name": "Backup, restore y disaster recovery",
     "objective": "Run Order (PLAN_MAESTRO.md seccion 26, paso 40): demostrar recuperacion real (backup automatico, retencion, export n8n, restore isolated, RPO/RTO inicial, runbook). Dependencias PH01-T002 (DONE), PH11-T001 (DONE).",
     "status": "PARTIAL",
-    "note": "SES-20260915-126: septimo ciclo programado consecutivo (SES-120..SES-126) confirma sin cambios el bloqueo estructural: psql/pg_dump/pg_restore/docker ausentes, puerto 5432 cerrado, sudo bloqueado por no_new_privs en la VM del bridge device_bash. PH10-T002 sin hecho nuevo (usuario aun no corrio SUBIRALGIT.BAT; git log local == origin/main en 3d30fdb). Hecho nuevo real de esta sesion: se intento reducir la cadencia del trigger horario (de '11 * * * *' a diario) via update_trigger, siguiendo la sugerencia repetida de SES-123/124/125; la plataforma rechazo la llamada por politica de permisos de modo automatico ([Cowork Scheduled Task Write]), confirmando que ninguna sesion automatizada puede cambiar la cadencia por si misma -- solo el usuario puede hacerlo desde la app. No se intento ningun rodeo. No se re-uso este hallazgo para insistir de nuevo; queda documentado una sola vez. No se modifico la configuracion de notificaciones (push/email siguen desactivados por decision del usuario, no tocada). No se hizo commit/push -- sigue pendiente de SUBIRALGIT.BAT del usuario, reforzado ademas por el guardrail del proyecto 'Publicacion Git unicamente bajo control humano'."
+    "note": "SES-20260916-143: vigesimo cuarto ciclo consecutivo sin cambios en el bloqueo estructural Docker/Postgres/n8n en device_bash (which psql/pg_dump/pg_restore/docker ausentes; puertos 5432/5678 rechazados; sudo bloqueado por no_new_privileges). git fetch confirma que el fix de nightly.yml (SES-141, agrega -v migration_checksum al paso de migraciones) sigue sin publicarse (sin push desde SES-127) -- guardrail 'Publicacion Git unicamente bajo control humano'. El Nightly no genero corrida nueva desde run_id=35095036869 (2026-09-16T12:18:13Z) ya documentado por SES-141/142; corresponde revisar de nuevo tras el proximo push humano o la proxima ventana diaria del Nightly. Sin informacion nueva accionable, no se repitio el aviso proactivo (ya cubierto por SES-141). El bloqueo central de PH10-T004/GATE-06 (Task Scheduler de Windows / cron WSL; disco USB fisico) sigue siendo exclusivamente humano, sin cambios. No se adelanto PH11-T003 (Run Order secuencial)."
   },
   "counts": {
     "totalTasks": 51,
-    "done": 43,
-    "inProgress": 2,
+    "done": 44,
+    "inProgress": 1,
     "blocked": 0,
     "totalGates": 8,
     "gatesDone": 5
