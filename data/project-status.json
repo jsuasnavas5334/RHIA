@@ -1,7 +1,7 @@
 {
-  "version": "1.0.143-claude-ph10-t004-partial-vigesimo-cuarto-ciclo-sin-cambios-fix-nightly-pendiente-push",
-  "updatedAt": "2026-09-16T15:12:36Z",
-  "state": "PH10_T004_PARTIAL_VIGESIMO_CUARTO_CICLO_SIN_CAMBIOS_BLOQUEO_DOCKER_POSTGRES_N8N_FIX_NIGHTLY_SES141_PENDIENTE_DE_PUSH_HUMANO",
+  "version": "1.0.156-claude-ph10-t004-partial-nightly-espera-cron-ciclo35-20260917",
+  "updatedAt": "2026-09-17T04:12:00Z",
+  "state": "PH10_T004_PARTIAL_ESPERANDO_CORRIDA_REAL_NIGHTLY_SOBRE_783DE72_VENTANA_CRON_07UTC_MENOS_DE_3H_DECISION_PENDIENTE_USUARIO",
   "currentPhase": {
     "id": "PH10",
     "name": "Seguridad, testing y resiliencia"
@@ -11,7 +11,7 @@
     "name": "Backup, restore y disaster recovery",
     "objective": "Run Order (PLAN_MAESTRO.md seccion 26, paso 40): demostrar recuperacion real (backup automatico, retencion, export n8n, restore isolated, RPO/RTO inicial, runbook). Dependencias PH01-T002 (DONE), PH11-T001 (DONE).",
     "status": "PARTIAL",
-    "note": "SES-20260916-143: vigesimo cuarto ciclo consecutivo sin cambios en el bloqueo estructural Docker/Postgres/n8n en device_bash (which psql/pg_dump/pg_restore/docker ausentes; puertos 5432/5678 rechazados; sudo bloqueado por no_new_privileges). git fetch confirma que el fix de nightly.yml (SES-141, agrega -v migration_checksum al paso de migraciones) sigue sin publicarse (sin push desde SES-127) -- guardrail 'Publicacion Git unicamente bajo control humano'. El Nightly no genero corrida nueva desde run_id=35095036869 (2026-09-16T12:18:13Z) ya documentado por SES-141/142; corresponde revisar de nuevo tras el proximo push humano o la proxima ventana diaria del Nightly. Sin informacion nueva accionable, no se repitio el aviso proactivo (ya cubierto por SES-141). El bloqueo central de PH10-T004/GATE-06 (Task Scheduler de Windows / cron WSL; disco USB fisico) sigue siendo exclusivamente humano, sin cambios. No se adelanto PH11-T003 (Run Order secuencial)."
+    "note": "SES-20260917-156: sin cambios de commit desde SES-144 (HEAD local = origin/main = 783de72). Nightly API (sin token): total_count=5, mismo run_id=35095036869 (head_sha=49b5f809, conclusion=failure); todavia no hay corrida sobre 783de72. Hora real verificada (date -u): 2026-09-17T04:12:56Z; proxima ventana del cron (07:00 UTC, definida en nightly.yml) a menos de 3h -- la mas cercana de todo este bloque de 35 ciclos PARTIAL consecutivos desde SES-121. Patron historico de corridas reales (11:22-13:28 UTC en las ultimas 5) sugiere que GitHub Actions retrasa el disparo del cron varias horas por cola del runner gratuito (informativo, no cambia la decision pendiente). Esta sesion aplico verificacion minima (git fetch + Nightly API), sin repetir el diagnostico estructural completo ni la reproduccion del pipeline (ya hecha con exito en SES-154), siguiendo la indicacion explicita de esa sesion. No se toco produccion ni se crecio el esquema de PostgreSQL del usuario. No se escribieron credenciales en ningun archivo, memoria ni log. No se reintento el cambio de cadencia del trigger (denegado desde SES-149). No se reenvio la notificacion proactiva al usuario (ya enviada en SES-148; el bloqueo y las 3 opciones de decision siguen exactamente iguales). Decision pendiente del usuario, sin resolver: (1) bajar/pausar la cadencia del trigger, (2) proveer token de GitHub para workflow_dispatch manual, o (3) instalar Docker Desktop/habilitar egress a Docker Hub + PostgreSQL 18/n8n reales en esta maquina para el restore drill estructural completo. Ninguna de las tres requiere cambios de codigo ni riesgo para datos de produccion. Proximo ciclo: revisar si ya corrio el Nightly real sobre 783de72 (ventana 07:00 UTC muy cercana); si aparece, analizarla de inmediato en detalle en vez de aplicar el ciclo minimo."
   },
   "counts": {
     "totalTasks": 51,

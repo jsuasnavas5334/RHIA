@@ -541,3 +541,64 @@ puntos 3/4 de "Que falta" desde `SES-130`, sin cambios. No se repitio
 el aviso proactivo (ya cubierto por `SES-141`). Ver
 `docs/progress/PH10-T004.md`, seccion `SES-20260916-142`, para el
 detalle completo.
+
+## Nota -- SES-20260916-144
+
+Se rompió la racha de 24 ciclos sin cambios: el usuario hizo `git push`
+del commit `783de722` ("Actualiza avances RHIA",
+`2026-09-16T16:10:14Z`), que incluye el fix de `nightly.yml` de
+`SES-141` (`-v migration_checksum`) y todo el trabajo acumulado
+pendiente de publicar desde `SES-127`. `git fetch` + `git log -1`
+confirman `HEAD` local = `origin/main` = `783de722`. El
+`.git/index.lock` que persistía desde `SES-119` ya no existe.
+
+El Nightly de hoy (`run_id=35095036869`, `12:18:13Z`) corrió sobre el
+`HEAD` anterior (`49b5f809`), antes del push -- todavía no hay
+evidencia de una corrida sobre `783de72`. Sin `gh` CLI ni token
+disponible en `device_bash`, no se puede disparar `workflow_dispatch`
+manualmente desde una sesión automatizada. Bloqueo estructural
+Docker/Postgres/n8n sin cambios (ver ciclos SES-136..143). Los puntos 1
+y 2 de "Qué falta" (Task Scheduler/cron nativo, disco USB físico)
+siguen siendo exclusivamente humanos.
+
+**Próximo ciclo:** revisar la corrida del Nightly sobre
+`head_sha=783de72` (cron diario `07:00 UTC`, `~2026-09-17`) para
+confirmar que el paso de migraciones pasa con el fix aplicado.
+
+**Hallazgo adicional (`SES-144`):** se diagnosticó en vivo el origen del
+`.git/index.lock` recurrente desde `SES-119`: lo crean los propios
+chequeos de solo lectura (`git status`/`git diff`) de estas sesiones
+automatizadas, porque `device_bash` no tiene permiso de borrado en la
+carpeta conectada y git no puede reemplazar `.git/index` de forma
+atómica. No bloquea a las sesiones automatizadas (`git status` sigue
+funcionando con el lock presente), pero un `git` real en Windows sí
+falla con `fatal: Unable to create '.git/index.lock': File exists` al
+encontrarlo -- probable causa de que no hubiera push humano entre
+`SES-127` y `SES-144` (~2 días). Desde este ciclo, las verificaciones
+de `git` de solo lectura en `device_bash` usan `GIT_OPTIONAL_LOCKS=0`
+para no volver a crear el archivo. Si el usuario ve este error en su
+propio terminal, es seguro borrar `.git/index.lock` a mano (fuera de
+`device_bash`) mientras no tenga un `git` real corriendo.
+
+## Nota -- SES-20260917-154
+
+Reproducción completa (no solo migraciones) del pipeline de `Nightly` sobre
+`783de72` en el contenedor cloud propio de esta sesión: `npm ci` (125
+paquetes) → `npm run build` (32 workspaces, exit 0) → 8 migraciones reales
+con el fix de `SES-141` → 3 seeds reales (52 tablas) → `npm run test`
+(752/752 tests, 0 fallos, 33 suites) → `test-commercial-baseline.mjs`
+(5/5 casos). Todo con PostgreSQL 16 real (`apt`) y npm registry real, sin
+tocar el dispositivo del usuario ni datos de producción. Confirma con
+evidencia real que el pipeline completo pasa sobre el HEAD actual, más allá
+del paso de migraciones ya verificado por `SES-141`. Detalle completo en
+`docs/progress/PH10-T004.md`, sección `SES-20260917-154`.
+
+Matiz sobre Docker en ese mismo contenedor: `dockerd` arranca (a diferencia
+de lo asumido en ciclos previos), pero el pull desde Docker Hub sigue
+bloqueado por egress (`403` en `registry-1.docker.io`) -- no cambia el
+punto 3/4 de "Qué falta" (`postgres:18` real sigue inalcanzable), solo
+precisa la causa exacta.
+
+El packet sigue `PARTIAL`: puntos 1 (Task Scheduler/cron nativo) y 2
+(disco USB físico) de "Qué falta" siguen siendo exclusivamente humanos;
+puntos 3/4/6 siguen sin Docker Hub/n8n real.
