@@ -602,3 +602,28 @@ precisa la causa exacta.
 El packet sigue `PARTIAL`: puntos 1 (Task Scheduler/cron nativo) y 2
 (disco USB físico) de "Qué falta" siguen siendo exclusivamente humanos;
 puntos 3/4/6 siguen sin Docker Hub/n8n real.
+
+## Nota -- SES-20260917-171
+
+**Hallazgo crítico con evidencia real:** el único bundle real en
+`%USERPROFILE%\RHIA-Backups` sigue siendo `rhia-postgres-20260820T195344Z`
+(el backup manual de `PH01-T002`, 2026-08-20). Antigüedad real medida hoy:
+**671h / ~28 días**, ~25.8x el umbral de `26h` de `check-backup-age.sh`.
+Verificado vía `device_list_dir` (listado "skeleton" de nombres, carpeta
+no conectada a Cowork -- sin necesidad de leer contenido cifrado). El RPO
+real hoy no es "24h aspiracional" (punto 1 de "Qué falta") -- es **hasta
+~28 días de pérdida de datos si ocurre un desastre real hoy**.
+**Recomendación urgente para George, independiente de las 3 opciones de
+decisión pendientes desde `SES-148`:** correr un backup manual actualizado
+cuanto antes con el procedimiento de este runbook ("Procedimiento: backup
+manual") -- no requiere Docker/PG18 ni ninguna de esas 3 decisiones.
+
+**Intento nuevo, resultado negativo:** se probó `embedded-postgres@18.4.0-beta.17`
+(npm) en el contenedor cloud propio para intentar cerrar la brecha
+PG16→PG18 de los puntos 3/4 de "Qué falta". Produce un binario real
+`postgres` 18.4 (versión exacta de producción) pero **sin**
+`pg_dump`/`pg_restore`/`psql`. El repositorio PGDG (`apt.postgresql.org`),
+que sí los tiene, está bloqueado por egress (403), mismo patrón que Docker
+Hub. No cierra la brecha hoy -- no repetir este intento completo sin una
+señal nueva de que el egress cambió. Detalle completo en
+`docs/progress/PH10-T004.md`, sección `SES-20260917-171`.

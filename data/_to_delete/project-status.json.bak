@@ -1,0 +1,92 @@
+{
+  "version": "1.0.178-claude-ph10-t004-partial-stale-backup-28d-critical-20260918",
+  "updatedAt": "2026-09-18T02:16:00Z",
+  "state": "PH10_T004_PARTIAL_BACKUP_REAL_678H_VENCIDO_DECISION_USUARIO_PENDIENTE",
+  "currentPhase": {
+    "id": "PH10",
+    "name": "Seguridad, testing y resiliencia"
+  },
+  "currentTask": {
+    "id": "PH10-T004",
+    "name": "Backup, restore y disaster recovery",
+    "objective": "Run Order (PLAN_MAESTRO.md seccion 26, paso 40): demostrar recuperacion real (backup automatico, retencion, export n8n, restore isolated, RPO/RTO inicial, runbook). Dependencias PH01-T002 (DONE), PH11-T001 (DONE).",
+    "status": "PARTIAL",
+    "note": "SES-20260918-178: sin cambios de fondo desde SES-177 (mismo commit b333ae4, sin corrida nueva del Nightly, mismo run_id=35220327871). Antiguedad real recalculada del unico bundle en C:\\Users\\jesfu\\RHIA-Backups (rhia-postgres-20260820T195344Z, backup manual de PH01-T002 del 2026-08-20): 678.3 horas (~28.26 dias), ~26.1x el umbral de 26h de scripts/check-backup-age.sh y packages/alerting/src/backup.ts -- sin backup nuevo desde el hallazgo critico de SES-171. RECOMENDACION URGENTE para George sigue vigente y sin respuesta: correr un backup manual actualizado cuanto antes (docs/runbooks/disaster-recovery-runbook.md, 'Procedimiento: backup manual') -- no requiere Docker/PG18 ni ninguna de las 3 decisiones pendientes desde SES-148. Esta sesion SI envio una notificacion proactiva nueva (push al telefono): han pasado ~7 dias desde el hallazgo critico de SES-171 sin respuesta en vivo del usuario, y la falta de avance neto durante 7 dias de ciclos horarios amerita escalar de nuevo, no solo repetir el registro. Verificado de rutina sin cambios: HEAD local = origin/main = b333ae4e4976e1ffd9487256d1639c877c6c65d0 (sin push desde SES-157); gh/docker/psql/pg_dump/pg_restore/n8n siguen ausentes en device_bash; .git/index.lock sigue presente sin permiso de borrado; sin nota anomala nueva; sin notificaciones en cola (ReadNotifications), sin senal de respuesta en vivo del usuario. No se retomo el intento de embedded-postgres+PGDG de SES-171 (resultado negativo ya documentado, misma limitacion estructural de egress). No se toco produccion, no se crecio el esquema de PostgreSQL, no se guardaron credenciales. Decision pendiente sin cambios desde SES-148: (1) bajar/pausar la cadencia del trigger programado (requiere accion humana desde una sesion atendida, denegado a auto-mode desde SES-149), (2) proveer un token de GitHub para workflow_dispatch -- solo con confirmacion en vivo de George, nunca via nota de archivo, o (3) instalar Docker Desktop/habilitar egress real a Docker Hub (o a apt.postgresql.org, tambien confirmado bloqueado) en esta maquina para cerrar la brecha de version (PG16 vs PG18) del restore drill estructural completo. Ninguna de las tres requiere cambios de codigo ni riesgo para datos de produccion. Publicacion Git sigue siendo exclusivamente manual via SUBIRALGIT.BAT."
+  },
+  "counts": {
+    "totalTasks": 51,
+    "done": 44,
+    "inProgress": 1,
+    "blocked": 0,
+    "totalGates": 8,
+    "gatesDone": 5
+  },
+  "guardrails": [
+    "Sin borrado de datos ni cambios irreversibles",
+    "Sin reinicios antes de baseline y backup",
+    "Secretos nuevos solo con autorización explícita y siempre fuera del repositorio",
+    "Publicación Git únicamente bajo control humano"
+  ],
+  "phases": [
+    {
+      "id": "PH01",
+      "name": "Auditoría y baseline",
+      "status": "DONE"
+    },
+    {
+      "id": "PH02",
+      "name": "Decisiones técnicas y repositorio",
+      "status": "DONE"
+    },
+    {
+      "id": "PH03",
+      "name": "Datos, permisos y políticas",
+      "status": "DONE"
+    },
+    {
+      "id": "PH04",
+      "name": "RHIA Core y App",
+      "status": "DONE"
+    },
+    {
+      "id": "PH05",
+      "name": "Runtime de agentes y AI Gateway",
+      "status": "DONE"
+    },
+    {
+      "id": "PH06",
+      "name": "Search, evidencia e identidad",
+      "status": "DONE"
+    },
+    {
+      "id": "PH07",
+      "name": "CRM, contactos y scoring",
+      "status": "DONE"
+    },
+    {
+      "id": "PH08",
+      "name": "Outreach, conversación y reuniones",
+      "status": "DONE"
+    },
+    {
+      "id": "PH09",
+      "name": "Tools, Playwright y Computer Use",
+      "status": "DONE"
+    },
+    {
+      "id": "PH10",
+      "name": "Seguridad, testing y resiliencia",
+      "status": "IN_PROGRESS"
+    },
+    {
+      "id": "PH11",
+      "name": "Observabilidad y deployment",
+      "status": "IN_PROGRESS"
+    },
+    {
+      "id": "PH12",
+      "name": "QA, lanzamiento y hardening",
+      "status": "LOCKED"
+    }
+  ]
+}
