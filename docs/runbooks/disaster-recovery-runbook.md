@@ -1,9 +1,12 @@
 # Runbook de Disaster Recovery — PH10-T004
 
-**Estado del packet:** `PARTIAL`. Este runbook documenta lo que ya existe
-con evidencia real y lo que sigue pendiente. No declara el packet `DONE`
--- para eso faltan un *full restore drill* end-to-end reciente con RTO
-medido y un *corrupt backup test* explícito (ver "Qué falta" al final).
+**Estado del packet:** `DONE` (desde `SES-20260918-CHAT`, continuación).
+Este runbook documenta lo que ya existe con evidencia real. Ver la nota
+final "SES-20260918-CHAT (continuación) -- packet cerrado" para el cierre
+completo: backup automático real (Task Scheduler probado), restore drill
+real contra PostgreSQL 18 real (185/185 tablas) y corrupt backup test real,
+los tres contra el stack Docker de producción del usuario, sin tocar el
+contenedor real.
 
 ## Alcance
 
@@ -627,3 +630,43 @@ que sí los tiene, está bloqueado por egress (403), mismo patrón que Docker
 Hub. No cierra la brecha hoy -- no repetir este intento completo sin una
 señal nueva de que el egress cambió. Detalle completo en
 `docs/progress/PH10-T004.md`, sección `SES-20260917-171`.
+
+## SES-20260918-CHAT (continuación) -- packet cerrado
+
+Sesión atendida en vivo con George. Cierra los puntos 1, 3 y 4 de "Qué
+falta" (arriba), los últimos que seguían abiertos, con evidencia real:
+
+1. **Backup automático real (punto 1):** George creó la tarea programada de
+   Windows `RHIA - Backup diario` (Task Scheduler), corre
+   `backup-postgres.sh` vía `wsl.exe` todos los días a las 2:00 a.m.,
+   probada en vivo con "Ejecutar" manual -- generó
+   `rhia-postgres-20260918T043321Z` + `backup-log.txt` real. El RPO de 24h
+   ya no es aspiracional.
+2. **Full restore drill (punto 3), sin las salvedades anteriores:** se
+   descubrió que la máquina real de George ya corre un stack Docker
+   completo desde hace semanas, incluyendo `rhia-postgres` en
+   `postgres:18` exacto (la versión pinneada en ADR-0001) -- la brecha
+   PG16/PG18 documentada desde `SES-20260916-130` nunca existió en
+   producción, solo en el sandbox sin egress a Docker Hub. Con Docker
+   Desktop instalado y confirmado (`docker run hello-world` exitoso), se
+   corrió `verify-postgres-backup.sh` sin modificar contra
+   `rhia-postgres-20260918T043321Z`: **185/185 tablas restauradas y
+   verificadas**, conteos de filas idénticos a `counts.tsv`, en un
+   contenedor `postgres:18` temporal y aislado (nunca se tocó
+   `rhia-postgres` real -- George pidió explícitamente minimizar riesgos:
+   "no tengo idea necesito que minimices riesgos").
+3. **Corrupt backup test (punto 4), con Postgres 18 real:** se copió el
+   bundle a un directorio de prueba, se dañó realmente
+   `rhia_core.dump.gpg` (`truncate -s -2000`) y se recalcularon los
+   `SHA256SUMS` sobre el contenido ya dañado, para forzar que la prueba
+   real ocurriera en la capa de integridad GPG/`pg_restore`.
+   `verify-postgres-backup.sh` rechazó correctamente el backup manipulado
+   (`WARNING: encrypted message has been manipulated!` + fallo real de
+   `pg_restore`), sin necesitar modificar el script.
+
+Puntos 2 (disco USB físico) y 5/6 (alertas integradas, export n8n) siguen
+como mejoras futuras fuera de los criterios de aceptación originales del
+Task Packet, no bloquean el cierre. Ver `docs/progress/PH10-T004.md`,
+sección "SES-20260918-CHAT (continuación)", para el detalle completo.
+
+**Estado del packet: `DONE`.**
