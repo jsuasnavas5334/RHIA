@@ -670,3 +670,20 @@ Task Packet, no bloquean el cierre. Ver `docs/progress/PH10-T004.md`,
 sección "SES-20260918-CHAT (continuación)", para el detalle completo.
 
 **Estado del packet: `DONE`.**
+
+## SES-20260918-181 -- corroboración independiente + GATE-06 cerrado
+
+Sesión automatizada posterior a `SES-20260918-CHAT (continuación)`.
+Ejecutó su propio restore drill + corrupt backup test reales (PostgreSQL
+16 vía `apt`, sandbox cloud efímero, nunca la máquina del usuario;
+57,688 filas sintéticas de volumen representativo en `city_context`;
+133/133 tablas restauradas, corrupt backup rechazado correctamente por
+`pg_restore`) como corroboración independiente, antes de descubrir que
+`SES-20260918-CHAT (continuación)` ya había cerrado el packet con
+evidencia aún más fuerte (PostgreSQL 18 real de producción, 185/185
+tablas). Con `PH09`/`PH10` completas, `GATE-06` (Tools y seguridad) quedó
+evaluado y `DONE` -- ver `docs/progress/GATE-06.md` para el detalle
+completo de las 4 condiciones. El Run Order avanza y queda bloqueado en
+`PH11-T003` (paso 43), que exige un reinicio real de la máquina de
+producción -- acción exclusivamente humana, ver
+`docs/progress/PH10-T004.md` sección `SES-20260918-181` para el detalle.

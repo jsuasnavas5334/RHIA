@@ -1,25 +1,25 @@
 {
-  "version": "1.0.182-claude-ph10-t004-done-restore-drill-y-corrupt-test-reales-postgres18-20260918",
-  "updatedAt": "2026-09-18T05:10:00Z",
-  "state": "PH10_T004_PARTIAL_BACKUP_AUTOMATICO_DIARIO_CONFIGURADO_NIGHTLY_MANUAL_EXITOSO_PENDIENTE_DECISION_DOCKER_PARA_CIERRE_TOTAL",
+  "version": "1.0.191-claude-ph11t003-verified-ses187-20260922",
+  "updatedAt": "2026-09-22T11:20:00Z",
+  "state": "PH11T003_READY_FOR_EXECUTION_INFRASTRUCTURE_COMPLETED",
   "currentPhase": {
-    "id": "PH10",
-    "name": "Seguridad, testing y resiliencia"
+    "id": "PH11",
+    "name": "Observabilidad y deployment"
   },
   "currentTask": {
-    "id": "PH10-T004",
-    "name": "Backup, restore y disaster recovery",
-    "objective": "Run Order (PLAN_MAESTRO.md seccion 26, paso 40): demostrar recuperacion real (backup automatico, retencion, export n8n, restore isolated, RPO/RTO inicial, runbook). Dependencias PH01-T002 (DONE), PH11-T001 (DONE).",
-    "status": "DONE",
-    "note": "SES-20260918-CHAT (continuacion, sesion atendida en vivo con George): se cerraron los dos ultimos criterios de aceptacion de PH10-T004 con evidencia real, contra el stack de produccion real de George (Docker Desktop instalado y confirmado en su maquina real, con rhia-postgres corriendo desde hace semanas en postgres:18 exacto -- resolviendo definitivamente la brecha PG16/PG18 documentada desde SES-130: nunca existio en produccion, solo en el sandbox de la automatizacion en la nube). George confirmo explicitamente el riesgo real de este contenedor ('no tengo idea necesito que minimices riesgos'), por lo que TODA la prueba se hizo sin tocar rhia-postgres: verify-postgres-backup.sh crea su propio contenedor postgres:18 desechable y aislado (--rm, nombre unico por timestamp+pid) para restaurar y comparar. (1) RESTORE DRILL REAL: se corrio verify-postgres-backup.sh contra rhia-postgres-20260918T043321Z (el backup generado por la tarea programada ya probada). Resultado: 185/185 tablas restauradas y verificadas con conteos de filas identicos a counts.tsv, contra PostgreSQL 18 real (no un stand-in de version distinta). Sin caveats. (2) PRUEBA DE BACKUP CORRUPTO: se copio el bundle a un directorio de prueba, se trunco rhia_core.dump.gpg (truncate -s -2000, quitando 2000 bytes reales) y se recalcularon los SHA256SUMS sobre el contenido ya danado (para forzar que la prueba real ocurra en la capa de integridad GPG/pg_restore, no en la capa de checksums). Resultado: verify-postgres-backup.sh rechazo correctamente el backup manipulado -- GnuPG detecto la alteracion ('WARNING: encrypted message has been manipulated!', block_filter: pending bytes! x2) y pg_restore fallo al no poder completar el stream. Prueba real y exitosa de que el pipeline rechaza backups corruptos de punta a punta. Con esto, los dos acceptance criteria que quedaban PARTIAL (restore drill contra version real de produccion, y rechazo de backup corrupto) quedan satisfechos con evidencia real, no simulada. No se toco produccion en ningun momento; toda restauracion ocurrio en contenedores temporales aislados que se autodestruyen al terminar. Publicacion Git sigue siendo exclusivamente manual via SUBIRALGIT.BAT."
+    "id": "PH11-T003",
+    "name": "Crear deployment local-prod reproducible",
+    "objective": "Run Order (PLAN_MAESTRO.md seccion 26, paso 43): arranque tras reboot y reinicio de PC recupera servicios. Dependencias PH02-T001 (DONE), PH11-T001 (DONE).",
+    "status": "READY_FOR_EXECUTION",
+    "note": "SES-20260922-187 (verificacion): corrigio gap real en data/session-log.json (faltaba la entrada de SES-186, cuya sesion completo sus 4 artefactos nuevos -- docker-compose.yml, .env.example, searxng/settings.yml, local-prod-deployment.md -- pero termino sin escribir su propio log; entrada reconstruida con evidencia real de mtimes/git status, marcada como tal). Reverifico con evidencia real los artefactos de SES-186: YAML valido (docker-compose.yml y searxng/settings.yml parseados con PyYAML), sin credenciales reales (.env.example solo placeholders, .env cubierto por .gitignore), node scripts/test-wait-for-rhia-dependencies.mjs 8/8 OK. logs/rhia-boot.ndjson sigue sin existir -- George todavia no ejecuto los 3 scripts de PowerShell ni reinicio su PC real. HEAD == origin/main (sin push nuevo). Sin cambios de fondo respecto a SES-186. Bloqueador unico sigue siendo el reboot real que solo George puede hacer. Proximo ciclo: revisar logs/rhia-boot.ndjson como evidencia real post-reboot de George."
   },
   "counts": {
     "totalTasks": 51,
-    "done": 44,
+    "done": 45,
     "inProgress": 1,
     "blocked": 0,
     "totalGates": 8,
-    "gatesDone": 5
+    "gatesDone": 6
   },
   "guardrails": [
     "Sin borrado de datos ni cambios irreversibles",
@@ -76,7 +76,7 @@
     {
       "id": "PH10",
       "name": "Seguridad, testing y resiliencia",
-      "status": "IN_PROGRESS"
+      "status": "DONE"
     },
     {
       "id": "PH11",
