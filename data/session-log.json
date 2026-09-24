@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-24T08:17:00Z",
+  "updatedAt": "2026-09-24T09:20:00Z",
   "sessions": [
     {
       "id": "SES-20260819-01",
@@ -6505,6 +6505,36 @@
         "Unico cambio de git: commit LOCAL (sin push) de los 3 archivos de documentacion/estado de este ciclo, respetando el guardrail de publicacion Git solo bajo control humano."
       ],
       "next": "Repetir el chequeo de archivos/commits nuevos y de notificaciones en el proximo ciclo; si aparece respuesta de George a las 4 preguntas, proceder segun la seccion 'Proximo paso' de docs/progress/PH12-T001.md. Si el .git/index.lock reaparece tras el commit de este ciclo, apartarlo (mv a _to_delete/) antes de intentar cualquier operacion git de escritura."
+    },
+    {
+      "id": "SES-20260924-235",
+      "startedAt": "2026-09-24T09:12:00Z",
+      "taskId": "PH12-T001",
+      "status": "BLOCKED",
+      "title": "Re-chequeo (40mo ciclo consecutivo) - notificacion push NO reenviada (canal de la tarea programada esta apagado; 39 avisos previos sin respuesta)",
+      "changes": [
+        "docs/progress/PH12-T001.md: nueva seccion SES-20260924-235 con el re-chequeo y el hallazgo sobre notifications.channel.",
+        "data/project-status.json: contador de ciclos actualizado (40), timestamp actualizado, nota condensada con la decision de no reenviar push este ciclo.",
+        "Se aparto (mv, no rm) .git/index.lock de 0 bytes recreado por el commit de SES-234 a _to_delete/index.lock.stale-235-<epoch>."
+      ],
+      "tests": [
+        "No se ejecuto la suite de tests de apps/core-api: el bloqueo sigue siendo de negocio (decision de George), no de codigo; sin cambios de codigo de la app desde SES-196 que invaliden los resultados previos documentados en SES-196."
+      ],
+      "evidence": [
+        "git log --oneline -3 (inicio de sesion) -> HEAD en 9aa238b (commit de SES-234); sin commits nuevos de George.",
+        "git status --short -> mismo diff sin commitear en frontend/src/utils/csv.ts, mismos archivos sueltos en _to_delete/.",
+        "ejemplo-leads.csv -> sigue siendo el placeholder de ejemplo (3 filas ficticias, sin datos reales).",
+        "ReadNotifications -> sin notificaciones en cola.",
+        "list_triggers -> confirma notifications.channel = {push:false, email:false} en la tarea 'RHIA - avance autonomo cada hora'; ultima notificacion push manual fue SES-234 (~08:17 UTC), hace <1h.",
+        "docs/progress/PH12-T001.md actualizado con el detalle completo de este ciclo."
+      ],
+      "decisions": [
+        "No reenviar notificacion push este ciclo: el canal de la propia tarea programada esta apagado, la ultima notificacion manual fue hace <1h (por debajo del espaciado ~2h usado hasta ahora), y 39 notificaciones previas no obtuvieron respuesta. Se documenta la opcion de que George reactive notifications.channel.push si quiere retomar el aviso automatico."
+      ],
+      "risks": [
+        "El bloqueo de negocio continua: sin las 4 respuestas de George, PH12-T001 y todo lo que depende de el en el Run Order (PH12-T002/T003/T004, GATE-07/08) permanece detenido."
+      ],
+      "next": "Repetir el chequeo de archivos/commits nuevos y de notificaciones en el proximo ciclo; si aparece respuesta de George a las 4 preguntas, proceder segun la seccion 'Proximo paso' de docs/progress/PH12-T001.md. Si el .git/index.lock reaparece tras el commit de este ciclo, apartarlo (mv a _to_delete/) antes de intentar cualquier operacion git de escritura. Mantener el push automatico en pausa salvo nueva senal (respuesta de George, o que reactive notifications.channel.push de la tarea programada)."
     }
   ]
 }
