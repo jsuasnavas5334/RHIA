@@ -1,23 +1,23 @@
 {
-  "version": "1.0.191-claude-ph11t003-verified-ses187-20260922",
-  "updatedAt": "2026-09-22T11:20:00Z",
-  "state": "PH11T003_READY_FOR_EXECUTION_INFRASTRUCTURE_COMPLETED",
+  "version": "1.0.229-claude-ph12t001-blocked-pending-george-20260924-recheck34",
+  "updatedAt": "2026-09-24T03:12:00Z",
+  "state": "PH12T001_BLOCKED_PENDING_GEORGE_INPUT",
   "currentPhase": {
-    "id": "PH11",
-    "name": "Observabilidad y deployment"
+    "id": "PH12",
+    "name": "QA, lanzamiento y hardening"
   },
   "currentTask": {
-    "id": "PH11-T003",
-    "name": "Crear deployment local-prod reproducible",
-    "objective": "Run Order (PLAN_MAESTRO.md seccion 26, paso 43): arranque tras reboot y reinicio de PC recupera servicios. Dependencias PH02-T001 (DONE), PH11-T001 (DONE).",
-    "status": "READY_FOR_EXECUTION",
-    "note": "SES-20260922-187 (verificacion): corrigio gap real en data/session-log.json (faltaba la entrada de SES-186, cuya sesion completo sus 4 artefactos nuevos -- docker-compose.yml, .env.example, searxng/settings.yml, local-prod-deployment.md -- pero termino sin escribir su propio log; entrada reconstruida con evidencia real de mtimes/git status, marcada como tal). Reverifico con evidencia real los artefactos de SES-186: YAML valido (docker-compose.yml y searxng/settings.yml parseados con PyYAML), sin credenciales reales (.env.example solo placeholders, .env cubierto por .gitignore), node scripts/test-wait-for-rhia-dependencies.mjs 8/8 OK. logs/rhia-boot.ndjson sigue sin existir -- George todavia no ejecuto los 3 scripts de PowerShell ni reinicio su PC real. HEAD == origin/main (sin push nuevo). Sin cambios de fondo respecto a SES-186. Bloqueador unico sigue siendo el reboot real que solo George puede hacer. Proximo ciclo: revisar logs/rhia-boot.ndjson como evidencia real post-reboot de George."
+    "id": "PH12-T001",
+    "name": "Pilot controlado con empresas reales",
+    "objective": "Operar un lote pequeño con supervisión para medir el funnel de oportunidad a reunión.",
+    "status": "BLOCKED",
+    "note": "BLOQUEADO desde SES-196 (2026-09-22 ~16:20 UTC). Pendiente: decision explicita de George a las 4 preguntas en docs/progress/PH12-T001.md (opcion de muestra A/B/C, lista/criterios de empresas reales 10-50, canal y KPIs, confirmacion de revision de mensajes antes de outreach). Base tecnica verificada con tests reales en SES-196 (outreach-policy 6/6, opportunity-scoring 32/32, contact-discovery 25/25, entity-resolver 44/44, next-best-action 24/24, evidence-pipeline 24/24, core-api 61 pass/2 skip); trazabilidad ya cubierta por tablas existentes (rhia.execution, rhia.action, rhia.audit_event, rhia.approval), sin necesidad de nuevo esquema. Ningun cambio de codigo de la app ni de infraestructura de produccion desde SES-196. Historial completo sesion por sesion esta en docs/progress/PH12-T001.md (condensado en SES-213 para evitar crecimiento indefinido de este archivo). [SES-217, ~15:14 UTC 2026-09-23]: confirmado sin respuesta de George (sin archivos nuevos desde SES-216, mismo HEAD 8a06773, mismo stage de 74 rutas); se reenvio notificacion push (la anterior fue SES-215, ~13:13 UTC, ~2h antes, por encima del espaciado de ~2h sugerido). Van 22 ciclos horarios consecutivos (SES-196 a SES-217) sin respuesta. Proximo envio de notificacion no antes de ~17:11 UTC salvo actividad nueva. [SES-218, ~16:12 UTC 2026-09-23]: confirmado sin respuesta de George (sin archivos nuevos desde SES-217, mismo HEAD 8a06773, mismo stage de 74 rutas); no se reenvio notificacion push (la anterior fue SES-217, ~15:12 UTC, ~1h antes, por debajo del espaciado de ~2h sugerido). Van 23 ciclos horarios consecutivos (SES-196 a SES-218) sin respuesta. Proximo envio de notificacion no antes de ~17:11 UTC salvo actividad nueva. [SES-219, ~17:12 UTC 2026-09-23]: confirmado sin respuesta de George (sin archivos nuevos desde SES-218, mismo HEAD 8a06773, mismo stage de 74 rutas); se reenvio notificacion push (la anterior fue SES-217, ~15:12 UTC, ~2h antes, en/por encima del espaciado de ~2h sugerido). Van 24 ciclos horarios consecutivos (SES-196 a SES-219) sin respuesta. Proximo envio de notificacion no antes de ~19:11 UTC salvo actividad nueva. [SES-220, ~18:14 UTC 2026-09-23]: confirmado sin respuesta de George (sin archivos nuevos desde SES-219, mismo HEAD 8a06773, mismo stage de 74 rutas); no se reenvio notificacion push (la anterior fue SES-219, ~17:12 UTC, ~1h antes, por debajo del espaciado de ~2h sugerido). Van 25 ciclos horarios consecutivos (SES-196 a SES-220) sin respuesta. Proximo envio de notificacion no antes de ~19:11 UTC salvo actividad nueva. [SES-221, ~19:11 UTC 2026-09-23]: confirmado sin respuesta de George (sin archivos nuevos desde SES-220, mismo HEAD 8a06773, mismo stage de 74 rutas); se reenvio notificacion push (la anterior fue SES-219, ~17:12 UTC, ~2h antes, en/por encima del espaciado de ~2h sugerido). Van 26 ciclos horarios consecutivos (SES-196 a SES-221) sin respuesta. Proximo envio de notificacion no antes de ~21:11 UTC salvo actividad nueva. [SES-222, ~20:13 UTC 2026-09-23]: confirmado sin respuesta de George (sin archivos nuevos desde SES-221, mismo HEAD 8a06773, mismo stage de 74 rutas); no se reenvio notificacion push (la anterior fue SES-221, ~19:11 UTC, ~1h antes, por debajo del espaciado de ~2h sugerido). Van 27 ciclos horarios consecutivos (SES-196 a SES-222) sin respuesta. Proximo envio de notificacion no antes de ~21:11 UTC salvo actividad nueva. [SES-223, ~21:12 UTC 2026-09-23]: confirmado sin respuesta de George (sin archivos nuevos desde SES-222, mismo HEAD 8a06773, mismo stage de 74 rutas); se reenvio notificacion push (la anterior fue SES-221, ~19:11 UTC, ~2h antes, en/por encima del espaciado de ~2h sugerido). Van 28 ciclos horarios consecutivos (SES-196 a SES-223) sin respuesta. Proximo envio de notificacion no antes de ~23:11 UTC salvo actividad nueva. [SES-224, ~22:13 UTC 2026-09-23]: confirmado sin respuesta de George (sin archivos nuevos desde SES-223, mismo HEAD 8a06773, mismo stage de 74 rutas); no se reenvio notificacion push (la anterior fue SES-223, ~21:12 UTC, ~1h antes, por debajo del espaciado de ~2h sugerido). Van 29 ciclos horarios consecutivos (SES-196 a SES-224) sin respuesta. Proximo envio de notificacion no antes de ~23:11 UTC salvo actividad nueva. [SES-225, ~23:12 UTC 2026-09-23]: confirmado sin respuesta de George (sin archivos nuevos desde SES-224, mismo HEAD 8a06773, mismo stage de 74 rutas); se reenvio notificacion push (la anterior fue SES-223, ~21:12 UTC, ~2h antes, en/por encima del espaciado de ~2h sugerido). Van 30 ciclos horarios consecutivos (SES-196 a SES-225) sin respuesta. Proximo envio de notificacion no antes de ~01:11 UTC (2026-09-24) salvo actividad nueva. [SES-226, ~00:14 UTC 2026-09-24]: confirmado sin respuesta de George (sin archivos nuevos desde SES-225, mismo HEAD 8a06773, mismo stage de 74 rutas); no se reenvio notificacion push (la anterior fue SES-225, ~23:12 UTC, ~1h antes, por debajo del espaciado de ~2h sugerido). Van 31 ciclos horarios consecutivos (SES-196 a SES-226) sin respuesta. Proximo envio de notificacion no antes de ~01:11 UTC (2026-09-24) salvo actividad nueva. [SES-227, ~01:14 UTC 2026-09-24]: confirmado sin respuesta de George (sin archivos nuevos de contenido desde SES-226, mismo HEAD 8a06773, git status ~77 rutas sin cambios de fondo); se detectaron mtimes recientes (~00:36-00:37 UTC) en RHIA-frontend.tar.gz/frontend//RHIA/ pero se confirmo que son los mismos artefactos de build de siempre, sin CSV de empresas ni respuesta a las 4 preguntas; se reenvio notificacion push (la anterior fue SES-225, ~23:12 UTC, ~2h antes, en/por encima del espaciado de ~2h sugerido). Van 32 ciclos horarios consecutivos (SES-196 a SES-227) sin respuesta. Proximo envio de notificacion no antes de ~03:11 UTC (2026-09-24) salvo actividad nueva. [SES-228, ~02:12 UTC 2026-09-24]: confirmado sin respuesta de George (sin archivos nuevos de contenido desde SES-227, mismo HEAD 8a06773, git status ~77 rutas sin cambios de fondo; unico hallazgo adicional fue Claude outputs/FIX-N8N-NOW.bat, artefacto de troubleshooting de n8n de sesiones muy anteriores -~2026-09-23 03:35 UTC-, no relacionado con las 4 preguntas ni con George); no se reenvio notificacion push (la anterior fue SES-227, ~01:11 UTC, ~1h antes, por debajo del espaciado de ~2h sugerido). Van 33 ciclos horarios consecutivos (SES-196 a SES-228) sin respuesta. Proximo envio de notificacion no antes de ~03:11 UTC (2026-09-24) salvo actividad nueva. [SES-229, ~03:12 UTC 2026-09-24]: confirmado sin respuesta de George (sin archivos nuevos de contenido desde SES-228, mismo HEAD 8a06773, git status 77 rutas sin cambios de fondo; ejemplo-leads.csv sigue siendo el placeholder ficticio); se reenvio notificacion push (la anterior fue SES-227, ~01:11 UTC, ~2h antes, en/por encima del espaciado de ~2h sugerido). Van 34 ciclos horarios consecutivos (SES-196 a SES-229) sin respuesta. Proximo envio de notificacion no antes de ~05:11 UTC (2026-09-24) salvo actividad nueva."
   },
   "counts": {
     "totalTasks": 51,
-    "done": 45,
-    "inProgress": 1,
-    "blocked": 0,
+    "done": 46,
+    "inProgress": 0,
+    "blocked": 1,
     "totalGates": 8,
     "gatesDone": 6
   },
@@ -81,12 +81,12 @@
     {
       "id": "PH11",
       "name": "Observabilidad y deployment",
-      "status": "IN_PROGRESS"
+      "status": "DONE"
     },
     {
       "id": "PH12",
       "name": "QA, lanzamiento y hardening",
-      "status": "LOCKED"
+      "status": "IN_PROGRESS"
     }
   ]
 }

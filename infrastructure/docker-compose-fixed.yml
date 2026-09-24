@@ -1,0 +1,140 @@
+version: '3.9'
+
+services:
+  postgres:
+    container_name: rhia-postgres
+    image: postgres:18
+    hostname: rhia-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-rhia_core}
+      POSTGRES_USER: ${POSTGRES_USER:-rhia}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
+      N8N_DB_NAME: ${N8N_DB_NAME:-n8n}
+      N8N_DB_USER: ${N8N_DB_USER:-n8n}
+      N8N_DB_PASSWORD: ${N8N_DB_PASSWORD:-}
+    volumes:
+      - rhia_postgres_data:/var/lib/postgresql:rw
+    networks:
+      - rhia_internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  n8n:
+    container_name: rhia-n8n
+    image: docker.n8n.io/n8nio/n8n:latest
+    hostname: rhia-n8n
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      N8N_PORT: 5678
+      N8N_TIMEZONE: UTC
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:-}
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: rhia-postgres
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: ${N8N_DB_NAME:-n8n}
+      DB_POSTGRESDB_USER: ${N8N_DB_USER:-n8n}
+      DB_POSTGRESDB_PASSWORD: ${N8N_DB_PASSWORD:-}
+      GENERIC_TIMEZONE: UTC
+      TZ: UTC
+    volumes:
+      - rhia_n8n_data:/home/node/.n8n:rw
+    networks:
+      - rhia_internal
+    ports:
+      - "127.0.0.1:5679:5678"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5678/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  searxng:
+    container_name: rhia-searxng
+    image: searxng/searxng:latest
+    hostname: rhia-searxng
+    restart: unless-stopped
+    environment:
+      SEARXNG_SECRET: ${SEARXNG_SECRET:-}
+    volumes:
+      - rhia_searxng_cache:/var/cache/searxng:rw
+      - ./searxng/settings.yml:/etc/searxng/settings.yml:ro
+    networks:
+      - rhia_internal
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  ollama:
+    container_name: rhia-ollama
+    image: ollama/ollama:latest
+    hostname: rhia-ollama
+    restart: unless-stopped
+    environment:
+      OLLAMA_HOST: "0.0.0.0:11434"
+      OLLAMA_CONTEXT_LENGTH: 4096
+      OLLAMA_MAX_LOADED_MODELS: 2
+      OLLAMA_NUM_PARALLEL: 2
+    volumes:
+      - rhia_ollama_data:/root/.ollama:rw
+    networks:
+      - rhia_internal
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  rhia_postgres_data:
+    name: infrastructure_rhia_postgres_data
+    driver: local
+  rhia_n8n_data:
+    name: infrastructure_rhia_n8n_data
+    driver: local
+  rhia_searxng_cache:
+    name: infrastructure_rhia_searxng_cache
+    driver: local
+  rhia_ollama_data:
+    name: infrastructure_rhia_ollama_data
+    driver: local
+
+networks:
+  rhia_internal:
+    name: rhia_internal
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.18.0.0/16

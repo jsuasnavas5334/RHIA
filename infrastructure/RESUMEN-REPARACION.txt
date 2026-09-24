@@ -1,0 +1,127 @@
+═══════════════════════════════════════════════════════════════════════════════
+                    RESUMEN DE REPARACIÓN N8N - N8N REPAIR SUMMARY
+                              22 de Septiembre, 2026
+═══════════════════════════════════════════════════════════════════════════════
+
+PROBLEMA IDENTIFICADO / PROBLEM IDENTIFIED:
+───────────────────────────────────────────────────────────────────────────────
+N8N mostraba "ERR_EMPTY_RESPONSE" en localhost:5679 porque el contenedor N8N
+estaba fallando con el error:
+  "password authentication failed for user "n8n"
+
+Causa Raíz / Root Cause:
+- PostgreSQL fue inicializado sin crear el usuario "n8n" 
+- N8N intentaba conectarse usando credenciales de "n8n" que no existían
+- Los contenedores se reiniciaban repetidamente sin poder conectar a la base de datos
+
+
+SOLUCIÓN APLICADA / SOLUTION APPLIED:
+───────────────────────────────────────────────────────────────────────────────
+Se implementó una estrategia de 3 pasos:
+
+[1] Crear Script de Inicialización de PostgreSQL
+    - Archivo: init-n8n-user.sql
+    - Crea usuario "n8n" con contraseña
+    - Crea base de datos "n8n" propiedad del usuario
+    - Asigna todos los permisos necesarios
+
+[2] Actualizar docker-compose.yml
+    - Agregar volumen: ./init-n8n-user.sql:/docker-entrypoint-initdb.d/01-init-n8n.sql:ro
+    - PostgreSQL ejecutará este script automáticamente al inicializar la DB
+
+[3] Ejecutar Secuencia de Reparación
+    - Detener todos los contenedores
+    - Eliminar volumen PostgreSQL antiguo para reinicializar
+    - Reiniciar contenedores
+    - PostgreSQL ejecuta init-n8n-user.sql automáticamente
+    - N8N puede ahora autenticarse correctamente
+
+
+CAMBIOS REALIZADOS / CHANGES MADE:
+───────────────────────────────────────────────────────────────────────────────
+
+✓ Archivos Creados / Files Created:
+  - init-n8n-user.sql (Script de inicialización de PostgreSQL)
+  - FIX-N8N-DB-AUTH.ps1 (Script principal de reparación)
+  - RUN-FIX-N8N-DB-AUTH.bat (Ejecutor del script)
+  - FINAL-STATUS-CHECK.ps1 (Verificación de estado)
+  - RUN-FINAL-CHECK.bat (Ejecutor de verificación)
+
+✓ Archivos Modificados / Files Modified:
+  - docker-compose.yml (Agregado volumen init script a PostgreSQL)
+
+✓ Acciones Realizadas / Actions Taken:
+  - docker-compose down (Detener contenedores)
+  - docker volume rm infrastructure_rhia_postgres_data -f (Eliminar volumen)
+  - docker-compose up -d (Reiniciar con nueva configuración)
+
+
+VERIFICACIÓN / VERIFICATION:
+───────────────────────────────────────────────────────────────────────────────
+
+INSTRUCCIONES PARA GEORGE / INSTRUCTIONS FOR GEORGE:
+
+1. Espera 2-3 minutos completas para que PostgreSQL se inicialice
+   Wait 2-3 full minutes for PostgreSQL to initialize
+
+2. Abre el navegador en http://localhost:5679
+   Open browser at http://localhost:5679
+
+3. RESULTADO ESPERADO / EXPECTED RESULT:
+   ✓ Deberías ver la pantalla de LOGIN de N8N (no ERR_EMPTY_RESPONSE)
+   ✓ Usuário predeterminado: admin
+   ✓ Contraseña: si no has asignado una, N8N la solicitará
+
+4. SI SIGUE SIN FUNCIONAR / IF STILL NOT WORKING:
+   - Ejecuta: RUN-GET-STATUS.bat
+   - Revisa el archivo N8N-LOGS-*.txt más reciente
+   - Busca si dice "password authentication failed" (fix no funcionó)
+   - O busca otros errores en el log
+
+
+ESTADO ESPERADO DESPUÉS DEL FIX / EXPECTED STATUS AFTER FIX:
+───────────────────────────────────────────────────────────────────────────────
+
+Container Status (docker-compose ps):
+┌─────────────────┬──────────────────┬──────────────┐
+│ NAME            │ IMAGE            │ STATUS       │
+├─────────────────┼──────────────────┼──────────────┤
+│ rhia-postgres   │ postgres:18      │ Up (healthy) │
+│ rhia-n8n        │ n8n:latest       │ Up (healthy) │
+│ rhia-ollama     │ ollama:latest    │ Up (healthy) │
+│ rhia-searxng    │ searxng:latest   │ Up           │
+└─────────────────┴──────────────────┴──────────────┘
+
+N8N Logs (deberían decir):
+✓ "Connected to database"
+✓ "N8N process initialized successfully" 
+✓ "Server listening on port 5678"
+
+
+PRÓXIMOS PASOS / NEXT STEPS:
+───────────────────────────────────────────────────────────────────────────────
+
+Una vez que N8N esté respondiendo en http://localhost:5679:
+
+1. Acceder a N8N dashboard
+2. Crear usuario administrador (si es primera ejecución)
+3. Importar workflow JSON: n8n-lead-processor-workflow.json
+4. Configurar conexión con PostgreSQL en N8N
+5. Crear tabla ph12_leads si no existe
+6. Probar con datos de ejemplo_leads.csv
+
+
+REGISTRO DE CAMBIOS / CHANGE LOG:
+───────────────────────────────────────────────────────────────────────────────
+
+Fecha/Date: 22/09/2026 02:54 UTC
+Problema: N8N ERR_EMPTY_RESPONSE debido a autenticación PostgreSQL
+Causa: Usuario n8n no existía en PostgreSQL
+Solución: Script de inicialización con usuario y permisos
+Status: ✓ APLICADO / ✓ APPLIED
+Verificación: Pendiente confirmación visual en navegador
+
+═══════════════════════════════════════════════════════════════════════════════
+Para preguntas, revisa los logs en N8N-LOGS-*.txt
+For questions, check the logs in N8N-LOGS-*.txt
+═══════════════════════════════════════════════════════════════════════════════

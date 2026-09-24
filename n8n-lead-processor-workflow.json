@@ -1,0 +1,131 @@
+{
+  "name": "PH12 - Lead Processor (Opción A)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ph12-leads",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "a2b3c4d5",
+      "name": "Webhook: Recibir Leads",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "operation": "splitInBatches",
+        "batchSize": 1
+      },
+      "id": "b3c4d5e6",
+      "name": "Split: Procesar por Lead",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "condition": "isEmpty",
+              "value1": "={{ $json.email }}",
+              "type": "boolean"
+            }
+          ]
+        }
+      },
+      "id": "c4d5e6f7",
+      "name": "Validar: Email existe",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const emailTemplate = `Asunto: {{contacto}} - Evaluaciones psicométricas para {{empresa}}\n\nHola {{contacto}},\n\nEspero que se encuentre bien.\n\nHe notado que {{empresa}} está en fase de {{notas}} y podría necesitar reforzar su proceso de selección.\n\nTrabajo con empresas que buscan:\n✓ Reducir tiempo de selección en un 40%\n✓ Mejorar predicción de desempeño\n✓ Identificar fortalezas en colaboradores\n\n¿Sería bueno agendar 15 min la próxima semana?\n\nDisponible: Lunes a viernes, 10am-5pm.\n\nUn cordial saludo,\n{{tu_nombre}}`;\n\nconst linkedinTemplate = `Hola {{contacto}},\n\nVi tu perfil y me gustaría conectar. Trabajo con empresas RRHH en {{empresa}} y similares, ayudando con evaluaciones psicométricas.\n\n¡Que tengas un excelente día!`;\n\nlet email_body = emailTemplate;\nlet linkedin_msg = linkedinTemplate;\n\nconst data = $input.first().json;\nconst keys = ['empresa', 'contacto', 'email', 'cargo', 'notas', 'tu_nombre'];\nkeys.forEach(key => {\n  const value = data[key] || '?';\n  email_body = email_body.replace(new RegExp(`{{${key}}}`, 'g'), value);\n  linkedin_msg = linkedin_msg.replace(new RegExp(`{{${key}}}`, 'g'), value);\n});\n\nreturn {\n  ...data,\n  email_generado: email_body,\n  linkedin_message: linkedin_msg,\n  status: 'pendiente',\n  fecha_creado: new Date().toISOString()\n};"
+      },
+      "id": "d5e6f7g8",
+      "name": "Generar: Email + LinkedIn",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonData": "={\n  \"id\": \"{{ $json.id }}\",\n  \"empresa\": \"{{ $json.empresa }}\",\n  \"contacto\": \"{{ $json.contacto }}\",\n  \"email\": \"{{ $json.email }}\",\n  \"cargo\": \"{{ $json.cargo }}\",\n  \"notas\": \"{{ $json.notas }}\",\n  \"prioridad\": \"{{ $json.prioridad || 'media' }}\",\n  \"email_generado\": \"{{ $json.email_generado }}\",\n  \"linkedin_message\": \"{{ $json.linkedin_message }}\",\n  \"status\": \"pendiente\",\n  \"fecha_creado\": \"{{ $json.fecha_creado }}\"\n}"
+      },
+      "id": "e6f7g8h9",
+      "name": "Preparar: Datos para BD",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "nodeVersion": 1.0,
+        "mode": "executeQuery",
+        "query": "INSERT INTO ph12_leads (empresa, contacto, email, cargo, notas, prioridad, email_generado, linkedin_message, status, fecha_creado) VALUES (@empresa, @contacto, @email, @cargo, @notas, @prioridad, @email_generado, @linkedin_message, @status, @fecha_creado)",
+        "options": {},
+        "parameterizedQueries": true,
+        "parameters": {
+          "empresa": "={{ $json.empresa }}",
+          "contacto": "={{ $json.contacto }}",
+          "email": "={{ $json.email }}",
+          "cargo": "={{ $json.cargo }}",
+          "notas": "={{ $json.notas }}",
+          "prioridad": "={{ $json.prioridad }}",
+          "email_generado": "={{ $json.email_generado }}",
+          "linkedin_message": "={{ $json.linkedin_message }}",
+          "status": "={{ $json.status }}",
+          "fecha_creado": "={{ $json.fecha_creado }}"
+        }
+      },
+      "id": "f7g8h9i0",
+      "name": "PostgreSQL: Insertar Lead",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 4.3,
+      "position": [1250, 300],
+      "credentials": {
+        "postgres": "rhia_postgres_creds"
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "sendAsJson": true,
+        "sendAs": "Body",
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"status\": \"success\",\n  \"message\": \"Lead procesado\",\n  \"data\": {\n    \"empresa\": \"{{ $json.empresa }}\",\n    \"contacto\": \"{{ $json.contacto }}\",\n    \"email\": \"{{ $json.email }}\"\n  }\n}"
+      },
+      "id": "g8h9i0j1",
+      "name": "Responder: HTTP Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1450, 300]
+    }
+  ],
+  "connections": {
+    "a2b3c4d5": {
+      "main": [[{"node": "b3c4d5e6", "branch": 0, "index": 0}]]
+    },
+    "b3c4d5e6": {
+      "main": [[{"node": "c4d5e6f7", "branch": 0, "index": 0}]]
+    },
+    "c4d5e6f7": {
+      "main": [[{"node": "d5e6f7g8", "branch": 0, "index": 0}]]
+    },
+    "d5e6f7g8": {
+      "main": [[{"node": "e6f7g8h9", "branch": 0, "index": 0}]]
+    },
+    "e6f7g8h9": {
+      "main": [[{"node": "f7g8h9i0", "branch": 0, "index": 0}]]
+    },
+    "f7g8h9i0": {
+      "main": [[{"node": "g8h9i0j1", "branch": 0, "index": 0}]]
+    }
+  }
+}
