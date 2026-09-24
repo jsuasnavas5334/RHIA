@@ -1,5 +1,55 @@
 import { Lead } from '../types'
 
+export const generateCSVContent = (data: Record<string, any>[]): string => {
+  if (data.length === 0) {
+    return ''
+  }
+
+  const headers = Object.keys(data[0])
+  const headerRow = headers.join(',')
+  
+  const dataRows = data.map((row) =>
+    headers.map((header) => {
+      const value = row[header] ?? ''
+      const stringValue = String(value)
+      
+      // Only quote if contains comma, quote, or newline
+      if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+        const escaped = stringValue.replace(/"/g, '""')
+        return `"${escaped}"`
+      }
+      return stringValue
+    }).join(',')
+  )
+
+  return [headerRow, ...dataRows].join('\n')
+}
+
+export const exportToCSV = (data: Record<string, any>[], returnBlob = false): string | Blob => {
+  const csvContent = generateCSVContent(data)
+  
+  if (returnBlob) {
+    return new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  }
+  
+  return csvContent
+}
+
+export const downloadCSV = (data: Record<string, any>[], filename = 'export.csv') => {
+  const csvContent = generateCSVContent(data)
+  
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const link = document.createElement('a')
+  const url = URL.createObjectURL(blob)
+
+  link.setAttribute('href', url)
+  link.setAttribute('download', filename)
+  link.style.visibility = 'hidden'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
+
 export const exportLeadsToCSV = (leads: Lead[], filename = 'leads.csv') => {
   if (leads.length === 0) {
     throw new Error('No hay leads para exportar')
@@ -29,87 +79,101 @@ export const exportLeadsToCSV = (leads: Lead[], filename = 'leads.csv') => {
     lead.contacto_nombre,
     lead.contacto_email,
     lead.contacto_telefono || '',
-    lead.industria,
-    lead.tamano_empleados,
+    lead.industria || '',
+    lead.tamano || '',
     lead.estado,
-    lead.vacante_titulo || '',
+    lead.vacancias_descripcion || '',
     lead.pain_points || '',
     lead.solucion_ofrecida || '',
-    lead.confianza_analisis || 0,
-    new Date(lead.fecha_creacion).toLocaleDateString('es-ES'),
+    (lead.confianza_analisis || 0).toString(),
+    new Date(lead.fecha_creacion).toLocaleDateString(),
   ])
 
-  // Create CSV content
-  const csvContent = [
-    headers.map((h) => `"${h}"`).join(','),
-    ...rows.map((row) =>
-      row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')
-    ),
-  ].join('\n')
+  const csvData = [headers, ...rows.map((row) => row.map((cell) => String(cell || '')))]
+  const csvContent = generateCSVContent(csvData)
 
-  // Download
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-  const link = document.createElement('a')
-  const url = URL.createObjectURL(blob)
-
-  link.setAttribute('href', url)
-  link.setAttribute('download', filename)
-  link.style.visibility = 'hidden'
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
+  downloadCSV(csvData, filename)
 }
 
-export const exportToCSV = (data: Record<string, any>[], filename = 'export.csv') => {
-  if (data.length === 0) {
-    throw new Error('No hay datos para exportar')
+export const parseCSV = (csvText: string, requiredColumns?: string[]): Record<string, string>[] => {
+  if (!csvText || csvText.trim() === '') {
+    return []
   }
 
-  // Get headers from first object
-  const headers = Object.keys(data[0])
-
-  // Create CSV content
-  const csvContent = [
-    headers.map((h) => `"${h}"`).join(','),
-    ...data.map((row) =>
-      headers.map((header) => `"${String(row[header] || '').replace(/"/g, '""')}"`).join(',')
-    ),
-  ].join('\n')
-
-  // Download
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-  const link = document.createElement('a')
-  const url = URL.createObjectURL(blob)
-
-  link.setAttribute('href', url)
-  link.setAttribute('download', filename)
-  link.style.visibility = 'hidden'
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-}
-
-export const parseCSV = (csvText: string): Record<string, string>[] => {
-  const lines = csvText.trim().split('\n')
-  if (lines.length < 2) {
-    throw new Error('Archivo CSV vacío o inválido')
+  const lines = csvText.split('\n')
+  if (lines.length === 0) {
+    return []
   }
 
-  // Parse headers (removing quotes)
-  const headers = lines[0].split(',').map((h) => h.replace(/^"|"$/g, '').trim())
+  const headerLine = lines[0]
+  const headers = parseCSVLine(headerLine)
 
-  // Parse data rows
-  const rows: Record<string, string>[] = []
+  if (requiredColumns && !requiredColumns.every((col) => headers.includes(col))) {
+    throw new Error(`Missing required columns: ${requiredColumns.join(', ')}`)
+  }
+
+  const data: Record<string, string>[] = []
+  let currentLine = ''
+
   for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split(',').map((v) => v.replace(/^"|"$/g, '').trim())
-    const row: Record<string, string> = {}
+    currentLine += (currentLine ? '\n' : '') + lines[i]
 
-    headers.forEach((header, index) => {
-      row[header] = values[index] || ''
-    })
-
-    rows.push(row)
+    // Check if the line is complete (has matching quotes)
+    if (isLineComplete(currentLine)) {
+      const values = parseCSVLine(currentLine)
+      if (values.length > 0) {
+        const row: Record<string, string> = {}
+        headers.forEach((header, index) => {
+          row[header] = values[index] || ''
+        })
+        data.push(row)
+      }
+      currentLine = ''
+    }
   }
 
-  return rows
+  return data
+}
+
+const parseCSVLine = (line: string): string[] => {
+  const values: string[] = []
+  let currentValue = ''
+  let insideQuotes = false
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i]
+    const nextChar = line[i + 1]
+
+    if (char === '"') {
+      if (insideQuotes && nextChar === '"') {
+        // Escaped quote
+        currentValue += '"'
+        i++
+      } else {
+        // Toggle quote state
+        insideQuotes = !insideQuotes
+      }
+    } else if (char === ',' && !insideQuotes) {
+      values.push(currentValue)
+      currentValue = ''
+    } else {
+      currentValue += char
+    }
+  }
+
+  values.push(currentValue)
+  return values
+}
+
+const isLineComplete = (line: string): boolean => {
+  let quoteCount = 0
+  for (let i = 0; i < line.length; i++) {
+    if (line[i] === '"' && (i === 0 || line[i - 1] !== '"')) {
+      quoteCount++
+    } else if (line[i] === '"' && line[i - 1] === '"') {
+      // Escaped quote, skip
+      i++
+    }
+  }
+  return quoteCount % 2 === 0
 }
