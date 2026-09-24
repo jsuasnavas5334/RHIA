@@ -78,3 +78,6 @@ export const SkeletonTable: React.FC<SkeletonTableProps> = ({ rows = 5, columns 
     </div>
   )
 }
+
+// Alias for backward compatibility
+export const SkeletonText = Skeleton

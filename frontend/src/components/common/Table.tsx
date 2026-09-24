@@ -96,3 +96,6 @@ export const Table = React.forwardRef<
 })
 
 Table.displayName = 'Table'
+
+// Export Column type alias for backward compatibility
+export type Column<T> = TableColumn<T>
