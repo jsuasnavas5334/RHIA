@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-26T03:30:00Z",
+  "updatedAt": "2026-09-26T04:12:00Z",
   "sessions": [
     {
       "id": "SES-20260819-01",
@@ -7691,6 +7691,30 @@
         "Falta resolver contacto real (nombre + email/LinkedIn verificado) por empresa antes de poder enviar cualquier mensaje.",
         "Falta aprobacion explicita de George sobre la lista final de 10 y sobre el contenido de cada mensaje antes de cualquier envio real.",
         "No hay evidencia de que el entorno operativo (Postgres/n8n) este accesible desde esta sesion para correr el pipeline real de contact-discovery."
+      ]
+    },
+    {
+      "id": "SES-20260926-279",
+      "startedAt": "2026-09-26T04:12:00Z",
+      "taskId": "PH12-T001",
+      "status": "IN_PROGRESS",
+      "title": "Continuacion: research real de contacto (canal oficial) para las 10 empresas del lote 1",
+      "summary": "Sesion de continuacion de desarrollo (no el ciclo horario de re-chequeo). Se releyo data/project-status.json y data/session-log.json: PH12-T001 IN_PROGRESS desde SES-278, con dos pendientes documentados antes de cualquier envio real: (1) aprobacion de George de la lista de 10 y de los mensajes, (2) resolver contacto real por empresa. Se confirmo de nuevo que el pipeline real de research/contact-discovery de apps/core-api no puede correr desde esta sesion (sin docker/n8n en el device_bash de esta VM Windows; 'which docker' sin resultado). Como paso de preparacion real (no simulado) y dentro de lo ya autorizado por George ('por todos los medios'), se hizo research manual con WebSearch/WebFetch sobre fuentes publicas oficiales (paginas de contacto propias de cada empresa, prensa de negocios, perfiles/paginas publicas de LinkedIn) para las 10 empresas del lote. Se obtuvo un canal oficial de contacto verificable (email/telefono/formulario propio de la empresa) para 7 de 10 empresas (Indurama, Tonicorp, Tesalia, Danec, Optica Los Andes, Sicon, El Rosado -este ultimo de uso limitado por ser el canal de proveedores-). Para 3 de 10 (Grupo Superior, Muebles El Bosque, Hormipisos) no se pudo resolver un canal oficial en este ciclo por bloqueos tecnicos de lectura (robots.txt, contenido no extraible) o falta de informacion publica suficiente. Se obtuvo un nombre de persona con algo de respaldo, confianza media y sin segunda fuente independiente, solo para 3 de 10 (Tonicorp: Gerardo Vazquez Zerecero via agregador de datos, no usar sin confirmar; Tesalia: Martin Morales via perfil publico de LinkedIn; Sicon: Xavier Alvarado, nombrado por la propia pagina de Facebook de la empresa). Se excluyeron deliberadamente como fuente de nombre/email los agregadores de datos personales (RocketReach, ZoomInfo, Lusha, Seamless.AI, SignalHire, FinalScout, GetProspect) por no ser apropiados para un contacto comercial en frio. Con esa base se redacto un borrador de mensaje personalizado por empresa (dirigido al 'equipo comercial' cuando no hay nombre verificado, nunca a un nombre inventado). No se selecciono ningun contacto para enviar, no se genero ningun envio real, y NO SE CONTACTO a ninguna empresa ni se envio ningun mensaje. No se modifico infraestructura de produccion ni el esquema de PostgreSQL. No se guardo ninguna credencial real. No se toco RHIA/frontend/ (pertenece al otro trigger de ciclo de desarrollo de 2h; sus cambios locales sin commit siguen intactos, no se tocaron). Se verifico ausencia de .git/index.lock huerfano al inicio del ciclo (no aparecio esta vez).",
+      "changes": [
+        "docs/progress/PH12-T001-contactos.md: nuevo, tabla de canal de contacto oficial por empresa (7 de 10 resueltos con canal oficial verificable) con fuente y nivel de confianza, exclusion explicita de agregadores de datos personales.",
+        "docs/progress/PH12-T001-mensajes-borrador.md: nuevo, borrador de mensaje personalizado por empresa (10), dirigido al equipo comercial cuando no hay nombre verificado; ningun mensaje enviado.",
+        "docs/progress/PH12-T001.md: nueva seccion SES-20260926-279 con este avance.",
+        "data/project-status.json: nota de currentTask actualizada con este avance y los pendientes para George.",
+        "Se comiteo LOCALMENTE (sin push) esta actualizacion de documentacion."
+      ],
+      "tests": [
+        "No aplica suite de apps/core-api este ciclo: no se modifico codigo, solo documentacion/research de negocio. Sin cambios en apps/core-api desde SES-196 que invaliden los resultados ya documentados alli (outreach-policy 6/6, opportunity-scoring 32/32, contact-discovery 25/25, entity-resolver 44/44, next-best-action 24/24, evidence-pipeline 24/24, core-api 61 pass/2 skip)."
+      ],
+      "blockers": [
+        "Aprobacion explicita de George sobre la lista final de 10 empresas y sobre la tabla de canales/contactos antes de cualquier envio real.",
+        "Decision de George sobre las 3 empresas sin canal oficial resuelto (Grupo Superior, Muebles El Bosque, Hormipisos): reintentar, aportar el contacto el mismo, o descartarlas del lote 1.",
+        "Aprobacion explicita de George del contenido de los mensajes borrador antes de cualquier envio real.",
+        "Confirmacion de George sobre que cuenta de email/LinkedIn autoriza usar para el envio (y con que limite), o si el enviara los mensajes directamente."
       ]
     }
   ]

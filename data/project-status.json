@@ -1,7 +1,7 @@
 {
-  "version": "1.0.276-claude-ph12t001-pilot-lote1-en-revision-20260926",
-  "updatedAt": "2026-09-26T03:30:00Z",
-  "state": "PH12T001_PILOT_LIST_READY_PENDING_REVIEW",
+  "version": "1.0.277-claude-ph12t001-contactos-lote1-en-revision-20260926",
+  "updatedAt": "2026-09-26T04:12:00Z",
+  "state": "PH12T001_CONTACTS_RESEARCHED_PENDING_APPROVAL",
   "currentPhase": {
     "id": "PH12",
     "name": "QA, lanzamiento y hardening"
@@ -11,7 +11,7 @@
     "name": "Pilot controlado con empresas reales",
     "objective": "Operar un lote pequeño con supervisión para medir el funnel de oportunidad a reunión.",
     "status": "IN_PROGRESS",
-    "note": "[SES-20260926-278, ~03:30 UTC] DESBLOQUEADO EN VIVO: George respondio en la conversacion (no via ciclo automatico) las 4 preguntas pendientes desde SES-196 (82 ciclos, ~83h bloqueado): 10 empresas para comenzar; Claude busca las empresas en Ecuador (sin lista propia de George); canal 'por todos los medios' (email/LinkedIn/telefono); George revisa y aprueba cada mensaje antes de cualquier envio real. Se investigaron con WebSearch/WebFetch (evidencia real, URLs citadas) 11 empresas ecuatorianas con vacantes comerciales/de ventas publicadas entre mayo y agosto de 2026 (senal de que estan invirtiendo en crecer ventas ahora): Indurama, Tonicorp, Tesalia, Danec, Optica Los Andes, Corporacion El Rosado, Sicon Cia. Ltda., Grupo Superior S.A., Muebles El Bosque S.A., Hormipisos (lote principal de 10) y Banco de Guayaquil (reserva). Documentado en docs/progress/PH12-T001-pilot-lote1-ecuador.md. Se redacto un borrador de plantillas de outreach (email/LinkedIn/llamada) en docs/progress/PH12-T001-plantillas-outreach.md, sin datos de contacto inventados y sin precios/descuentos en el primer toque. PENDIENTE antes de cualquier envio real: (1) aprobacion de George de la lista de 10 y de la plantilla; (2) resolver contacto real (nombre+email/LinkedIn) por empresa, lo cual requiere el pipeline real de research/contact-discovery de apps/core-api contra Postgres — no hay evidencia de que ese entorno este accesible desde esta sesion. No se contacto a ninguna empresa, no se envio ningun mensaje, no se toco infraestructura de produccion ni el esquema de PostgreSQL. Se comiteo LOCALMENTE (sin push)."
+    "note": "[SES-20260926-279, ~04:12 UTC] Continuacion de SES-278. No se pudo correr el pipeline real de research/contact-discovery de apps/core-api (sin Docker/n8n accesibles desde esta sesion). Se hizo research manual real (WebSearch/WebFetch, evidencia citada) sobre canales oficiales (email/telefono/formulario) de las 10 empresas del lote 1: 7 de 10 resueltos con canal oficial verificable (Indurama, Tonicorp, Tesalia, Danec, Optica Los Andes, Sicon, El Rosado), 3 de 10 sin resolver (Grupo Superior, Muebles El Bosque, Hormipisos, por bloqueos tecnicos de lectura o falta de info publica). Nombre de persona con respaldo (confianza media, sin segunda fuente) solo para 3 de 10 (Tonicorp, Tesalia, Sicon); se excluyeron a proposito los agregadores de datos personales (RocketReach/ZoomInfo/Lusha/etc.) como fuente de nombre o email. Documentado en docs/progress/PH12-T001-contactos.md. Se redacto un borrador de mensaje personalizado por empresa (dirigido al 'equipo comercial' donde no hay nombre verificado) en docs/progress/PH12-T001-mensajes-borrador.md. NO se contacto a ninguna empresa, NO se envio ningun mensaje. PENDIENTE antes de cualquier envio real: (1) aprobacion de George de la lista de 10 y de la tabla de contactos/canales; (2) decision de George sobre las 3 empresas sin canal resuelto (reintentar, aportar el contacto el mismo, o descartarlas); (3) aprobacion de George del contenido de los mensajes borrador; (4) confirmacion de que cuenta de email/LinkedIn autoriza usar para el envio, o si el enviara directamente. No se modifico infraestructura de produccion ni el esquema de PostgreSQL. Se comiteo LOCALMENTE (sin push)."
   },
   "counts": {
     "totalTasks": 51,
