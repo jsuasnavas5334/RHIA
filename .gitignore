@@ -67,3 +67,4 @@ EJECUTAR-PRUEBA-REAL.ps1
 
 # Papelera de sesiones automaticas (no se pueden borrar desde el entorno de Claude)
 _to_delete/
+PUSH-RHIA.bat
