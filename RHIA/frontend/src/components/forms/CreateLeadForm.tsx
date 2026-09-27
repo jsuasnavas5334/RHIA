@@ -41,9 +41,16 @@ export const CreateLeadForm: React.FC<CreateLeadFormProps> = ({
       value: string | number
     }
 
+    let parsed: string | number = value
+    if (type === 'number' || type === 'range') {
+      // Campo vacío o inválido → 0 (evita enviar NaN a la API)
+      const n = parseFloat(String(value))
+      parsed = Number.isNaN(n) ? 0 : n
+    }
+
     setFormData((prev) => ({
       ...prev,
-      [name]: type === 'number' ? parseFloat(value) : value,
+      [name]: parsed,
     }))
   }
 

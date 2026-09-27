@@ -1,7 +1,7 @@
 import React from 'react'
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'danger' | 'success'
+  variant?: 'primary' | 'secondary' | 'danger' | 'success' | 'outline'
   size?: 'sm' | 'md' | 'lg'
   loading?: boolean
   children: React.ReactNode
@@ -16,6 +16,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       secondary: 'bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-400',
       danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
       success: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500',
+      outline: 'bg-transparent border border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-gray-400 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-slate-800',
     }
 
     const sizeStyles = {
@@ -30,13 +31,14 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         className={finalClassName}
-        disabled={loading || props.disabled}
         {...props}
+        disabled={loading || props.disabled}
+        aria-busy={loading || undefined}
       >
         {loading ? (
           <span className="flex items-center gap-2">
-            <span className="animate-spin">⏳</span>
-            Loading...
+            <span className="animate-spin" aria-hidden="true">⏳</span>
+            Cargando...
           </span>
         ) : (
           props.children

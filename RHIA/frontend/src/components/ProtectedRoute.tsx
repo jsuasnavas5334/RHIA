@@ -17,8 +17,15 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/login" replace />
   }
 
-  if (requiredRoles && user && !requiredRoles.includes(user.rol)) {
-    return <Navigate to="/unauthorized" replace />
+  if (requiredRoles && requiredRoles.length > 0) {
+    // Sin usuario cargado no se pueden verificar roles: se niega el acceso
+    // (fail-closed) y se pide volver a iniciar sesión.
+    if (!user) {
+      return <Navigate to="/login" replace />
+    }
+    if (!requiredRoles.includes(user.rol)) {
+      return <Navigate to="/unauthorized" replace />
+    }
   }
 
   return <>{children}</>

@@ -25,7 +25,7 @@ export const useLeads = () => {
       setTotal(response.data.total || 0)
       return response.data
     } catch (err: any) {
-      const errorMessage = err.response?.data?.detail || 'Error fetching leads'
+      const errorMessage = err.response?.data?.detail || 'Error al obtener los leads'
       setError(errorMessage)
       return { leads: [], total: 0 }
     } finally {
@@ -38,48 +38,48 @@ export const useLeads = () => {
     setError(null)
     try {
       const response = await api.post<Lead>('/leads', leadData)
-      setLeads([response.data, ...leads])
+      setLeads(prev => [response.data, ...prev])
       return { success: true, lead: response.data }
     } catch (err: any) {
-      const errorMessage = err.response?.data?.detail || 'Error creating lead'
+      const errorMessage = err.response?.data?.detail || 'Error al crear el lead'
       setError(errorMessage)
       return { success: false, error: errorMessage }
     } finally {
       setLoading(false)
     }
-  }, [leads])
+  }, [])
 
   const updateLead = useCallback(async (leadId: number, leadData: Partial<Lead>) => {
     setLoading(true)
     setError(null)
     try {
       const response = await api.put<Lead>(`/leads/${leadId}`, leadData)
-      setLeads(leads.map(l => l.id === leadId ? response.data : l))
+      setLeads(prev => prev.map(l => l.id === leadId ? response.data : l))
       return { success: true, lead: response.data }
     } catch (err: any) {
-      const errorMessage = err.response?.data?.detail || 'Error updating lead'
+      const errorMessage = err.response?.data?.detail || 'Error al actualizar el lead'
       setError(errorMessage)
       return { success: false, error: errorMessage }
     } finally {
       setLoading(false)
     }
-  }, [leads])
+  }, [])
 
   const deleteLead = useCallback(async (leadId: number) => {
     setLoading(true)
     setError(null)
     try {
       await api.delete(`/leads/${leadId}`)
-      setLeads(leads.filter(l => l.id !== leadId))
+      setLeads(prev => prev.filter(l => l.id !== leadId))
       return { success: true }
     } catch (err: any) {
-      const errorMessage = err.response?.data?.detail || 'Error deleting lead'
+      const errorMessage = err.response?.data?.detail || 'Error al eliminar el lead'
       setError(errorMessage)
       return { success: false, error: errorMessage }
     } finally {
       setLoading(false)
     }
-  }, [leads])
+  }, [])
 
   return { leads, total, loading, error, fetchLeads, createLead, updateLead, deleteLead }
 }
@@ -98,7 +98,7 @@ export const useLead = (leadId: number) => {
       setLead(response.data)
       return response.data
     } catch (err: any) {
-      const errorMessage = err.response?.data?.detail || 'Error fetching lead'
+      const errorMessage = err.response?.data?.detail || 'Error al obtener el lead'
       setError(errorMessage)
       return null
     } finally {
@@ -115,7 +115,7 @@ export const useLead = (leadId: number) => {
       setLead(response.data)
       return response.data
     } catch (err: any) {
-      const errorMessage = err.response?.data?.detail || 'Error updating lead'
+      const errorMessage = err.response?.data?.detail || 'Error al actualizar el lead'
       setError(errorMessage)
       throw new Error(errorMessage)
     } finally {
@@ -132,7 +132,7 @@ export const useLead = (leadId: number) => {
       setLead(null)
       return true
     } catch (err: any) {
-      const errorMessage = err.response?.data?.detail || 'Error deleting lead'
+      const errorMessage = err.response?.data?.detail || 'Error al eliminar el lead'
       setError(errorMessage)
       throw new Error(errorMessage)
     } finally {

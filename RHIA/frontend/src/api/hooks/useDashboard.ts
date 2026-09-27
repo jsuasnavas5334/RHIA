@@ -15,7 +15,7 @@ export const useDashboard = () => {
       setMetrics(response.data)
       return response.data
     } catch (err: any) {
-      const errorMessage = err.response?.data?.detail || 'Error fetching dashboard metrics'
+      const errorMessage = err.response?.data?.detail || 'Error al obtener las métricas del dashboard'
       setError(errorMessage)
       return null
     } finally {

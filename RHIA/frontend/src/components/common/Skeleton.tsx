@@ -1,27 +1,55 @@
 import React from 'react'
 
 interface SkeletonProps {
+  /** Tailwind class (e.g. "w-1/2") or any CSS length (e.g. "100px") */
   width?: string
+  /** Tailwind class (e.g. "h-4") or any CSS length (e.g. "50px") */
   height?: string
   className?: string
   count?: number
+  rounded?: boolean
 }
+
+const isTailwind = (value: string, prefix: 'w-' | 'h-') => value.startsWith(prefix)
 
 export const Skeleton: React.FC<SkeletonProps> = ({
   width = 'w-full',
   height = 'h-4',
   className = '',
   count = 1,
+  rounded = false,
 }) => {
+  const widthClass = isTailwind(width, 'w-') ? width : ''
+  const heightClass = isTailwind(height, 'h-') ? height : ''
+  const style: React.CSSProperties = {}
+  if (!widthClass) style.width = width
+  if (!heightClass) style.height = height
+
   return (
     <>
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className={`${width} ${height} bg-gray-200 dark:bg-gray-700 rounded animate-pulse-subtle mb-2 ${className}`}
+          style={style}
+          className={`${widthClass} ${heightClass} bg-gray-200 dark:bg-gray-700 ${rounded ? 'rounded-full' : 'rounded'} animate-pulse-subtle mb-2 ${className}`}
         />
       ))}
     </>
+  )
+}
+
+interface SkeletonTextProps {
+  lines?: number
+  className?: string
+}
+
+export const SkeletonText: React.FC<SkeletonTextProps> = ({ lines = 2, className = '' }) => {
+  return (
+    <div className={`space-y-2 ${className}`}>
+      {Array.from({ length: lines }).map((_, i) => (
+        <Skeleton key={i} width={i === lines - 1 && lines > 1 ? 'w-2/3' : 'w-full'} className="mb-0" />
+      ))}
+    </div>
   )
 }
 

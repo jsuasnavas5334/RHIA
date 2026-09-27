@@ -5,16 +5,15 @@ import { Button } from '../components/common/Button'
 import { Input } from '../components/common/Input'
 import { Badge, Loader } from '../components/common/Badge'
 import { useLead } from '../api/hooks/useLeads'
-import { Lead, LeadStatus } from '../types'
+import { LeadStatus } from '../types'
 
-export const LeadDetailPage: React.FC = () => {
+const LeadDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const leadId = id ? parseInt(id) : 0
   const { lead, loading, error, getLead, updateLead } = useLead(leadId)
-  const [isEditing, setIsEditing] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const [editedLead, setEditedLead] = useState<Lead | null>(null)
+  // Estado al que se está cambiando (null = ninguna petición de estado en curso)
+  const [pendingStatus, setPendingStatus] = useState<LeadStatus | null>(null)
   const [newNote, setNewNote] = useState('')
   const [isAddingNote, setIsAddingNote] = useState(false)
 
@@ -24,35 +23,24 @@ export const LeadDetailPage: React.FC = () => {
     }
   }, [leadId, getLead])
 
-  useEffect(() => {
-    if (lead) {
-      setEditedLead(lead)
-    }
-  }, [lead])
+  // Ambas acciones envían el lead completo (PUT): si corrieran a la vez, la
+  // segunda sobrescribiría el cambio de la primera con datos viejos.
+  const isBusy = pendingStatus !== null || isAddingNote
 
   const handleStatusChange = async (newStatus: LeadStatus) => {
-    if (!lead) return
-    setIsSaving(true)
+    if (!lead || isBusy || lead.estado === newStatus) return
+    setPendingStatus(newStatus)
     try {
       await updateLead({ ...lead, estado: newStatus })
+    } catch {
+      // useLead ya guarda el mensaje en `error`; se muestra en el banner
     } finally {
-      setIsSaving(false)
-    }
-  }
-
-  const handleSave = async () => {
-    if (!editedLead) return
-    setIsSaving(true)
-    try {
-      await updateLead(editedLead)
-      setIsEditing(false)
-    } finally {
-      setIsSaving(false)
+      setPendingStatus(null)
     }
   }
 
   const handleAddNote = async () => {
-    if (!lead || !newNote.trim()) return
+    if (!lead || isBusy || !newNote.trim()) return
     setIsAddingNote(true)
     try {
       const updatedNotes = (lead.notas || '') + (lead.notas ? '\n' : '') + newNote
@@ -61,12 +49,16 @@ export const LeadDetailPage: React.FC = () => {
         notas: updatedNotes,
       })
       setNewNote('')
+    } catch {
+      // se conserva la nota escrita para reintentar; el error va al banner
     } finally {
       setIsAddingNote(false)
     }
   }
 
-  if (loading) {
+  // useLead comparte `loading`/`error` entre getLead y updateLead: solo se
+  // reemplaza la página completa cuando todavía no hay lead cargado.
+  if (loading && !lead) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader size="lg" />
@@ -74,7 +66,7 @@ export const LeadDetailPage: React.FC = () => {
     )
   }
 
-  if (error) {
+  if (error && !lead) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-red-600">Error: {error}</div>
@@ -99,6 +91,12 @@ export const LeadDetailPage: React.FC = () => {
         </Button>
       </div>
 
+      {error && (
+        <div role="alert" className="mb-6 p-3 rounded-lg bg-red-50 text-red-700 text-sm">
+          Error: {error}
+        </div>
+      )}
+
       <Card className="mb-6">
         <div className="grid grid-cols-2 gap-6">
           <div>
@@ -119,9 +117,7 @@ export const LeadDetailPage: React.FC = () => {
           </div>
           <div>
             <label className="text-sm font-semibold text-gray-600">Estado</label>
-            <Badge status={lead.estado as any} className="mt-2">
-              {lead.estado}
-            </Badge>
+            <Badge status={lead.estado} className="mt-2" />
           </div>
           <div>
             <label className="text-sm font-semibold text-gray-600">Fuente</label>
@@ -139,7 +135,9 @@ export const LeadDetailPage: React.FC = () => {
               key={status}
               onClick={() => handleStatusChange(status)}
               variant={lead.estado === status ? 'primary' : 'outline'}
-              loading={isSaving}
+              aria-pressed={lead.estado === status}
+              loading={pendingStatus === status}
+              disabled={isBusy}
               size="sm"
             >
               {status}
@@ -159,9 +157,15 @@ export const LeadDetailPage: React.FC = () => {
             placeholder="Agregar nota..."
             value={newNote}
             onChange={(e) => setNewNote(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                handleAddNote()
+              }
+            }}
             className="flex-1"
           />
-          <Button onClick={handleAddNote} loading={isAddingNote}>
+          <Button onClick={handleAddNote} loading={isAddingNote} disabled={isBusy}>
             Agregar
           </Button>
         </div>
@@ -204,3 +208,5 @@ export const LeadDetailPage: React.FC = () => {
     </div>
   )
 }
+
+export default LeadDetailPage

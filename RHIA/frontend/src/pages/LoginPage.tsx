@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { LoginForm } from '../components/forms/LoginForm'
 import { LoginRequest } from '../types'
-import api from '../api/client'
+import { loginRequest, getLoginErrorMessage } from '../api/auth'
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate()
@@ -22,29 +22,16 @@ export const LoginPage: React.FC = () => {
     setError('')
 
     try {
-      const response = await api.post<{
-        access_token: string
-        user: {
-          id: number
-          email: string
-          nombre_completo: string
-          rol: string
-          activo: boolean
-        }
-      }>('/auth/login', credentials)
+      const { token, user } = await loginRequest(credentials)
 
-      const { access_token, user } = response.data
-
-      setToken(access_token)
+      setToken(token)
       setUser(user)
 
       navigate('/dashboard', { replace: true })
     } catch (err: any) {
-      const errorMessage =
-        err.response?.data?.detail ||
-        err.message ||
-        'Error en la autenticación. Verifica tus credenciales.'
-      setError(errorMessage)
+      setError(
+        getLoginErrorMessage(err, 'Error en la autenticación. Verifica tus credenciales.')
+      )
     } finally {
       setIsLoading(false)
     }

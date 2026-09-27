@@ -18,7 +18,12 @@ interface IndustryReport {
   tasa_conversion: number
 }
 
-export const ReportsPage: React.FC = () => {
+// Porcentaje seguro: evita NaN/Infinity cuando el denominador es 0
+// (p. ej. una cuenta nueva sin leads).
+const pct = (num: number, den: number): number =>
+  den > 0 ? (num / den) * 100 : 0
+
+const ReportsPage: React.FC = () => {
   const [conversionReport, setConversionReport] = useState<ConversionReport | null>(null)
   const [industryReport, setIndustryReport] = useState<IndustryReport[]>([])
   const [loading, setLoading] = useState(true)
@@ -93,7 +98,7 @@ export const ReportsPage: React.FC = () => {
               label="Ganados"
               value={conversionReport.leads_ganados}
               trend="up"
-              trendValue={`${((conversionReport.leads_ganados / conversionReport.total_leads) * 100).toFixed(1)}%`}
+              trendValue={`${pct(conversionReport.leads_ganados, conversionReport.total_leads).toFixed(1)}%`}
               icon="🎯"
             />
             <StatCard
@@ -135,14 +140,14 @@ export const ReportsPage: React.FC = () => {
                     </span>
                     <span className="text-sm font-semibold text-gray-600 dark:text-gray-400">
                       {item.value} (
-                      {((item.value / conversionReport.total_leads) * 100).toFixed(1)}%)
+                      {pct(item.value, conversionReport.total_leads).toFixed(1)}%)
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
                     <div
                       className={`h-3 rounded-full ${item.color}`}
                       style={{
-                        width: `${(item.value / conversionReport.total_leads) * 100}%`,
+                        width: `${Math.min(pct(item.value, conversionReport.total_leads), 100)}%`,
                       }}
                     ></div>
                   </div>
@@ -235,7 +240,7 @@ export const ReportsPage: React.FC = () => {
                       {item.cantidad_leads}
                     </td>
                     <td className="px-4 py-3 text-sm text-right font-semibold text-green-600">
-                      {item.tasa_conversion.toFixed(1)}%
+                      {(item.tasa_conversion ?? 0).toFixed(1)}%
                     </td>
                   </tr>
                 ))}
@@ -247,3 +252,5 @@ export const ReportsPage: React.FC = () => {
     </div>
   )
 }
+
+export default ReportsPage

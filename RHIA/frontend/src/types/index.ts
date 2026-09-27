@@ -44,6 +44,8 @@ export interface LeadCreateRequest {
   vacante_titulo?: string
   vacante_descripcion?: string
   vacante_url?: string
+  pain_points?: string
+  solucion_ofrecida?: string
   notas?: string
   fuente?: string
   confianza_analisis?: number

@@ -1,123 +1,71 @@
-import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { describe, it, expect, beforeEach } from 'vitest'
+import { MemoryRouter, Routes, Route } from 'react-router-dom'
+import { ROUTER_FUTURE_FLAGS } from '../../routerConfig'
 import { ProtectedRoute } from '../ProtectedRoute'
+import { useAuthStore } from '../../store/authStore'
+import type { User } from '../../types'
+
+const makeUser = (rol: string): User => ({
+  id: 1,
+  email: 'test@rhia.com',
+  nombre_completo: 'Usuario Test',
+  rol,
+  activo: true,
+})
+
+const renderRoute = (roles: string[], content = 'Admin Content') =>
+  render(
+    <MemoryRouter initialEntries={['/']} future={ROUTER_FUTURE_FLAGS}>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute requiredRoles={roles}>
+              <div>{content}</div>
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/login" element={<div>Login Page</div>} />
+        <Route path="/unauthorized" element={<div>Unauthorized</div>} />
+      </Routes>
+    </MemoryRouter>
+  )
 
 describe('ProtectedRoute Component', () => {
   beforeEach(() => {
-    localStorage.clear()
+    useAuthStore.setState({ user: null, token: null, isAuthenticated: false })
   })
 
-  it('renders protected component when authenticated', () => {
-    localStorage.setItem('token', 'test-token')
-
-    render(
-      <BrowserRouter>
-        <Routes>
-          <Route
-            element={
-              <ProtectedRoute>
-                <div>Protected content</div>
-              </ProtectedRoute>
-            }
-            path="/"
-          />
-        </Routes>
-      </BrowserRouter>
-    )
-
-    expect(screen.getByText('Protected content')).toBeTruthy()
+  it('renders children when authenticated with the required role', () => {
+    useAuthStore.setState({ user: makeUser('admin'), token: 't', isAuthenticated: true })
+    renderRoute(['admin'])
+    expect(screen.getByText('Admin Content')).toBeInTheDocument()
   })
 
-  it('redirects to login when not authenticated', () => {
-    localStorage.removeItem('token')
-
-    const { container } = render(
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<div>Public</div>} />
-          <Route
-            path="/login"
-            element={
-              <ProtectedRoute>
-                <div>Protected content</div>
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-      </BrowserRouter>
-    )
-
-    // Should not render protected content
-    expect(screen.queryByText('Protected content')).toBeFalsy()
+  it('redirects to /login when not authenticated', () => {
+    renderRoute(['admin'])
+    expect(screen.getByText('Login Page')).toBeInTheDocument()
+    expect(screen.queryByText('Admin Content')).not.toBeInTheDocument()
   })
 
-  it('checks localStorage for token', () => {
-    const spy = vi.spyOn(Storage.prototype, 'getItem')
-    localStorage.setItem('token', 'valid-token')
-
-    render(
-      <BrowserRouter>
-        <Routes>
-          <Route
-            element={
-              <ProtectedRoute>
-                <div>Content</div>
-              </ProtectedRoute>
-            }
-            path="/"
-          />
-        </Routes>
-      </BrowserRouter>
-    )
-
-    expect(spy).toHaveBeenCalledWith('token')
-    spy.mockRestore()
+  it('redirects to /unauthorized when role does not match', () => {
+    useAuthStore.setState({ user: makeUser('viewer'), token: 't', isAuthenticated: true })
+    renderRoute(['admin'])
+    expect(screen.getByText('Unauthorized')).toBeInTheDocument()
+    expect(screen.queryByText('Admin Content')).not.toBeInTheDocument()
   })
 
-  it('supports role-based access control', () => {
-    localStorage.setItem('token', 'test-token')
-    localStorage.setItem('userRole', 'admin')
-
-    render(
-      <BrowserRouter>
-        <Routes>
-          <Route
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <div>Admin panel</div>
-              </ProtectedRoute>
-            }
-            path="/"
-          />
-        </Routes>
-      </BrowserRouter>
-    )
-
-    expect(screen.getByText('Admin panel')).toBeTruthy()
+  it('allows access when user has any of the required roles', () => {
+    useAuthStore.setState({ user: makeUser('manager'), token: 't', isAuthenticated: true })
+    renderRoute(['admin', 'manager'], 'Moderation Panel')
+    expect(screen.getByText('Moderation Panel')).toBeInTheDocument()
   })
 
-  it('denies access with insufficient role', () => {
-    localStorage.setItem('token', 'test-token')
-    localStorage.setItem('userRole', 'user')
-
-    render(
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<div>Public</div>} />
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <div>Admin panel</div>
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-      </BrowserRouter>
-    )
-
-    // Should redirect or show access denied
-    expect(screen.queryByText('Admin panel')).toBeFalsy()
+  it('redirects to /login when token exists but user is not loaded (fail-closed)', () => {
+    useAuthStore.setState({ user: null, token: 't', isAuthenticated: true })
+    renderRoute(['admin'])
+    expect(screen.getByText('Login Page')).toBeInTheDocument()
+    expect(screen.queryByText('Admin Content')).not.toBeInTheDocument()
   })
 })

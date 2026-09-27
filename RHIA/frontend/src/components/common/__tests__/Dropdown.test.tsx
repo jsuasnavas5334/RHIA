@@ -92,24 +92,23 @@ describe('Dropdown Component', () => {
     })
   })
 
-  it('renders all items', () => {
+  it('renders all items', async () => {
+    const user = userEvent.setup()
     render(<Dropdown items={mockItems} trigger={trigger} />)
-    const triggerButton = screen.getByText('Menu')
-    userEvent.click(triggerButton)
+    await user.click(screen.getByText('Menu'))
 
-    expect(screen.getByText('Edit')).toBeTruthy()
-    expect(screen.getByText('Delete')).toBeTruthy()
+    expect(await screen.findByText('Edit')).toBeInTheDocument()
+    expect(screen.getByText('Delete')).toBeInTheDocument()
   })
 
-  it('applies variant classes to items', () => {
-    const { container } = render(
-      <Dropdown items={mockItems} trigger={trigger} />
-    )
-    const triggerButton = screen.getByText('Menu')
-    userEvent.click(triggerButton)
+  it('applies variant classes to items', async () => {
+    const user = userEvent.setup()
+    render(<Dropdown items={mockItems} trigger={trigger} />)
+    await user.click(screen.getByText('Menu'))
 
-    const dangerItem = screen.getByText('Delete').closest('[class*=""]')
-    expect(dangerItem).toBeTruthy()
+    const dangerItem = await screen.findByText('Delete')
+    expect(dangerItem).toHaveClass('text-red-600')
+    expect(screen.getByText('Edit')).not.toHaveClass('text-red-600')
   })
 
   it('supports custom trigger element', () => {

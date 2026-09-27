@@ -11,9 +11,9 @@ import { useLeadsStore } from '../store/leadsStore'
 import { useToastContext } from '../context/ToastContext'
 import { exportLeadsToCSV } from '../utils/csv'
 
-export const LeadsPage: React.FC = () => {
+const LeadsPage: React.FC = () => {
   const navigate = useNavigate()
-  const { leads, total, loading, error, fetchLeads, deleteLead } = useLeads()
+  const { leads, total, loading, error, fetchLeads, updateLead, deleteLead } = useLeads()
   const { filters, setFilters, currentPage, setCurrentPage, perPage } = useLeadsStore()
   const toast = useToastContext()
   const [searchTerm, setSearchTerm] = useState(filters.search || '')
@@ -44,8 +44,12 @@ export const LeadsPage: React.FC = () => {
 
   const handleDeleteLead = async (leadId: number) => {
     if (window.confirm('¿Estás seguro de que deseas eliminar este lead?')) {
-      await deleteLead(leadId)
-      toast.success('Lead eliminado exitosamente')
+      const result = await deleteLead(leadId)
+      if (result?.success) {
+        toast.success('Lead eliminado exitosamente')
+      } else {
+        toast.error(result?.error || 'Error al eliminar el lead')
+      }
     }
   }
 
@@ -91,18 +95,22 @@ export const LeadsPage: React.FC = () => {
       return
     }
 
-    // Simulated bulk update - in production would call backend
     let updated = 0
+    let failed = 0
     for (const leadId of selectedIds) {
       const lead = leads.find((l) => l.id === leadId)
-      if (lead) {
-        // In production: await updateLead(leadId, { ...lead, estado: newStatus })
+      if (!lead) continue
+      const result = await updateLead(leadId, { ...lead, estado: newStatus })
+      if (result?.success) {
         updated++
+      } else {
+        failed++
       }
     }
 
     setSelectedIds(new Set())
-    toast.success(`${updated} leads actualizados a ${newStatus}`)
+    if (updated > 0) toast.success(`${updated} leads actualizados a ${newStatus}`)
+    if (failed > 0) toast.error(`${failed} leads no se pudieron actualizar`)
   }
 
   const handleBulkDelete = async () => {
@@ -116,17 +124,20 @@ export const LeadsPage: React.FC = () => {
     }
 
     let deleted = 0
+    let failed = 0
     for (const leadId of selectedIds) {
-      try {
-        await deleteLead(leadId)
+      // deleteLead no lanza: devuelve { success: false } si falla
+      const result = await deleteLead(leadId)
+      if (result?.success) {
         deleted++
-      } catch (err) {
-        // Continue with other deletes
+      } else {
+        failed++
       }
     }
 
     setSelectedIds(new Set())
-    toast.success(`${deleted} leads eliminados`)
+    if (deleted > 0) toast.success(`${deleted} leads eliminados`)
+    if (failed > 0) toast.error(`${failed} leads no se pudieron eliminar`)
   }
 
   const handleImportFile = async () => {
@@ -356,7 +367,7 @@ export const LeadsPage: React.FC = () => {
               ))
             ) : (
               <tr>
-                <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
                   {loading ? 'Cargando...' : 'No hay leads con esos filtros'}
                 </td>
               </tr>
@@ -422,3 +433,5 @@ export const LeadsPage: React.FC = () => {
     </div>
   )
 }
+
+export default LeadsPage

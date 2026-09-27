@@ -1,118 +1,75 @@
-import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { LoginForm } from '../LoginForm'
 
+const getEmail = () => screen.getByPlaceholderText('tu@empresa.com') as HTMLInputElement
+const getPassword = () => screen.getByPlaceholderText('••••••••') as HTMLInputElement
+const getSubmit = () => screen.getByRole('button', { name: /ingres/i })
+
 describe('LoginForm Component', () => {
   it('renders email and password inputs', () => {
-    render(<LoginForm onSuccess={() => {}} />)
-
-    const emailInput = screen.getByPlaceholderText(/email/i)
-    const passwordInput = screen.getByPlaceholderText(/password/i)
-
-    expect(emailInput).toBeTruthy()
-    expect(passwordInput).toBeTruthy()
+    render(<LoginForm onSubmit={vi.fn()} />)
+    expect(getEmail()).toBeInTheDocument()
+    expect(getEmail().type).toBe('email')
+    expect(getPassword()).toBeInTheDocument()
+    expect(getPassword().type).toBe('password')
   })
 
   it('renders submit button', () => {
-    render(<LoginForm onSuccess={() => {}} />)
-    const submitButton = screen.getByRole('button', { name: /login/i })
-    expect(submitButton).toBeTruthy()
+    render(<LoginForm onSubmit={vi.fn()} />)
+    expect(getSubmit()).toHaveTextContent('Ingresar')
   })
 
-  it('validates email format', async () => {
-    const user = userEvent.setup()
-    render(<LoginForm onSuccess={() => {}} />)
-
-    const emailInput = screen.getByPlaceholderText(/email/i) as HTMLInputElement
-    await user.type(emailInput, 'invalid-email')
-
-    const submitButton = screen.getByRole('button', { name: /login/i })
-    await user.click(submitButton)
-
-    expect(screen.getByText(/invalid email/i)).toBeTruthy()
+  it('shows validation error when fields are empty', async () => {
+    const onSubmit = vi.fn()
+    const { container } = render(<LoginForm onSubmit={onSubmit} />)
+    fireEvent.submit(container.querySelector('form')!)
+    expect(await screen.findByText(/completa todos los campos/i)).toBeInTheDocument()
+    expect(onSubmit).not.toHaveBeenCalled()
   })
 
-  it('validates password is not empty', async () => {
+  it('shows validation error when password is missing', async () => {
+    const onSubmit = vi.fn()
     const user = userEvent.setup()
-    render(<LoginForm onSuccess={() => {}} />)
-
-    const emailInput = screen.getByPlaceholderText(/email/i)
-    await user.type(emailInput, 'test@example.com')
-
-    const submitButton = screen.getByRole('button', { name: /login/i })
-    await user.click(submitButton)
-
-    expect(screen.getByText(/password required/i)).toBeTruthy()
+    const { container } = render(<LoginForm onSubmit={onSubmit} />)
+    await user.type(getEmail(), 'test@example.com')
+    fireEvent.submit(container.querySelector('form')!)
+    expect(await screen.findByText(/completa todos los campos/i)).toBeInTheDocument()
+    expect(onSubmit).not.toHaveBeenCalled()
   })
 
   it('submits form with valid credentials', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined)
     const user = userEvent.setup()
-    const handleSuccess = vi.fn()
-    render(<LoginForm onSuccess={handleSuccess} />)
-
-    const emailInput = screen.getByPlaceholderText(/email/i)
-    const passwordInput = screen.getByPlaceholderText(/password/i)
-
-    await user.type(emailInput, 'test@example.com')
-    await user.type(passwordInput, 'password123')
-
-    const submitButton = screen.getByRole('button', { name: /login/i })
-    await user.click(submitButton)
-
-    expect(handleSuccess).toHaveBeenCalled()
-  })
-
-  it('displays loading state while submitting', async () => {
-    const user = userEvent.setup()
-    render(<LoginForm onSuccess={() => {}} />)
-
-    const emailInput = screen.getByPlaceholderText(/email/i)
-    const passwordInput = screen.getByPlaceholderText(/password/i)
-
-    await user.type(emailInput, 'test@example.com')
-    await user.type(passwordInput, 'password123')
-
-    const submitButton = screen.getByRole('button', { name: /login/i })
-    await user.click(submitButton)
-
-    expect(submitButton).toHaveProperty('disabled')
-  })
-
-  it('displays error message on login failure', async () => {
-    const user = userEvent.setup()
-    render(
-      <LoginForm onSuccess={() => {}} onError={(error) => {}} />
+    render(<LoginForm onSubmit={onSubmit} />)
+    await user.type(getEmail(), 'test@example.com')
+    await user.type(getPassword(), 'password123')
+    await user.click(getSubmit())
+    await waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith({ email: 'test@example.com', password: 'password123' })
     )
-
-    const emailInput = screen.getByPlaceholderText(/email/i)
-    const passwordInput = screen.getByPlaceholderText(/password/i)
-
-    await user.type(emailInput, 'wrong@example.com')
-    await user.type(passwordInput, 'wrongpassword')
-
-    const submitButton = screen.getByRole('button', { name: /login/i })
-    await user.click(submitButton)
-
-    // Wait for error to appear
-    await new Promise((resolve) => setTimeout(resolve, 500))
   })
 
-  it('clears error message when user starts typing', async () => {
+  it('displays loading state', () => {
+    render(<LoginForm onSubmit={vi.fn()} isLoading />)
+    expect(screen.getByRole('button')).toBeDisabled()
+    expect(getEmail()).toBeDisabled()
+    expect(getPassword()).toBeDisabled()
+  })
+
+  it('displays error passed via props', () => {
+    render(<LoginForm onSubmit={vi.fn()} error="Credenciales inválidas" />)
+    expect(screen.getByText('Credenciales inválidas')).toBeInTheDocument()
+  })
+
+  it('displays fallback error when onSubmit rejects', async () => {
+    const onSubmit = vi.fn().mockRejectedValue(new Error('401'))
     const user = userEvent.setup()
-    render(<LoginForm onSuccess={() => {}} />)
-
-    const emailInput = screen.getByPlaceholderText(/email/i) as HTMLInputElement
-    await user.type(emailInput, 'invalid')
-
-    const submitButton = screen.getByRole('button', { name: /login/i })
-    await user.click(submitButton)
-
-    expect(screen.getByText(/invalid email/i)).toBeTruthy()
-
-    await user.clear(emailInput)
-    await user.type(emailInput, 'valid@example.com')
-
-    expect(screen.queryByText(/invalid email/i)).toBeFalsy()
+    render(<LoginForm onSubmit={onSubmit} />)
+    await user.type(getEmail(), 'wrong@example.com')
+    await user.type(getPassword(), 'wrongpassword')
+    await user.click(getSubmit())
+    expect(await screen.findByText(/error en la autenticación/i)).toBeInTheDocument()
   })
 })

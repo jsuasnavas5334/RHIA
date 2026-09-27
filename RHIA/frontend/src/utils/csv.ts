@@ -58,27 +58,57 @@ export const exportLeadsToCSV = (leads: Lead[], filename = 'leads.csv') => {
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+
+  return csvContent
+}
+
+// Parse a single CSV line respecting quoted fields and escaped quotes ("")
+const parseCSVLine = (line: string): string[] => {
+  const values: string[] = []
+  let current = ''
+  let inQuotes = false
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i]
+    if (inQuotes) {
+      if (ch === '"') {
+        if (line[i + 1] === '"') {
+          current += '"'
+          i++
+        } else {
+          inQuotes = false
+        }
+      } else {
+        current += ch
+      }
+    } else if (ch === '"') {
+      inQuotes = true
+    } else if (ch === ',') {
+      values.push(current.trim())
+      current = ''
+    } else {
+      current += ch
+    }
+  }
+  values.push(current.trim())
+  return values
 }
 
 export const parseCSV = (csvText: string): Record<string, string>[] => {
-  const lines = csvText.trim().split('\n')
+  const lines = csvText.trim().split(/\r?\n/).filter((l) => l.length > 0)
   if (lines.length < 2) {
     throw new Error('Archivo CSV vacío o inválido')
   }
 
-  // Parse headers (removing quotes)
-  const headers = lines[0].split(',').map((h) => h.replace(/^"|"$/g, '').trim())
+  const headers = parseCSVLine(lines[0])
 
-  // Parse data rows
   const rows: Record<string, string>[] = []
   for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split(',').map((v) => v.replace(/^"|"$/g, '').trim())
+    const values = parseCSVLine(lines[i])
     const row: Record<string, string> = {}
-
     headers.forEach((header, index) => {
-      row[header] = values[index] || ''
+      row[header] = values[index] ?? ''
     })
-
     rows.push(row)
   }
 

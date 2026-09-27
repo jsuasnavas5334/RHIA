@@ -6,11 +6,14 @@ import { Badge, Loader } from '../components/common/Badge'
 import api from '../api/client'
 import { AutomationRule } from '../types'
 
-export const AutomationPage: React.FC = () => {
+const AutomationPage: React.FC = () => {
   const [rules, setRules] = useState<AutomationRule[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>('')
   const [isCreating, setIsCreating] = useState(false)
+  // Regla con una petición (activar/desactivar/eliminar) en curso:
+  // evita peticiones duplicadas por doble clic.
+  const [pendingRuleId, setPendingRuleId] = useState<number | null>(null)
   const [newRule, setNewRule] = useState({
     nombre: '',
     descripcion: '',
@@ -64,6 +67,8 @@ export const AutomationPage: React.FC = () => {
   }
 
   const handleToggleRule = async (ruleId: number, activo: boolean) => {
+    if (pendingRuleId !== null) return
+    setPendingRuleId(ruleId)
     try {
       const rule = rules.find((r) => r.id === ruleId)
       if (rule) {
@@ -75,21 +80,29 @@ export const AutomationPage: React.FC = () => {
       }
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Error al actualizar regla')
+    } finally {
+      setPendingRuleId(null)
     }
   }
 
   const handleDeleteRule = async (ruleId: number) => {
+    if (pendingRuleId !== null) return
     if (window.confirm('¿Eliminar esta regla de automatización?')) {
+      setPendingRuleId(ruleId)
       try {
         await api.delete(`/automation/rules/${ruleId}`)
         await fetchRules()
       } catch (err: any) {
         setError(err.response?.data?.detail || 'Error al eliminar regla')
+      } finally {
+        setPendingRuleId(null)
       }
     }
   }
 
-  if (loading && rules.length === 0) {
+  // Loader a pantalla completa solo en la carga inicial: al crear la
+  // primera regla no debe desmontarse el formulario.
+  if (loading && rules.length === 0 && !isCreating) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader size="lg" message="Cargando automatizaciones..." />
@@ -197,7 +210,10 @@ export const AutomationPage: React.FC = () => {
               </Button>
               <Button
                 variant="secondary"
-                onClick={() => setIsCreating(false)}
+                onClick={() => {
+                  setIsCreating(false)
+                  setError('')
+                }}
                 disabled={loading}
               >
                 Cancelar
@@ -221,7 +237,7 @@ export const AutomationPage: React.FC = () => {
                   </p>
                 </div>
                 <div className="flex gap-2 items-center">
-                  <Badge status={rule.activo ? 'ganado' : 'perdido'} />
+                  <Badge status={rule.activo ? 'activa' : 'inactiva'} />
                 </div>
               </div>
 
@@ -241,7 +257,7 @@ export const AutomationPage: React.FC = () => {
                     Ejecuciones
                   </p>
                   <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    {rule.conteo_ejecuciones || 0}
+                    {rule.conteo_ejecuciones ?? rule.total_ejecuciones ?? 0}
                   </p>
                 </div>
                 <div>
@@ -261,6 +277,8 @@ export const AutomationPage: React.FC = () => {
                   size="sm"
                   variant={rule.activo ? 'primary' : 'secondary'}
                   onClick={() => handleToggleRule(rule.id, rule.activo)}
+                  loading={pendingRuleId === rule.id}
+                  disabled={pendingRuleId !== null}
                 >
                   {rule.activo ? 'Desactivar' : 'Activar'}
                 </Button>
@@ -268,6 +286,7 @@ export const AutomationPage: React.FC = () => {
                   size="sm"
                   variant="danger"
                   onClick={() => handleDeleteRule(rule.id)}
+                  disabled={pendingRuleId !== null}
                 >
                   Eliminar
                 </Button>
@@ -295,3 +314,5 @@ export const AutomationPage: React.FC = () => {
     </div>
   )
 }
+
+export default AutomationPage

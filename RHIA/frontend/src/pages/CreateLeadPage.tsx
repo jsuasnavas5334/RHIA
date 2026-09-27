@@ -4,7 +4,7 @@ import { CreateLeadForm } from '../components/forms/CreateLeadForm'
 import { useLeads } from '../api/hooks/useLeads'
 import { LeadCreateRequest } from '../types'
 
-export const CreateLeadPage: React.FC = () => {
+const CreateLeadPage: React.FC = () => {
   const navigate = useNavigate()
   const { createLead } = useLeads()
   const [isLoading, setIsLoading] = useState(false)
@@ -15,8 +15,15 @@ export const CreateLeadPage: React.FC = () => {
     setError('')
 
     try {
-      await createLead(leadData)
-      navigate('/leads')
+      // useLeads().createLead no lanza: devuelve { success, error }.
+      // Antes se navegaba a /leads aunque la creación fallara.
+      const result = await createLead(leadData)
+      if (result.success) {
+        navigate('/leads')
+        return
+      }
+      setError(result.error || 'Error al crear el lead')
+      setIsLoading(false)
     } catch (err: any) {
       const errorMessage =
         err.response?.data?.detail ||
@@ -42,3 +49,5 @@ export const CreateLeadPage: React.FC = () => {
     </div>
   )
 }
+
+export default CreateLeadPage

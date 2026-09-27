@@ -1,0 +1,25 @@
+
+> rhia-frontend@0.1.0 build
+> vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 130 modules transformed.
+x Build failed in 11.96s
+error during build:
+EPERM: operation not permitted, unlink '/sessions/rcw-01ahxsdmgbomqs76hwu1qy6g/mnt/Software RHIA/RHIA/frontend/dist/assets/api-CEREx-9t.js'
+    at unlinkSync (node:fs:1948:11)
+    at _unlinkSync (node:internal/fs/rimraf:215:14)
+    at rimrafSync (node:internal/fs/rimraf:196:7)
+    at node:internal/fs/rimraf:254:9
+    at Array.forEach (<anonymous>)
+    at _rmdirSync (node:internal/fs/rimraf:251:7)
+    at rimrafSync (node:internal/fs/rimraf:201:14)
+    at Object.rmSync (node:fs:1239:10)
+    at emptyDir (file:///sessions/rcw-01ahxsdmgbomqs76hwu1qy6g/mnt/Software%20RHIA/RHIA/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:17082:19)
+    at prepareOutDir (file:///sessions/rcw-01ahxsdmgbomqs76hwu1qy6g/mnt/Software%20RHIA/RHIA/frontend/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:65746:7)
+npm notice
+npm notice New major version of npm available! 10.9.8 -> 12.1.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.1.0
+npm notice To update run: npm install -g npm@12.1.0
+npm notice

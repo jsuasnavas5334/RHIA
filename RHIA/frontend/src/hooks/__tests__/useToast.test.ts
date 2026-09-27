@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useToast } from '../useToast'
 
@@ -65,8 +65,7 @@ describe('useToast Hook', () => {
     let toastId: string | undefined
 
     act(() => {
-      const toast = result.current.success('Test')
-      toastId = toast?.id
+      toastId = result.current.success('Test')
     })
 
     expect(toastId).toBeDefined()
@@ -76,6 +75,8 @@ describe('useToast Hook', () => {
         result.current.removeToast(toastId)
       }
     })
+
+    expect(result.current.toasts.find((t) => t.id === toastId)).toBeUndefined()
   })
 
   it('generates unique toast ids', () => {
@@ -85,10 +86,11 @@ describe('useToast Hook', () => {
     let id2: string | undefined
 
     act(() => {
-      id1 = result.current.success('Toast 1')?.id
-      id2 = result.current.success('Toast 2')?.id
+      id1 = result.current.success('Toast 1')
+      id2 = result.current.success('Toast 2')
     })
 
+    expect(id1).toBeDefined()
     expect(id1).not.toBe(id2)
   })
 

@@ -3,7 +3,7 @@ import { Card, StatCard } from '../components/common/Card'
 import { Loader } from '../components/common/Badge'
 import { useDashboard } from '../api/hooks/useDashboard'
 
-export const DashboardPage: React.FC = () => {
+const DashboardPage: React.FC = () => {
   const { metrics, loading, error, fetchMetrics } = useDashboard()
 
   useEffect(() => {
@@ -155,3 +155,5 @@ export const DashboardPage: React.FC = () => {
     </div>
   )
 }
+
+export default DashboardPage

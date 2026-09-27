@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { ErrorBoundary } from '../ErrorBoundary'
 
@@ -39,7 +39,7 @@ describe('ErrorBoundary Component', () => {
       </ErrorBoundary>
     )
 
-    expect(screen.getByText(/error occurred/i)).toBeTruthy()
+    expect(screen.getByText(/algo salió mal/i)).toBeTruthy()
   })
 
   it('displays error details', () => {
@@ -59,7 +59,7 @@ describe('ErrorBoundary Component', () => {
       </ErrorBoundary>
     )
 
-    const fallback = screen.queryByText(/something went wrong/i)
+    const fallback = screen.queryByText(/algo salió mal/i)
     expect(fallback).toBeTruthy()
   })
 
@@ -70,7 +70,7 @@ describe('ErrorBoundary Component', () => {
       </ErrorBoundary>
     )
 
-    const button = screen.getByRole('button', { name: /reload/i })
+    const button = screen.getByRole('button', { name: /recargar/i })
     expect(button).toBeTruthy()
   })
 
@@ -89,7 +89,7 @@ describe('ErrorBoundary Component', () => {
       </ErrorBoundary>
     )
 
-    expect(screen.getByText(/error occurred/i)).toBeTruthy()
+    expect(screen.getByText(/algo salió mal/i)).toBeTruthy()
   })
 
   it('logs error to console', () => {

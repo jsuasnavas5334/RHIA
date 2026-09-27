@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Button } from '../Button'
@@ -21,7 +21,8 @@ describe('Button Component', () => {
 
   it('disables when loading', () => {
     render(<Button loading>Save</Button>)
-    const button = screen.getByText('Loading...')
+    expect(screen.getByText('Cargando...')).toBeInTheDocument()
+    const button = screen.getByRole('button') as HTMLButtonElement
     expect(button.disabled).toBe(true)
   })
 

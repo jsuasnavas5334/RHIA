@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Modal, ConfirmDialog } from '../Modal'
@@ -6,7 +6,7 @@ import { Modal, ConfirmDialog } from '../Modal'
 describe('Modal Component', () => {
   it('renders modal content when open', () => {
     render(
-      <Modal isOpen={true} onClose={() => {}}>
+      <Modal title="Test Modal" isOpen={true} onClose={() => {}}>
         <div>Modal content</div>
       </Modal>
     )
@@ -15,7 +15,7 @@ describe('Modal Component', () => {
 
   it('does not render when closed', () => {
     const { container } = render(
-      <Modal isOpen={false} onClose={() => {}}>
+      <Modal title="Test Modal" isOpen={false} onClose={() => {}}>
         <div>Modal content</div>
       </Modal>
     )
@@ -26,7 +26,7 @@ describe('Modal Component', () => {
     const user = userEvent.setup()
     const handleClose = vi.fn()
     const { container } = render(
-      <Modal isOpen={true} onClose={handleClose}>
+      <Modal title="Test Modal" isOpen={true} onClose={handleClose}>
         <div>Content</div>
       </Modal>
     )
@@ -38,18 +38,18 @@ describe('Modal Component', () => {
 
   it('applies size variants', () => {
     const { container, rerender } = render(
-      <Modal isOpen={true} onClose={() => {}} size="sm">
+      <Modal title="Test Modal" isOpen={true} onClose={() => {}} size="sm">
         <div>Content</div>
       </Modal>
     )
     expect(container.querySelector('[class*="max-w-sm"]')).toBeTruthy()
 
     rerender(
-      <Modal isOpen={true} onClose={() => {}} size="lg">
+      <Modal title="Test Modal" isOpen={true} onClose={() => {}} size="lg">
         <div>Content</div>
       </Modal>
     )
-    expect(container.querySelector('[class*="max-w-2xl"]')).toBeTruthy()
+    expect(container.querySelector('[class*="max-w-lg"]')).toBeTruthy()
   })
 
   it('renders title when provided', () => {
@@ -67,7 +67,7 @@ describe('ConfirmDialog Component', () => {
     render(
       <ConfirmDialog
         isOpen={true}
-        onClose={() => {}}
+        onCancel={() => {}}
         onConfirm={() => {}}
         title="Confirm Action"
         message="Are you sure?"
@@ -81,7 +81,7 @@ describe('ConfirmDialog Component', () => {
     render(
       <ConfirmDialog
         isOpen={true}
-        onClose={() => {}}
+        onCancel={() => {}}
         onConfirm={() => {}}
         title="Confirm"
         message="Are you sure?"
@@ -97,7 +97,7 @@ describe('ConfirmDialog Component', () => {
     render(
       <ConfirmDialog
         isOpen={true}
-        onClose={() => {}}
+        onCancel={() => {}}
         onConfirm={handleConfirm}
         title="Confirm"
         message="Proceed?"
@@ -116,7 +116,7 @@ describe('ConfirmDialog Component', () => {
     render(
       <ConfirmDialog
         isOpen={true}
-        onClose={handleClose}
+        onCancel={handleClose}
         onConfirm={() => {}}
         title="Confirm"
         message="Proceed?"

@@ -1,118 +1,49 @@
-════════════════════════════════════════════════════════════════════════════════
-                        CICLO DE DESARROLLO - HORA 1
-════════════════════════════════════════════════════════════════════════════════
+═══════════════════════════════════════════════════════════════
+📊 RHIA FRONTEND - CICLO DE DESARROLLO 2H
+Ciclo: #19 (automático) | Timestamp: 2026-09-27 14:51 UTC
+Próximo checkpoint: 2026-09-27 ~16:51 UTC (+2h)
+═══════════════════════════════════════════════════════════════
 
-Timestamp: 2026-09-24 00:55 UTC
-Status: ✅ OPERACIONAL
+✅ BUILD STATUS: EXITOSO (13.24s, vite 5.4.21)
+   `npm run build` directo en la carpeta falla con EPERM (el entorno
+   automático no puede borrar dist/assets/*). Build hecho en copia
+   local; resultado IDÉNTICO byte a byte al dist/ del disco
+   (diff -rq sin diferencias) → dist/ en disco está al día.
 
-════════════════════════════════════════════════════════════════════════════════
-                            COMPILACIÓN & BUILD
-════════════════════════════════════════════════════════════════════════════════
+   Últimas 3 líneas del build:
+     dist/assets/http-B0W_wSPZ.js             50.83 kB │ gzip: 18.63 kB
+     dist/assets/react-vendor-DFq8JaiF.js    140.92 kB │ gzip: 45.09 kB
+     ✓ built in 13.24s
 
-✅ npm run build                   [EXITOSO]
-   - Modules transformados: 130
-   - Tiempo: 12.26s
-   - Output: dist/ (172KB)
-   - CSS: 24.85 KB → 4.94 KB (gzipped)
-   - JS: 274.13 KB → 86.09 KB (gzipped)
+📦 BUNDLE: 276 KB JS raw (276,353 B) / ~87 KB gzip (sin cambio)
+   <200 KB raw: ⚠️ no cumplido (React+ReactDOM = 141 KB)
+   <100 KB gzip: ✅ cumplido
 
-✅ TypeScript compilation         [EXITOSO]
-   - Strict mode: DESACTIVADO (permite warnings)
-   - Build type: Vite (sin tsc pre-check)
-   - Resultado: VERDE
+🧪 TESTS: ✅ 245/245 PASAN · 31/31 archivos · 0 fallan (23 s)
+   CSV 8/8 ✅ (Blob mocks OK) · Dropdown 9/9 ✅ (waitFor OK)
+   Salida limpia: 0 bloques stderr
 
-════════════════════════════════════════════════════════════════════════════════
-                          TESTING SUITE STATUS
-════════════════════════════════════════════════════════════════════════════════
+🔍 TYPE CHECK: ✅ tsc --noEmit sin errores
 
-Estado de tests:
-  - Setup de tests: ✅ CONFIGURADO
-  - Mocks de Blob API: ✅ AÑADIDO
-  - Async wrapping: ✅ IMPLEMENTADO
-  - Test CSV: ✅ ARREGLADO (7 casos)
-  - Test Dropdown: ✅ ARREGLADO (9 casos)
+🔧 CAMBIOS DE ESTE CICLO
+   - Sin cambios de código (todo en verde, 20 min desde ciclo #18).
+   - vite.config.ts.timestamp-*.mjs dejado por el build fallido
+     movido a _to_delete/timestamps/.
+   - Nota técnica: correr tests con node_modules enlazado a la
+     carpeta sincronizada es >5 min (se corta); con `npm ci` en la
+     copia local tarda 23 s. Usar siempre copia local + npm ci.
 
-Fixes implementados en esta iteración:
-  1. vitest.setup.ts → Mocks globales
-  2. vitest.config.ts → setupFiles configurado
-  3. csv.test.ts → 17 tests refactored
-  4. Dropdown.test.tsx → 9 tests refactored con waitFor()
+⚠️ OBSERVACIONES (sin cambio)
+   - Contrato de API: frontend usa /api/leads, /api/crm/*,
+     /api/automation/rules, /api/auth/login; el Core API expone
+     /api/v1/*. Falta definir qué backend sirve este frontend.
+   - Contrato /automation/rules sin confirmar (condicion vs condiciones).
+   - Importar CSV sigue siendo simulado.
 
-════════════════════════════════════════════════════════════════════════════════
-                        CÓDIGO FUENTE - ESTADÍSTICAS
-════════════════════════════════════════════════════════════════════════════════
-
-Estructura:
-  ✓ src/               225 KB
-  ✓ src/components/    (20+ componentes)
-  ✓ src/pages/         (7 páginas)
-  ✓ src/hooks/         (custom hooks)
-  ✓ src/api/           (API integration)
-  ✓ src/styles/        (CSS + Tailwind)
-
-Configuración:
-  ✓ package.json       ✅ (actualizado con test scripts)
-  ✓ tsconfig.json      ✅ (strict: false, tipos ajustados)
-  ✓ vite.config.ts     ✅ 
-  ✓ vitest.config.ts   ✅ (setupFiles añadido)
-  ✓ tailwind.config.js ✅
-  ✓ postcss.config.js  ✅
-
-════════════════════════════════════════════════════════════════════════════════
-                      DEPENDENCIAS INSTALADAS
-════════════════════════════════════════════════════════════════════════════════
-
-Total paquetes: 428
-  ✓ Node modules: 74 MB
-  ✓ React & React-DOM: 18.2.0
-  ✓ TypeScript: 5.3.0
-  ✓ Vite: 5.4.21
-  ✓ Vitest: 1.6.1 ✅ (con soporte de globales)
-  ✓ Tailwind CSS: 3.4.0
-  ✓ Zustand: 4.5.0
-  ✓ Axios: 1.7.0
-
-════════════════════════════════════════════════════════════════════════════════
-                        PRÓXIMOS PASOS (HORA 2-4)
-════════════════════════════════════════════════════════════════════════════════
-
-Prioridad 1 - CRÍTICA:
-  [ ] Ejecutar suite completa: npm run test -- --run
-  [ ] Validar que pasen 144+ test cases
-  [ ] Revisar coverage report
-
-Prioridad 2 - IMPORTANTE:
-  [ ] Arreglar type errors en página/componentes
-  [ ] Actualizar LeadStatus types
-  [ ] Validar props en formularios
-
-Prioridad 3 - OPTIMIZACIÓN:
-  [ ] Reducir bundle size < 200KB
-  [ ] Optimizar CSS critical path
-  [ ] Minify assets
-
-════════════════════════════════════════════════════════════════════════════════
-                          PRÓXIMO CHECKPOINT
-════════════════════════════════════════════════════════════════════════════════
-
-⏰ Próxima ejecución de ciclo: +2 horas (2026-09-24 02:55 UTC)
-
-Qué revisar:
-  ✓ Estado de tests (PASS/FAIL)
-  ✓ Build status
-  ✓ Type checking
-  ✓ Code coverage
-  ✓ Bundle size
-
-Comando para próximo ciclo:
-  npm run test -- --run
-  npm run build
-  npm run test:coverage
-
-════════════════════════════════════════════════════════════════════════════════
-
-Estado General: ✅ SISTEMA OPERACIONAL
-Último update: 2026-09-24 00:55 UTC
-Próxima actualización: 2026-09-24 02:55 UTC (automático cada 2 horas)
-
-════════════════════════════════════════════════════════════════════════════════
+📋 PRÓXIMAS ACCIONES
+   1. Definir backend/contrato para RHIA/frontend (decisión de George).
+   2. Bundle raw >200 KB: axios→fetch bajaría a ~227 KB; <200 KB
+      exige preact/compat o similar (decisión de George).
+   3. Vaciar en Windows las carpetas _to_delete/.
+   4. Para correr `npm run build` en la carpeta desde Windows no hay
+      problema (el EPERM es solo del entorno automático).
