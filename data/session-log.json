@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-27T14:30:00Z",
+  "updatedAt": "2026-09-27T15:20:00Z",
   "sessions": [
     {
       "id": "SES-20260819-01",
@@ -8528,6 +8528,38 @@
       ],
       "decisions": [],
       "next": "Esperar a George: (1) aprobar/pedir cambios a plantillas Brive A/B, (2) confirmar cuenta de email/LinkedIn para el envio o si George envia directamente, (3) decidir subconjunto/priorizacion de los 160 contactos, (4) decidir canal para Grupo Lucky Ecuador y Nobis Holding. NUEVO: revisar desde la app si trig_013ZYVXLNkB8hkUNbq4QSy9w esta disparando sesiones duplicadas/superpuestas cada hora (evidencia directa de 2 sesiones corriendo en paralelo en este mismo ciclo); esta sesion desatendida no puede diagnosticar ni corregir eso por si sola."
+    },
+    {
+      "id": "SES-20260927-309",
+      "startedAt": "2026-09-27T15:12:55Z",
+      "taskId": "PH12-T001",
+      "status": "PARTIAL",
+      "title": "Re-chequeo ciclo ~118 (~4.88 dias): bloqueo persiste sin cambio; se identifica causa raiz alternativa de los locks huerfanos de git (permiso de borrado deshabilitado en la carpeta conectada, no solo concurrencia)",
+      "summary": "Sesion disparada por el trigger horario 'RHIA - avance autonomo cada hora' (trig_013ZYVXLNkB8hkUNbq4QSy9w, cron '11 * * * *'). Sesion nueva sin memoria previa; contexto reconstruido integramente desde el repositorio. Se leyo data/project-status.json (v1.0.308, nota de SES-308) y las ultimas 6 entradas de data/session-log.json (SES-303 a SES-308), y se releyo la cola de docs/progress/PH12-T001.md. Se confirmo el Task Packet PH12-T001 en PLAN_MAESTRO.md (linea 3773) sin cambios. ReadNotifications: sin notificaciones en cola. HEAD en 2d31327 (cierre de SES-308), rama main, 89 commits adelante de origin/main, sin push (publicacion Git unicamente bajo control humano). Los 3 documentos que dependen de una decision de George (PH12-T001-plantillas-outreach-brive.md, PH12-T001-lote-100-contactos.md, PH12-T001-secundarios-canal-oficial.md) siguen sin cambio desde 2026-09-26 04:24-05:24 UTC (~35h). Los 4 pendientes de George siguen exactamente iguales. No se contacto a ninguna empresa, no se envio ningun mensaje a un tercero, no se genero ninguna solicitud de conexion de LinkedIn, no se modifico infraestructura de produccion ni el esquema de PostgreSQL, y no se guardo ninguna credencial real ni se escribio ninguna contrasena en ningun formulario. No se reintento update_trigger (rechazos ya documentados en SES-301/302). Se confirmo via list_triggers (no solo por la nota del repo) que el trigger horario tiene notifications:{push:false,email:false} configurado explicitamente -> no se envio notificacion push. HALLAZGO NUEVO de este ciclo: se identifico una causa raiz alternativa (y mas simple) para los 'locks huerfanos' de git documentados en sesiones anteriores, independiente de la teoria de sesiones concurrentes de SES-307/308. Al ejecutar 'git status' esta sesion encontro un .git/index.lock huerfano (0 bytes) que le impedia crear uno nuevo; se movio a _to_delete/ con 'mv' (el entorno no tiene permiso de borrado en esta carpeta conectada: 'rm' falla con Operation not permitted). Tras destrabarlo, se ejecuto 'git add' con exito, pero AL FINALIZAR esa misma operacion git no pudo eliminar el lock que ella misma habia creado (mismo error 'Operation not permitted' al hacer unlink), dejando un NUEVO lock huerfano listo para bloquear la siguiente operacion git de esta MISMA sesion -- sin ninguna sesion concurrente de por medio. Esto muestra que, en este entorno, CUALQUIER operacion git que escriba (add/commit/status en algunos casos) deja un lock que el propio proceso no puede limpiar, porque el borrado esta deshabilitado por defecto en la carpeta conectada; eso solo basta para explicar el patron de 'lock huerfano en cada sesion' observado desde hace ~100 ciclos, sin necesitar que dos sesiones se superpongan. (Esto no contradice la evidencia directa de concurrencia de SES-307/308 -- ambas causas pueden estar ocurriendo a la vez -- pero da una explicacion mas simple y mas frecuente para la mayoria de los casos.) Se verifico ademas, via list_triggers, que 'RHIA Frontend - Ciclo de Desarrollo 2H' (trig_01MYG5qWdQDJankBpqb61Jzk, cron cada 2h) es un trigger DISTINTO y legitimo (creado para mantenimiento continuo del frontend, ultima corrida exitosa 14:38 UTC, STATUS_CICLO.txt ciclo #19: build OK, 245/245 tests OK) -- los archivos sin commitear en RHIA/frontend/ pertenecen a ese trigger, no a esta tarea, y no fueron tocados por esta sesion. Para el trigger horario de esta tarea (trig_013ZYVXLNkB8hkUNbq4QSy9w), list_triggers solo expone el ultimo 'last_run' (esta misma sesion, status PENDING) y no un historial completo, por lo que no se pudo confirmar ni descartar directamente un disparo duplicado en este ciclo especifico; la recomendacion de que George revise el historial de disparos desde la app se mantiene vigente.",
+      "changes": [
+        "data/project-status.json: nota actualizada (ciclo ~118, ~4.88 dias; se agrega hallazgo de causa raiz de locks)",
+        "data/session-log.json: nueva entrada SES-20260927-309",
+        "docs/progress/PH12-T001.md: nueva seccion 'Update' SES-20260927-309"
+      ],
+      "tests": [
+        "No se re-ejecuto ningun test este ciclo: sin cambios de codigo desde 2026-09-11 en los paquetes de negocio; se mantiene vigente la evidencia previa (outreach-policy 6/6, opportunity-scoring 32/32, contact-discovery 25/25, entity-resolver 44/44, next-best-action 24/24, evidence-pipeline 24/24, core-api 61 pass/2 skip)"
+      ],
+      "evidence": [
+        "git log -1 --oneline -> 2d31327 (cierre de SES-308) al inicio de esta sesion",
+        "git status --short --branch -> main...origin/main [ahead 89]; primer intento fallo con 'unable to unlink .git/index.lock: Operation not permitted' (lock huerfano de una operacion anterior)",
+        "git add data/project-status.json fallo con 'fatal: Unable to create .git/index.lock: File exists' hasta mover el lock huerfano con mv a _to_delete/index.lock.stale-ph12t001-<ts>; luego el add funciono pero dejo un nuevo lock huerfano al no poder auto-eliminarse (mismo error de permiso) -- reproducido en esta MISMA sesion, sin ninguna otra sesion corriendo en paralelo, lo que aisla el permiso de borrado como causa suficiente",
+        "list_triggers: trig_013ZYVXLNkB8hkUNbq4QSy9w notifications:{push:false,email:false}; last_run de esta corrida en status PENDING con session_id de esta propia sesion (sin segunda corrida visible en este llamado)",
+        "list_triggers: trig_01MYG5qWdQDJankBpqb61Jzk ('RHIA Frontend - Ciclo de Desarrollo 2H') confirmado como trigger separado y sano, ultima corrida SUCCEEDED 14:38 UTC -- explica los archivos sin commitear en RHIA/frontend/",
+        "stat -c '%y %n' sin cambio en los 3 docs de decision (todos 2026-09-26)",
+        "ReadNotifications al inicio de esta sesion: sin notificaciones en cola"
+      ],
+      "risks": [
+        "Bloqueo de negocio (4 decisiones de George) sin ETA, ahora ~4.88 dias / ~118 ciclos horarios nominales sin avance; cada ciclo consume uso de cuenta sin producir valor de negocio",
+        "Confirmado (no solo sospechado) que este entorno no tiene permiso de borrado en la carpeta conectada, por lo que CUALQUIER operacion git que escriba puede dejar un lock huerfano que bloquea la siguiente -- de una sesion futura o de la misma sesion -- si nadie lo destraba con mv primero; se recomienda a George evaluar conceder el permiso de borrado una vez desde la app para que git pueda limpiar sus propios locks",
+        "Persiste sin resolver la recomendacion de revisar si el trigger horario esta disparando sesiones duplicadas (evidencia directa en SES-307/308); esta sesion desatendida no tiene visibilidad de un historial completo de disparos para confirmarlo en este ciclo"
+      ],
+      "decisions": [],
+      "next": "Esperar a George: (1) aprobar/pedir cambios a plantillas Brive A/B, (2) confirmar cuenta de email/LinkedIn para el envio o si George envia directamente, (3) decidir subconjunto/priorizacion de los 160 contactos (volumen vs calidad), (4) decidir canal para Grupo Lucky Ecuador y Nobis Holding. Sugerido: revisar desde la app el historial de disparos de trig_013ZYVXLNkB8hkUNbq4QSy9w por posible duplicado; considerar reducir la cadencia horaria mientras las 4 decisiones siguen pendientes (~118 ciclos sin avance de negocio); considerar conceder permiso de borrado en la carpeta conectada para que git deje de acumular locks huerfanos en cada operacion de escritura."
     }
   ]
 }
