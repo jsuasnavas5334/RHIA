@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-27T14:17:11Z",
+  "updatedAt": "2026-09-27T14:30:00Z",
   "sessions": [
     {
       "id": "SES-20260819-01",
@@ -8496,6 +8496,38 @@
       ],
       "decisions": [],
       "next": "Esperar a George: (1) aprobar/pedir cambios a plantillas Brive A/B, (2) confirmar cuenta de email/LinkedIn para el envio o si George envia directamente, (3) decidir subconjunto/priorizacion de los 160 contactos (volumen vs calidad), (4) decidir canal para Grupo Lucky Ecuador y Nobis Holding. Opcionalmente: George puede revisar por que el trigger horario no dejo rastro entre ~07:17 y ~14:12 UTC de hoy (brecha de ~7h con 2 locks huerfanos hallados en esa ventana), reducir el mismo la cadencia del trigger desde la app, o revisar y aprobar el borrado de los archivos .stale-*/.bak-* acumulados en _to_delete/ (la sesion desatendida no puede hacer ninguna de esas cosas por si sola)."
+    },
+    {
+      "id": "SES-20260927-308",
+      "startedAt": "2026-09-27T14:12:52Z",
+      "taskId": "PH12-T001",
+      "status": "PARTIAL",
+      "title": "Re-chequeo ciclo ~117: sesion concurrente con SES-307 verificada; sin cambios de fondo; se recomienda a George revisar disparo duplicado del trigger horario",
+      "summary": "Esta sesion fue disparada por el mismo trigger horario ('11 * * * *') y corrio en paralelo con otra sesion que produjo y commiteo SES-307 (65ec0ec) durante la propia verificacion de esta sesion: al leer data/project-status.json por primera vez se obtuvo el contenido ya vigente de SES-306; mas tarde, mientras se releia el Task Packet de PH12-T001 y se revisaba el estado de git, se observo momentaneamente el archivo revertido a una version vieja (v1.0.261, 2026-09-25) -- corrupcion transitoria que la propia nota de SES-307 atribuye a un script residual /tmp/update_status.py de esa sesion -- y luego, segundos despues, SES-307 escribio su version correcta (v1.0.307) y la commiteo. Se confirmo con 3 lecturas sucesivas y con 'git diff'/'git show HEAD' que el archivo quedo estable en v1.0.307 y que 'git status' quedo limpio tras ese commit; esta sesion NO volvio a escribir esos 3 archivos de estado hasta despues de confirmar que SES-307 ya habia commiteado, para no crear una segunda condicion de carrera sobre el mismo working tree. Se reconfirmo independientemente que no hay commits nuevos de George (HEAD=65ec0ec, 88 commits adelante de origin/main, sin push) y que los 3 documentos de decision (plantillas-outreach-brive.md, lote-100-contactos.md, secundarios-canal-oficial.md) siguen sin cambio desde el 26-09 (>32h). Los 4 pendientes de George (aprobar/pedir cambios a las plantillas Brive A/B; confirmar cuenta de email/LinkedIn para el envio o si George envia directamente; decidir con cuales de los 160 contactos empezar y si priorizar volumen o calidad; decidir canal para Grupo Lucky Ecuador y Nobis Holding) siguen exactamente iguales; ninguna tarea del Run Order (PH12-T002/T003/T004) es avanzable de forma independiente, porque la propia accion 3 del Task Packet ('Outreach controlado') requiere enviar mensajes reales a contactos reales. No se contacto a ninguna empresa, no se envio ningun mensaje a un tercero, no se genero ninguna solicitud de conexion de LinkedIn, no se modifico infraestructura de produccion ni el esquema de PostgreSQL, y no se guardo ninguna credencial real ni se escribio ninguna contrasena en ningun formulario. No se re-ejecuto la suite de tests de paquetes de negocio (sin cambios de codigo desde 2026-09-11; evidencia previa sigue vigente sin variacion). No se reintento update_trigger (rechazos ya documentados en SES-301/302) ni se envio notificacion push (el trigger tiene notifications:{push:false,email:false} configurado explicitamente por George). NOVEDAD real de este ciclo: evidencia DIRECTA (no solo inferida por locks huerfanos) de que el trigger horario 'RHIA - avance autonomo cada hora' puede disparar o ejecutar mas de una sesion superpuesta en la misma ventana horaria -- esta sesion y SES-307 corrieron en paralelo sobre el mismo working tree y solo por el orden de las escrituras no hubo perdida de datos. Esto es consistente con los locks huerfanos y con el 'gap' de ~7h que SES-307 reporto (sesiones previas probablemente perdieron la carrera del commit y no dejaron rastro). Se recomienda a George revisar desde la app el historial de disparos de trig_013ZYVXLNkB8hkUNbq4QSy9w (posible disparo duplicado o superpuesto) -- esta sesion desatendida no tiene visibilidad completa de ese historial ni permiso para modificar el trigger.",
+      "changes": [
+        "data/project-status.json: nota actualizada (ciclo ~117, ~4.84 dias; se agrega hallazgo de concurrencia)",
+        "data/session-log.json: nueva entrada SES-20260927-308",
+        "docs/progress/PH12-T001.md: nueva entrada breve SES-20260927-308"
+      ],
+      "tests": [
+        "No se re-ejecuto ningun test este ciclo: sin cambios de codigo desde 2026-09-11 en los paquetes de negocio; se mantiene vigente la evidencia previa (outreach-policy 6/6, opportunity-scoring 32/32, contact-discovery 25/25, entity-resolver 44/44, next-best-action 24/24, evidence-pipeline 24/24, core-api 61 pass/2 skip)"
+      ],
+      "evidence": [
+        "3 lecturas sucesivas de data/project-status.json (~14:2x UTC) confirmando estabilidad en v1.0.307 tras el commit de SES-307",
+        "git diff data/project-status.json (antes del commit de SES-307) mostro un diff limpio de 3 lineas hacia v1.0.307, no una reescritura total -- confirma que la corrupcion transitoria observada fue una lectura a mitad de una escritura concurrente, no un dano permanente",
+        "git log -1 -> 65ec0ec (commit de cierre de SES-307), git status --short -- data/ docs/progress/PH12-T001.md -> limpio",
+        "git rev-list --left-right --count origin/main...HEAD -> 0 88 (sin push)",
+        "ReadNotifications al inicio de esta sesion: sin notificaciones en cola",
+        "stat -c '%y %n' sin cambio en los 3 docs de decision (todos 2026-09-26)",
+        "list_triggers -> trig_013ZYVXLNkB8hkUNbq4QSy9w notifications:{push:false,email:false} sin cambio"
+      ],
+      "risks": [
+        "Concurrencia CONFIRMADA (no solo sospechada) entre al menos 2 sesiones corriendo simultaneamente sobre el mismo trigger horario y el mismo working tree: hoy el orden de escritura/commit evito perdida de datos por casualidad, no por diseño (no hay locking real entre sesiones); una superposicion futura con peor timing podria perder una entrada de session-log.json o dejar project-status.json con contenido incorrecto de forma permanente",
+        "El bloqueo de negocio (4 decisiones de George) continua sin ETA; cada ciclo horario -- y ahora posiblemente cada ciclo duplicado -- consume uso de cuenta sin producir avance de negocio",
+        "Esta sesion no tiene permiso de borrado en la carpeta conectada; los locks/objetos temporales huerfanos de git siguen acumulandose en _to_delete/"
+      ],
+      "decisions": [],
+      "next": "Esperar a George: (1) aprobar/pedir cambios a plantillas Brive A/B, (2) confirmar cuenta de email/LinkedIn para el envio o si George envia directamente, (3) decidir subconjunto/priorizacion de los 160 contactos, (4) decidir canal para Grupo Lucky Ecuador y Nobis Holding. NUEVO: revisar desde la app si trig_013ZYVXLNkB8hkUNbq4QSy9w esta disparando sesiones duplicadas/superpuestas cada hora (evidencia directa de 2 sesiones corriendo en paralelo en este mismo ciclo); esta sesion desatendida no puede diagnosticar ni corregir eso por si sola."
     }
   ]
 }
